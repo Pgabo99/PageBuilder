@@ -1,0 +1,34 @@
+# Környezeti változók és titkos adatok
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# IDE és OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Claude Code helyi beállítások
+.claude/settings.local.json
+
+# Függőségek és build kimenet
+node_modules/
+vendor/
+dist/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+crash.log
+
+# Tesztkimenet
+playwright-report/
+test-results/
+coverage/
+.phpunit.result.cache
