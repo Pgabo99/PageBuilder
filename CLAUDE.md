@@ -39,7 +39,7 @@ Egyetemi Cloud és DevOps projekt: weboldalépítő alkalmazás szerkeszthető �
 
 ## Munkamenet
 
-Small Issues, Small Commits, Small PRs, Small Context. Egyszerre egy GitHub issue (ütemterv-feladatnál `docs/roadmap.md` azonosítóval), saját branchen: terv → jóváhagyás → issue → implementáció → tesztek → kódellenőrzés → atomi commitok → push → PR (`Closes #`) → merge jóváhagyás után → `main` frissítése. Részletek: `.claude/rules/ai-workflow.md`.
+MVP-beadandó, legegyszerűbb működő megoldással; halasztott elemek: `docs/backlog.md`. Small Issues, Small Commits, Small PRs, Small Context. Egyszerre egy GitHub issue (ütemterv-feladatnál `docs/roadmap.md` azonosítóval), saját branchen: rövid terv → jóváhagyás → issue → implementáció → tesztek → gyors kódellenőrzés → atomi commitok → push → PR (`Closes #`) → merge a felhasználó jóváhagyásával → `main` frissítése. Részletek: `.claude/rules/ai-workflow.md`.
 
 ## Szabályfájlok
 
@@ -52,4 +52,4 @@ A részletes szabályok a `.claude/rules/` könyvtárban vannak; a technológias
 - `/mattpocock-skills:domain-modeling`: fogalomtár (`docs/GLOSSARY.md`) és a döntésnapló (`docs/architecture.md`).
 - `/mattpocock-skills:tdd`: új funkció vagy hibajavítás Red-Green-Refactor ciklusban.
 - `/mattpocock-skills:diagnosing-bugs`: nehezen reprodukálható hibák, teljesítményromlás.
-- `/mattpocock-skills:code-review`, `/security-review`: változtatások ellenőrzése commit előtt.
+- `/code-review`: gyors ellenőrzés commit előtt; `/mattpocock-skills:code-review`, `/security-review`: nagyobb vagy kockázatos változtatásnál.
