@@ -12,7 +12,7 @@
 - Új függőség telepítése (Composer, npm, Docker image, Terraform provider, Claude Code plugin).
 - Destruktív művelet: fájl- vagy könyvtártörlés, adatbázis törlése vagy `migrate:fresh`, `docker volume rm`, `git reset --hard`, `terraform destroy`.
 - Felhőerőforrás létrehozása vagy módosítása (`terraform apply`): előtte költségbecslés és külön egyeztetés.
-- Commit, push, PR-nyitás és merge: csak kifejezett felhasználói jóváhagyással.
+- Push, PR-nyitás és merge: csak kifejezett felhasználói jóváhagyással. Helyi commit feature branchen jóváhagyás nélkül is készülhet; a `main`-re közvetlen commit tilos.
 
 ## Git workflow (fejlesztési feladatonként)
 
@@ -21,7 +21,7 @@
 3. Implementáció.
 4. Automatizált tesztek futtatása (valós eredménnyel).
 5. Kódellenőrzés (`/code-review`, szükség esetén `/security-review`), a talált hibák javítása.
-6. Commit(ok) magyar üzenettel; logikailag szétválasztva (pl. dokumentáció és kód külön).
+6. Commitok menet közben, kis logikai egységenként, magyar üzenettel (pl. dokumentáció és kód külön), hogy ne maradjon commitolatlan munka.
 7. Push.
 8. Pull Request magyar címmel és leírással (`gh pr create`).
 9. Merge csak a felhasználó jóváhagyása után.
