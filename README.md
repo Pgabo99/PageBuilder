@@ -19,12 +19,20 @@ Vizuális weboldalszerkesztő egyetemi Cloud és DevOps beadandóhoz: webhelyek 
 
 ## Indítás
 
-Követelmény: Docker (Compose v2) és Git.
+Követelmény: Docker (Compose v2) és Git; minden parancs konténerben fut. A lenti parancsok POSIX shellt igényelnek (Windows: Git Bash).
 
 ```sh
-cp .env.example .env    # a jelszavakat cseréld le
-docker compose up -d --wait
-docker compose ps       # minden szolgáltatás healthy
+cp .env.example .env                                         # a jelszavakat cseréld le
+[ -f backend/.env ] || cp backend/.env.example backend/.env
+docker compose build
+docker compose run --rm --no-deps backend composer install
+docker compose run --rm --no-deps backend sh -c 'grep -q "^APP_KEY=." .env || php artisan key:generate'
+docker compose up -d --wait                                  # minden szolgáltatás healthy
+docker compose exec backend php artisan migrate
+docker compose exec backend php artisan test
 ```
 
-Jelenleg a `mysql` és a `redis` fut (T1.3/1); a host gépen egyik sem érhető el, a többi szolgáltatás a [T1.3](docs/roadmap.md) további lépéseiben készül. Leállítás: `docker compose down` (a `-v` az adat-volume-okat is törli).
+- Fut: `mysql`, `redis`, `backend` (PHP-FPM); a host gépen egyik sem érhető el. A többi szolgáltatás a [T1.3](docs/roadmap.md) további lépéseiben készül.
+- A hitelesítő adatok és a teszt-adatbázis részletei: [DevOps](docs/devops.md#lokális-környezet-docker-compose).
+- A teszt-adatbázist új MySQL volume-on az init szkript hozza létre. Korábbi (T1.3/1-es) volume esetén, adatvesztés nélkül: `docker compose up -d --wait mysql`, majd `docker compose exec mysql sh /docker-entrypoint-initdb.d/01-testing-db.sh`.
+- Leállítás: `docker compose down` (a `-v` az adat-volume-okat is törli).

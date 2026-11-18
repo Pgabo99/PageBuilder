@@ -17,6 +17,11 @@ docs/
 
 Szolgáltatások: `nginx`, `backend` (PHP-FPM), `worker`, `scheduler`, `mysql`, `redis`, `frontend` (Vite dev szerver). Mindegyiken healthcheck van, az indítás `service_healthy` feltétellel. A gépen csak Docker és Git kell. Rögzített image tagek, commitolt lock fájlok, `.env.example`.
 
+- A hitelesítő adatok egyetlen forrása a gyökér `.env`; a backend `DB_*` változóit a Compose adja, és ezek elsőbbséget élveznek a `backend/.env`-vel szemben.
+- Teszt-adatbázis: `<MYSQL_DATABASE>_testing`, külön, csak arra jogosult felhasználóval (`docker/mysql/init/`); a `phpunit.xml` `force="true"`-val a `mysql_testing` kapcsolatot, `array` sessiont és cache-t, `sync` queue-t ír elő.
+- A backend healthcheckje a PHP-FPM `/ping` végpontja (`cgi-fcgi`).
+- A `DB_TEST_*` változók és a tesztfelhasználó csak a lokális és a CI-környezetben léteznek; az éles backend környezetébe nem kerülnek (a `mysql_testing` kapcsolat ott hitelesítő adat nélkül nem használható).
+
 ## Image-ek
 
 | Image | Tartalom | Build |
