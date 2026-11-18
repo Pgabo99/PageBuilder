@@ -19,4 +19,12 @@ Vizuális weboldalszerkesztő egyetemi Cloud és DevOps beadandóhoz: webhelyek 
 
 ## Indítás
 
-A fejlesztői környezet a [T1.3](docs/roadmap.md) feladattal készül el.
+Követelmény: Docker (Compose v2) és Git.
+
+```sh
+cp .env.example .env    # a jelszavakat cseréld le
+docker compose up -d --wait
+docker compose ps       # minden szolgáltatás healthy
+```
+
+Jelenleg a `mysql` és a `redis` fut (T1.3/1); a host gépen egyik sem érhető el, a többi szolgáltatás a [T1.3](docs/roadmap.md) további lépéseiben készül. Leállítás: `docker compose down` (a `-v` az adat-volume-okat is törli).

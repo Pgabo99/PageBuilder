@@ -12,7 +12,7 @@ Minden mérföldkőnek azonos nevű GitHub milestone felel meg; az `M0 – Rends
 |---|---|---|---|
 | T1.1 ✅ | Laravel 13 inicializálása a `backend/`-ben konténerből (`docker/php/Dockerfile` alap stage) | `php artisan --version` konténerben fut; `composer.lock` verziózva | — |
 | T1.2 ✅ | Vue 3 inicializálása a `frontend/`-ben konténerből (create-vue, `docker/node/Dockerfile`), Vitest és Vue Test Utils | `npm run build` és `vue-tsc` zöld; strict mód | — |
-| T1.3 | Docker Compose: nginx, backend, worker, scheduler, mysql, redis, frontend; healthcheckek; `.env.example` | `docker compose up` után a `/up` és a SPA elérhető; minden szolgáltatás healthy | Redis-perzisztencia (AOF); a T1.1-ben kihagyott (`--no-scripts`) lépések: `.env.example` MySQL-re állítása, `APP_KEY` generálása, migráció MySQL-en |
+| T1.3 | Docker Compose: nginx, backend, worker, scheduler, mysql, redis, frontend; healthcheckek; `.env.example` | `docker compose up` után a `/up` és a SPA elérhető; minden szolgáltatás healthy | Bontás: T1.3/1 MySQL és Redis ✅, T1.3/2 backend, T1.3/3 Nginx, T1.3/4 frontend, T1.3/5 worker és scheduler. A T1.1-ben kihagyott (`--no-scripts`) lépések: `.env.example` MySQL-re állítása, `APP_KEY` generálása, migráció MySQL-en |
 | T1.4 | Minőségi eszközök: Pint, ESLint (Flat Config) és Prettier a hivatalos Vue-konfigurációkkal, Pest alap; egységes parancsok | mindegyik konténerben fut, zöld | parancsfuttató (Makefile vagy npm/composer script) |
 
 ## M2 – CI és szállítási út (tracer bullet)
@@ -98,6 +98,11 @@ Minden mérföldkőnek azonos nevű GitHub milestone felel meg; az `M0 – Rends
 
 A feladattábláknál felsoroltakon túl:
 - Költség: Azure-erőforrás csak előzetes költségbecslés és külön egyeztetés után jön létre (T2.5, T2.6, T7.5). A VM a T2.6-tól fut; használaton kívül leállítható (deallocate).
+- Redis cache elkülönítése (M2): a `noeviction` mellett `maxmemory` esetén a cache-írások hibára futnak; döntés külön cache-adatbázisról vagy külön Redis-példányról.
+
+## Technikai adósság
+
+- MySQL healthcheck (`compose.yaml`): a `MYSQL_PWD` a MySQL 8.0 óta elavult, a 9.7.4-en működik. Eltávolítása esetén a healthcheck unhealthy lesz; csere: `--defaults-extra-file`.
 
 ## Opcionális továbbfejlesztések
 

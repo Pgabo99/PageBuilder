@@ -59,7 +59,7 @@ flowchart LR
 | MySQL | felhasználók, draft struktúra, deploymentek, pillanatképek | napi dump |
 | Médiakötet | feltöltött eredeti fájlok (privát) | napi archívum |
 | Release-kötet | publikált statikus verziók, `live/{slug}` symlinkek | napi archívum; tartalék: újragenerálás pillanatképből |
-| Redis | session, queue, cache, alkalmazásmetrikák | nem mentett (perzisztencia: [roadmap](roadmap.md) nyitott kérdés) |
+| Redis | session, queue, cache, alkalmazásmetrikák | AOF (`appendfsync everysec`), named volume; `noeviction` |
 
 ## Háttérfolyamatok
 
@@ -133,3 +133,4 @@ A döntések részletei a hivatkozott dokumentumban, az indoklás és az elvetet
 | Q26 | Hitelesítési hatókör | [security](security.md) | AI-029 |
 | Q27 | Komponensmezők, registry | [database-design](database-design.md) | AI-030 |
 | Q28 | Törölt céloldal kezelése | [database-design](database-design.md) | AI-031 |
+| Q29 | Redis-perzisztencia (AOF), MySQL 9.7 LTS | [architecture](architecture.md), `compose.yaml` | AI-041 |
