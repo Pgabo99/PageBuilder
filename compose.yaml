@@ -8,8 +8,11 @@ services:
       MYSQL_USER: ${MYSQL_USER:?másold a .env.example-t .env néven}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:?másold a .env.example-t .env néven}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?másold a .env.example-t .env néven}
+      MYSQL_TEST_USER: ${MYSQL_TEST_USER:?másold a .env.example-t .env néven}
+      MYSQL_TEST_PASSWORD: ${MYSQL_TEST_PASSWORD:?másold a .env.example-t .env néven}
     volumes:
       - mysql-data:/var/lib/mysql
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       # A $$ miatt a konténer shellje helyettesít: a jelszó nem kerül a parancssorba és a healthcheck-naplóba.
       test: ["CMD-SHELL", "MYSQL_PWD=\"$$MYSQL_PASSWORD\" mysql -h 127.0.0.1 -u \"$$MYSQL_USER\" -N -s -e 'SELECT 1' \"$$MYSQL_DATABASE\""]
@@ -41,6 +44,9 @@ services:
       DB_DATABASE: ${MYSQL_DATABASE:?másold a .env.example-t .env néven}
       DB_USERNAME: ${MYSQL_USER:?másold a .env.example-t .env néven}
       DB_PASSWORD: ${MYSQL_PASSWORD:?másold a .env.example-t .env néven}
+      DB_TEST_DATABASE: ${MYSQL_DATABASE:?másold a .env.example-t .env néven}_testing
+      DB_TEST_USERNAME: ${MYSQL_TEST_USER:?másold a .env.example-t .env néven}
+      DB_TEST_PASSWORD: ${MYSQL_TEST_PASSWORD:?másold a .env.example-t .env néven}
     volumes:
       - ./backend:/var/www/backend
     depends_on:
