@@ -22,6 +22,7 @@ Szolgáltatások: `nginx`, `backend` (PHP-FPM), `worker`, `scheduler`, `mysql`, 
 - A hitelesítő adatok egyetlen forrása a gyökér `.env`; a backend `DB_*` változóit a Compose adja, és ezek elsőbbséget élveznek a `backend/.env`-vel szemben.
 - Teszt-adatbázis: `<MYSQL_DATABASE>_testing`, külön, csak arra jogosult felhasználóval (`docker/mysql/init/`); a `phpunit.xml` `force="true"`-val a `mysql_testing` kapcsolatot, `array` sessiont és cache-t, `sync` queue-t ír elő.
 - A backend healthcheckje a PHP-FPM `/ping` végpontja (`cgi-fcgi`).
+- Nginx: egyetlen host port (`127.0.0.1:${NGINX_PORT:-8080}`); csak a `backend/public` van mountolva, így a `.env` és a többi backend-fájl nem érhető el HTTP-n; az `APP_URL`-t a Compose adja.
 - A `DB_TEST_*` változók és a tesztfelhasználó csak a lokális és a CI-környezetben léteznek; az éles backend környezetébe nem kerülnek (a `mysql_testing` kapcsolat ott hitelesítő adat nélkül nem használható).
 
 ## Image-ek
