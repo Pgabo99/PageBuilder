@@ -23,7 +23,7 @@
 5. Kódellenőrzés (`/code-review`, szükség esetén `/security-review`), a talált hibák javítása.
 6. Commitok menet közben, kis logikai egységenként, magyar üzenettel (pl. dokumentáció és kód külön), hogy ne maradjon commitolatlan munka.
 7. Push.
-8. Pull Request magyar címmel és leírással (`gh pr create`).
+8. Pull Request magyar címmel és leírással (`gh pr create`); assignee a felhasználó, a feladat mérföldkövének milestone-ja, illő labelek (pl. `enhancement`, `documentation`).
 9. Merge csak a felhasználó jóváhagyása után.
 10. A lokális `main` frissítése (`git switch main && git pull`).
 11. A következő feladat csak ezután indul.

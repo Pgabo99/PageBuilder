@@ -4,6 +4,8 @@ Inkrementális haladás: egyszerre egy feladat. A feladat előtt tisztázzuk a r
 
 Státusz: ⬜ nincs elkezdve · 🔄 folyamatban · ✅ kész
 
+Minden mérföldkőnek azonos nevű GitHub milestone felel meg; az `M0 – Rendszertervezés` (tervezési dokumentáció, Claude Code konfiguráció) a roadmap előtti, lezárt szakasz.
+
 ## M1 – Fejlesztői környezet
 
 | ID | Feladat | Elfogadási kritérium | Előtte tisztázandó |
