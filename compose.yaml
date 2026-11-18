@@ -1,0 +1,35 @@
+name: pagebulder
+
+services:
+  mysql:
+    image: mysql:9.7.4@sha256:df90258da46f6e7ff8574ff84f17618aba0765cac749928299c69fd4e7cb8ad8
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:?másold a .env.example-t .env néven}
+      MYSQL_USER: ${MYSQL_USER:?másold a .env.example-t .env néven}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?másold a .env.example-t .env néven}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?másold a .env.example-t .env néven}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      # A $$ miatt a konténer shellje helyettesít: a jelszó nem kerül a parancssorba és a healthcheck-naplóba.
+      test: ["CMD-SHELL", "MYSQL_PWD=\"$$MYSQL_PASSWORD\" mysql -h 127.0.0.1 -u \"$$MYSQL_USER\" -N -s -e 'SELECT 1' \"$$MYSQL_DATABASE\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  redis:
+    image: redis:8.10.3-alpine3.23@sha256:7958cfbb9d152f87dadfbc89f1b0b15938f0b81ff8982feb327476f4911935c3
+    command: ["redis-server", "--appendonly", "yes", "--appendfsync", "everysec", "--maxmemory-policy", "noeviction"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  mysql-data:
+  redis-data:
