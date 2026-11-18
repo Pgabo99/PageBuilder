@@ -1,5 +1,7 @@
 # Tesztelési stratégia
 
+> **Bővített terv** a beadandó utáni továbbfejlesztéshez; nem karbantartott. Az MVP-hatókör: [roadmap](roadmap.md), a halasztott elemek: [backlog](backlog.md).
+
 Tesztvezérelt fejlesztés (Red-Green-Refactor); hibajavításhoz regressziós teszt. A munkamódszer szabályai a `.claude/rules/testing.md`-ben vannak.
 
 ## Szintek

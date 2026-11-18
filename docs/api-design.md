@@ -1,5 +1,7 @@
 # API-terv
 
+> **Bővített terv** a beadandó utáni továbbfejlesztéshez; nem karbantartott. Az MVP-hatókör: [roadmap](roadmap.md), a halasztott elemek: [backlog](backlog.md).
+
 REST, JSON, `/api/v1` előtag. Hitelesítés: Laravel Sanctum SPA cookie, azonos originről. Minden erőforrás-végpont Policy-vel védett; egy webhely gyerekerőforrásai (oldal, komponens, média, deployment) a webhely tulajdonosán keresztül jogosultak. Más felhasználó erőforrására 404 a válasz (az erőforrás létezése sem derül ki).
 
 ## Konvenciók

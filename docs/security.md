@@ -1,5 +1,7 @@
 # Biztonság
 
+> **Bővített terv** a beadandó utáni továbbfejlesztéshez; nem karbantartott. Az MVP-hatókör: [roadmap](roadmap.md), a halasztott elemek: [backlog](backlog.md).
+
 Általános szabályok: `.claude/rules/security.md`. Ez a dokumentum a projekt-specifikus fenyegetéseket és kontrollokat rögzíti.
 
 ## Fenyegetések és kontrollok

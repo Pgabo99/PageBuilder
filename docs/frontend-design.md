@@ -1,5 +1,7 @@
 # Frontend-terv
 
+> **Bővített terv** a beadandó utáni továbbfejlesztéshez; nem karbantartott. Az MVP-hatókör: [roadmap](roadmap.md), a halasztott elemek: [backlog](backlog.md).
+
 Vue 3 (`<script setup lang="ts">`), TypeScript strict, Vite, Pinia, Vue Router.
 
 ## Nézetek

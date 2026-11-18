@@ -1,5 +1,7 @@
 # DevOps
 
+> A „Lokális környezet” szakasz aktuális; a többi **bővített terv** a beadandó utáni továbbfejlesztéshez, nem karbantartott. Az MVP-hatókör: [roadmap](roadmap.md), a halasztott elemek: [backlog](backlog.md).
+
 ## Repó-szerkezet
 
 ```
