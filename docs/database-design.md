@@ -1,5 +1,7 @@
 # Adatbázis-terv
 
+> **Bővített terv** a beadandó utáni továbbfejlesztéshez; nem karbantartott. Az MVP-hatókör: [roadmap](roadmap.md), a halasztott elemek: [backlog](backlog.md).
+
 MySQL 8, InnoDB, `utf8mb4`. A szerkeszthető (draft) struktúra relációs; a publikált állapot módosíthatatlan pillanatkép (`page_versions`).
 
 ## ER diagram

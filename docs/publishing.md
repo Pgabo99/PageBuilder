@@ -1,5 +1,7 @@
 # Publikálás
 
+> **Bővített terv** a beadandó utáni továbbfejlesztéshez; nem karbantartott. Az MVP-hatókör: [roadmap](roadmap.md), a halasztott elemek: [backlog](backlog.md).
+
 Aszinkron, webhelyszintű, atomi aktiválással. A publikálás és a rollback ugyanazt az állapotgépet, lockot és jobot használja.
 
 ## Állapotgép

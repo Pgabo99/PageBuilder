@@ -1,44 +1,39 @@
 # Architektúra
 
-## Cél és hatókör
+## Cél és rendszerhatár
 
-A PageBuilder vizuális weboldalszerkesztő: a felhasználó webhelyeket és oldalakat hoz létre előre definiált komponensekből, majd aszinkron módon statikus HTML-ként publikálja őket. Egyetemi Cloud és DevOps beadandó; a reprodukálható technikai bizonyíték elsődleges a funkcionális komplexitással szemben.
+A PageBuilder vizuális weboldalszerkesztő: a felhasználó webhelyeket és oldalakat hoz létre három komponenstípusból (címsor, szöveg, gomb/link), majd queue jobbal statikus HTML-ként publikálja őket. Egyetemi Cloud és DevOps beadandó, MVP-hatókörrel ([roadmap](roadmap.md)); a halasztott elemek a [backlogban](backlog.md).
 
-## Rendszerkontextus
+A rendszeren belül: SPA, Laravel API, queue worker, MySQL, Redis, publikált statikus fájlok, monitoring és backup. Kívül: felhasználók, GitHub (repó, Actions, GHCR), Let's Encrypt, Azure Blob (VM-en kívüli mentés).
 
 ```mermaid
 flowchart LR
-  user([Szerkesztő felhasználó]) -->|HTTPS| ingress
-  visitor([Látogató]) -->|HTTPS /sites/slug/| ingress
-  appinsights[Azure Application Insights<br/>külső elérhetőség-ellenőrzés] -->|HTTPS| ingress
+  user([Felhasználó]) -->|HTTPS| traefik
+  visitor([Látogató]) -->|HTTPS /sites/slug/| traefik
   gh[GitHub Actions] -->|image push| ghcr[(GHCR)]
   gh -->|image tag commit| repo[(Git repó)]
 
   subgraph vm[Azure VM – k3s]
-    ingress[Traefik ingress<br/>TLS, cert-manager]
+    traefik[Traefik<br/>TLS: Let's Encrypt]
     nginx[Nginx<br/>SPA, /sites, FastCGI]
     php[PHP-FPM<br/>Laravel API]
     worker[Queue worker]
-    scheduler[Scheduler]
     mysql[(MySQL)]
     redis[(Redis)]
-    media[(Médiakötet)]
-    releases[(Release-kötet)]
+    sites[(Publikált oldalak)]
     argocd[Argo CD]
-    sealed[Sealed Secrets]
     mon[Prometheus + Grafana]
-    backup[Backup / restore CronJob]
+    backup[Backup CronJob]
   end
 
-  ingress --> nginx --> php
-  php --> mysql & redis & media
-  worker --> mysql & redis & media
-  worker -->|ír| releases
-  nginx -->|csak olvas| releases
+  traefik --> nginx --> php
+  php --> mysql & redis
+  worker --> mysql & redis
+  worker -->|ír| sites
+  nginx -->|olvas| sites
   argocd -->|pull| repo
   argocd -->|pull| ghcr
-  backup --> blob[(Azure Blob<br/>backup)]
-  sealed -.kulcsmentés.-> kv[(Azure Key Vault)]
+  backup -->|mysqldump| blob[(Azure Blob)]
 ```
 
 ## Belépési pontok
@@ -46,62 +41,30 @@ flowchart LR
 | Belépési pont | Útvonal | Elérés |
 |---|---|---|
 | Szerkesztő SPA | `/` | nyilvános, hitelesítés után használható |
-| REST API | `/api/v1/*` | Sanctum SPA cookie |
+| REST API | `/api/*` | Sanctum SPA cookie |
 | Publikált webhelyek | `/sites/{slug}/` | nyilvános, statikus |
-| Health | `/up` | nyilvános (csak állapot) |
-| Metrikák | `/metrics` | csak clusteren belül |
-| Grafana, Argo CD, Prometheus | — | csak `kubectl port-forward` |
+| Health | `/up` | nyilvános |
+| Grafana, Argo CD, Prometheus | — | `kubectl port-forward` |
 
 ## Perzisztens állapot
 
 | Tároló | Tartalom | Mentés |
 |---|---|---|
-| MySQL | felhasználók, draft struktúra, deploymentek, pillanatképek | napi dump |
-| Médiakötet | feltöltött eredeti fájlok (privát) | napi archívum |
-| Release-kötet | publikált statikus verziók, `live/{slug}` symlinkek | napi archívum; tartalék: újragenerálás pillanatképből |
-| Redis | session, queue, cache, alkalmazásmetrikák | AOF (`appendfsync everysec`), named volume; `noeviction` |
-
-## Háttérfolyamatok
-
-- **Queue worker:** publikálás és rollback ([publishing.md](publishing.md)).
-- **Scheduler:** beragadt deploymentek felismerése, release-megőrzés, késleltetett médiatörlés.
-- **CronJobok:** napi backup, heti restore-teszt ([devops.md](devops.md)).
+| MySQL | felhasználók, webhelyek, oldalak (`content` JSON), publikálási állapot | napi `mysqldump`: PVC és Azure Blob |
+| Publikált oldalak | statikus HTML | újragenerálható |
+| Redis | session, queue, cache | AOF, nem mentett |
 
 ## Környezetek
 
-| Környezet | Futtatás | Cél |
-|---|---|---|
-| Lokális | Docker Compose | fejlesztés |
-| CI | ideiglenes Compose-stack | Pest, Playwright, scanek |
-| Production | Azure VM, k3s, Argo CD | éles üzem |
-
-A staging opcionális; a `deploy/overlays/` szerkezet később bővíthető vele.
-
-## Felhasználói folyamatok (MVP)
-
-1. **Szerkesztés:** regisztráció → webhely és oldal → komponensek hozzáadása, sorrendezése, szerkesztése → mentés → előnézet.
-2. **Sikeres publikálás:** `queued` → `running` → `succeeded`, a webhely elérhető, megjelenik az előzményekben.
-3. **Sikertelen publikálás:** validációs hiba → `failed`, naplóval; az előző verzió élesben marad.
-4. **Rollback:** korábbi sikeres deployment visszaállítása.
-
-## MVP és opcionális funkciók
-
-| MVP | Opcionális |
+| Környezet | Futtatás |
 |---|---|
-| Regisztráció, bejelentkezés, kijelentkezés | E-mail-megerősítés, jelszó-visszaállítás, 2FA, OAuth |
-| Egy tulajdonos webhelyenként | Szerepkörök, megosztás, admin |
-| 5 komponenstípus, korlátozott Markdown | WYSIWYG, egyedi HTML/CSS/JS, új típusok |
-| Explicit mentés | Autosave |
-| Webhelyszintű publikálás, előzmények, rollback | Draft visszaállítása pillanatképből |
-| Útvonalalapú címzés, Azure DNS-név | Saját domain, aldomaines címzés |
-| Lokális, CI, production | Staging |
-| Prometheus, Grafana, JSON-napló | Loki, Alertmanager |
-| Trivy, Gitleaks, audit, Dependabot | CodeQL, Snyk, OWASP Dependency-Check |
-| Napi backup, restore-teszt, DR-gyakorlat | Velero, point-in-time restore |
+| Lokális | Docker Compose |
+| CI | GitHub Actions, ideiglenes Compose-stack |
+| Production | Azure VM, k3s, Argo CD |
 
 ## Döntésnapló
 
-A döntések részletei a hivatkozott dokumentumban, az indoklás és az elvetett alternatívák az [AI auditban](ai-audit.md) találhatók.
+Az indoklás és az elvetett alternatívák az [AI auditban](ai-audit.md). A Q1–Q28 döntések egy része a bővített tervre vonatkozik; az MVP-ben a Q30 az irányadó.
 
 | # | Döntés | Részletek | Audit |
 |---|---|---|---|
@@ -134,3 +97,4 @@ A döntések részletei a hivatkozott dokumentumban, az indoklás és az elvetet
 | Q27 | Komponensmezők, registry | [database-design](database-design.md) | AI-030 |
 | Q28 | Törölt céloldal kezelése | [database-design](database-design.md) | AI-031 |
 | Q29 | Redis-perzisztencia (AOF), MySQL 9.7 LTS | [architecture](architecture.md), `compose.yaml` | AI-041 |
+| Q30 | MVP-egyszerűsítés: JSON-komponensek, 3 típus, egyszerűsített publikálás, Traefik ACME, sima manifestek | [roadmap](roadmap.md), [backlog](backlog.md) | AI-044 |
