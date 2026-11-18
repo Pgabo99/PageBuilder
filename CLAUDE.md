@@ -39,7 +39,7 @@ Egyetemi Cloud és DevOps projekt: weboldalépítő alkalmazás szerkeszthető �
 
 ## Munkamenet
 
-Egyszerre egy ütemterv-feladat (`docs/roadmap.md`), saját feature branchen: terv → jóváhagyás → implementáció → tesztek → kódellenőrzés → commit → push → PR → merge jóváhagyás után → `main` frissítése. Részletek: `.claude/rules/ai-workflow.md`.
+Small Issues, Small Commits, Small PRs, Small Context. Egyszerre egy GitHub issue (ütemterv-feladatnál `docs/roadmap.md` azonosítóval), saját branchen: terv → jóváhagyás → issue → implementáció → tesztek → kódellenőrzés → atomi commitok → push → PR (`Closes #`) → merge jóváhagyás után → `main` frissítése. Részletek: `.claude/rules/ai-workflow.md`.
 
 ## Szabályfájlok
 
