@@ -62,6 +62,27 @@ services:
       retries: 5
       start_period: 10s
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ../docker/node/Dockerfile
+      target: base
+    image: pagebulder-frontend:dev
+    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173", "--strictPort"]
+    environment:
+      HMR_CLIENT_PORT: ${NGINX_PORT:-8080}
+      VITE_USE_POLLING: "true"
+    volumes:
+      - ./frontend:/app
+      # Linuxra telepített függőségek, elkülönítve a host node_modules-tól.
+      - frontend-node-modules:/app/node_modules
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:5173/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
   nginx:
     image: nginx:1.30.7-alpine3.24@sha256:bef154735288bc38d99fac41ae63730684bcc661503673a04a0f9bc526ba8598
     ports:
@@ -73,6 +94,8 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+      frontend:
+        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/nginx-health"]
       interval: 10s
@@ -83,3 +106,4 @@ services:
 volumes:
   mysql-data:
   redis-data:
+  frontend-node-modules:
