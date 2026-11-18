@@ -1,109 +1,100 @@
-# Ütemterv
+# Ütemterv (MVP)
 
-Inkrementális haladás: egyszerre egy feladat. A feladat előtt tisztázzuk a részleteket, utána ellenőrzés és teszt következik, a következő feladat csak jóváhagyással indul. A sorrend tracer bullet elvű: a teljes út (kód → CI → GHCR → Argo CD → éles) korán, minimális alkalmazással működjön, és erre épüljenek a funkciók.
+Egyetemi beadandó: minden követelményhez a legegyszerűbb működő megoldás. A halasztott fejlesztések a [backlogban](backlog.md) vannak. Minden mérföldkőnek azonos nevű GitHub milestone felel meg; egy feladat egy kis issue.
 
-Státusz: ⬜ nincs elkezdve · 🔄 folyamatban · ✅ kész
+Státusz: ✅ kész · 🔄 folyamatban
 
-Minden mérföldkőnek azonos nevű GitHub milestone felel meg; az `M0 – Rendszertervezés` (tervezési dokumentáció, Claude Code konfiguráció) a roadmap előtti, lezárt szakasz.
+## Követelmények és megoldás
+
+| Szempont (pont) | MVP-megoldás |
+|---|---|
+| Rendszerhatár (5) | rövid architektúra-ábra és rendszerhatár ([architecture.md](architecture.md)) |
+| Setup és repository (5) | Compose-stack, README, branch protection, issue/PR workflow |
+| CI (9) | GitHub Actions PR-ra: Pint, ESLint, `vue-tsc`, Pest, Vitest, Playwright |
+| Artifact és security (7) | SHA-tagelt image-ek a GHCR-ben; Trivy (fs, image), `composer audit`, `npm audit` |
+| Deployment és rollback (9) | a CI átírja az image taget a `deploy/`-ban → Argo CD sync → smoke teszt; rollback: a tag-commit `git revert`-je |
+| GitOps (5) | k3s és Argo CD egy VM-en, sima manifestek (`deploy/`); a secret egyszeri `kubectl create secret` |
+| IaC (5) | Terraform: VM, NSG, publikus IP DNS-címkével, backup storage account; k3s cloud-inittel; lokális state |
+| Observability és SLO (7) | Prometheus és Grafana; SLI a Traefik-metrikákból (sikeres kérések aránya, p95), 2 SLO, 1 dashboard |
+| Recovery (4) | CronJob: napi `mysqldump` a VM-en és Azure Blobban (VM-en kívül); egyszer ténylegesen végrehajtott, ellenőrzött visszaállítás |
+| AI audit (4) | [ai-audit.md](ai-audit.md), jelentős döntések |
+
+HTTPS: a k3s beépített Traefikje Let's Encrypt tanúsítványt kér az Azure DNS-címre.
+
+## Alkalmazás (MVP)
+
+Regisztráció és bejelentkezés (Sanctum); webhelyek és oldalak CRUD, Policy-vel; szerkesztő 3 komponenstípussal (címsor, szöveg, gomb/link), egyszerű drag & droppal, a komponensek a `pages.content` JSON oszlopban; publikálás queue jobbal statikus HTML-be, kiszolgálás `/sites/{slug}/` alatt, állapot: folyamatban / kész / hibás.
 
 ## M1 – Fejlesztői környezet
 
-| ID | Feladat | Elfogadási kritérium | Előtte tisztázandó |
-|---|---|---|---|
-| T1.1 ✅ | Laravel 13 inicializálása a `backend/`-ben konténerből (`docker/php/Dockerfile` alap stage) | `php artisan --version` konténerben fut; `composer.lock` verziózva | — |
-| T1.2 ✅ | Vue 3 inicializálása a `frontend/`-ben konténerből (create-vue, `docker/node/Dockerfile`), Vitest és Vue Test Utils | `npm run build` és `vue-tsc` zöld; strict mód | — |
-| T1.3 | Docker Compose: nginx, backend, worker, scheduler, mysql, redis, frontend; healthcheckek; `.env.example` | `docker compose up` után a `/up` és a SPA elérhető; minden szolgáltatás healthy | Bontás: T1.3/1 MySQL és Redis ✅, T1.3/2 backend ✅, T1.3/3 Nginx, T1.3/4 frontend, T1.3/5 worker és scheduler. A T1.1-ben kihagyott (`--no-scripts`) lépések: `.env.example` MySQL-re állítása, `APP_KEY` generálása, migráció MySQL-en |
-| T1.4 | Minőségi eszközök: Pint, ESLint (Flat Config) és Prettier a hivatalos Vue-konfigurációkkal, Pest alap; egységes parancsok | mindegyik konténerben fut, zöld | parancsfuttató (Makefile vagy npm/composer script) |
+| ID | Feladat |
+|---|---|
+| T1.1 ✅ | Laravel 13 a `backend/`-ben, konténerből |
+| T1.2 ✅ | Vue 3 a `frontend/`-ben, konténerből (Vitest) |
+| T1.3/1 ✅ | Compose: MySQL, Redis (AOF) |
+| T1.3/2 ✅ | Compose: backend, teszt-adatbázis |
+| T1.3/3 | Compose: Nginx, `/up` a hostról, `.env` tiltva |
+| T1.3/4 | Compose: frontend dev szerver az Nginx mögött |
+| T1.3/5 | Compose: `worker` (`queue:work`) |
+| T1.4 | Pint, ESLint és Prettier (hivatalos Vue-konfig), Pest; egységes parancsok |
 
-## M2 – CI és szállítási út (tracer bullet)
+## M2 – CI és artifact
 
-| ID | Feladat | Elfogadási kritérium | Előtte tisztázandó |
-|---|---|---|---|
-| T2.1 | PR workflow: lint, Pest, `composer audit`, `npm audit`, Gitleaks, Trivy config | zöld futás egy PR-on; artifactok | branch protection |
-| T2.2 | Production Dockerfile-ok (backend, nginx), multi-stage, nem root | lokálisan buildel; Trivy image scan zöld | base image-ek |
-| T2.3 | Build, scan és push GHCR-be a main ágon | SHA-tagelt image a GHCR-ben | csomag láthatósága |
-| T2.4 | `deploy/` Kustomize base és prod overlay | `kustomize build` és Trivy config zöld | erőforráskorlátok |
-| T2.5 | Terraform bootstrap: state storage, Key Vault, backup storage | `terraform apply`; `prevent_destroy` | költségbecslés és jóváhagyás; előfizetés, régió, elnevezés |
-| T2.6 | Terraform main: hálózat, NSG, statikus IP DNS-címkével, VM k3s-sel | SSH és `kubectl get nodes` működik | költségbecslés és jóváhagyás; VM-méret, SSH-hozzáférés |
-| T2.7 | Argo CD és Sealed Secrets bootstrap, kulcsmentés a Key Vaultba | az Argo CD szinkronizálja a prod overlayt | bootstrap módja (szkript vagy cloud-init) |
-| T2.8 | cert-manager, LE staging → production, HTTPS-átirányítás | érvényes tanúsítvány a hosztnéven | — |
-| T2.9 | CI tag-commit → Argo CD deploy → smoke teszt; rollback `git revert`-tel | dokumentált deploy és rollback commit | — |
+| ID | Feladat |
+|---|---|
+| T2.1 | PR-workflow: lint, Pest, Vitest, `vue-tsc`; branch protection |
+| T2.2 | Security: Trivy fs, `composer audit`, `npm audit` |
+| T2.3 | Production image-ek (backend, nginx a SPA buildjével) |
+| T2.4 | Build, Trivy image scan, push GHCR-be `main`-en, SHA-taggel |
 
 ## M3 – Hitelesítés
 
-| ID | Feladat | Elfogadási kritérium |
-|---|---|---|
-| T3.1 | Auth API (register, login, logout, user), rate limit, Redis session | Pest: siker, 422, 429, session-regenerálás |
-| T3.2 | Frontend: API-kliens, `useAuthStore`, login és regisztráció nézet, router guard | loading és hibaállapotok; a11y |
-| T3.3 | Playwright-alap és auth E2E a CI-ban | zöld E2E Compose-stacken |
+| ID | Feladat |
+|---|---|
+| T3.1 | Auth API (register, login, logout, user); Pest: siker és hibautak |
+| T3.2 | Frontend: API-kliens, auth store, login és regisztráció nézet, router guard |
 
-## M4 – Webhelyek és oldalak
+## M4 – Webhelyek és szerkesztő
 
-| ID | Feladat | Elfogadási kritérium |
-|---|---|---|
-| T4.1 | Websites API és Policy | Pest: CRUD, IDOR, validáció |
-| T4.2 | Pages API, sorrend, `references` | Pest: kétfázisú átrendezés, egyedi slug |
-| T4.3 | Frontend: webhely- és oldalkezelés | loading, empty és error állapotok |
+| ID | Feladat |
+|---|---|
+| T4.1 | Webhelyek API és Policy (idegen erőforrásra 404) |
+| T4.2 | Oldalak API, `content` JSON validálása (3 típus) |
+| T4.3 | Frontend: webhely- és oldalkezelés |
+| T4.4 | Szerkesztő: komponensek hozzáadása, szerkesztése, törlése, drag & drop, mentés |
 
-## M5 – Komponensek és szerkesztő
+## M5 – Publikálás
 
-| ID | Feladat | Elfogadási kritérium | Előtte tisztázandó |
-|---|---|---|---|
-| T5.1 | Komponenstáblák, modellek, morph map, `config/components.php`, `Link` value object | migrációk és factory-k; integritásteszt | — |
-| T5.2 | `GET`/`PUT /pages/{page}/components`, típusvalidáció, `lock_version` | Pest: atomicitás, 409, idegen hivatkozás | — |
-| T5.3 | Média: feltöltés, lista, törlés, privát `/file` (`X-Accel-Redirect`) | Pest: MIME, SVG, IDOR, közvetlen elérés tiltva | maximális fájlméret |
-| T5.4 | Szerkesztő elrendezése, registry, vászon, tulajdonságszerkesztők | mind az 5 típus szerkeszthető; reszponzív | — |
-| T5.5 | Drag & drop és billentyűzetes sorrendezés | húzással és billentyűzettel is működik | natív vagy könyvtár (függőség) |
-| T5.6 | Mentési állapotok, 409-kezelés, elhagyási figyelmeztetés | négy állapot látható; a helyi módosítás megmarad | — |
-| T5.7 | Blade renderer, közös CSS, előnézet végpont és sandboxolt iframe | a képek hitelesítve töltődnek; az 1. E2E folyamat zöld | — |
+| ID | Feladat |
+|---|---|
+| T5.1 | Publish végpont és job: Blade → statikus HTML, állapot |
+| T5.2 | Nginx `/sites/{slug}/`; publikálás gomb és állapot a felületen |
 
-## M6 – Publikálás
+## M6 – Infrastruktúra és GitOps
 
-| ID | Feladat | Elfogadási kritérium | Előtte tisztázandó |
-|---|---|---|---|
-| T6.1 | `deployments`, `deployment_logs`, `page_versions`; publish végpont, lock, 409 | Pest: konkurencia, dispatch commit után | — |
-| T6.2 | Publish job: validálás, pillanatkép, render, média, manifest, atomi aktiválás | Pest: idempotens retry, a hiba nem érinti az élest | timeout, retry, backoff alapértékek |
-| T6.3 | Nginx `/sites/` kiszolgálás, csak olvasható mount, CSP | a publikált oldal elérhető lokálisan | webhely slugjának módosíthatósága |
-| T6.4 | Előzmények és naplók a felületen, polling, gombtiltás | állapotváltások láthatók | — |
-| T6.5 | Rollback (pillanatképből újragenerálással) | Pest: forrásszabályok, manifest, a draft változatlan | — |
-| T6.6 | Scheduler: beragadt deploymentek, release-megőrzés, médiatörlés | Pest: szabályok | — |
-| T6.7 | E2E: 2–4. folyamat | zöld a CI-ban | — |
+| ID | Feladat |
+|---|---|
+| T6.1 | Terraform: VM k3s-sel, NSG, publikus IP DNS-címkével, backup storage account (költségbecslés és jóváhagyás után) |
+| T6.2 | `deploy/` manifestek; Argo CD bootstrap; secretek |
+| T6.3 | Traefik HTTPS (Let's Encrypt) |
+| T6.4 | CI: image tag commit → Argo CD sync → smoke teszt; rollback `git revert`-tel, dokumentálva |
 
-## M7 – Megfigyelhetőség
+## M7 – Observability és recovery
 
-| ID | Feladat | Elfogadási kritérium |
-|---|---|---|
-| T7.1 | JSON-naplózás (Laravel, Nginx) | a `kubectl logs` kimenete JSON |
-| T7.2 | `/metrics` (`promphp/prometheus_client_php`), csak belül | metrikák a Prometheusban; kívülről nem érhető el |
-| T7.3 | kube-prometheus-stack (szűkített), exporterek, korlátok | mért memóriahasználat a VM-en |
-| T7.4 | Grafana dashboardok kódként, SLO-panelek | provisioninggel betöltve |
-| T7.5 | Blackbox exporter és Application Insights availability test | külső mérési adatok láthatók |
-| T7.6 | k6 forgatókönyvek és workflow | futtatott mérés, JSON-összegzés artifactként |
+| ID | Feladat |
+|---|---|
+| T7.1 | Prometheus és Grafana; SLI/SLO (rendelkezésre állás, p95), dashboard |
+| T7.2 | Backup CronJob: `mysqldump` PVC-re és Azure Blobba |
+| T7.3 | Ellenőrzött visszaállítás külön adatbázisba, dokumentálva |
 
-## M8 – Backup és DR
+## M8 – E2E és lezárás
 
-| ID | Feladat | Elfogadási kritérium |
-|---|---|---|
-| T8.1 | Backup CronJob (DB, média, releases, manifest), publikálási lock | backup a Blobban, checksum egyezik |
-| T8.2 | Heti restore-teszt CronJob és metrikák | sikeres izolált restore; metrika a dashboardon |
-| T8.3 | DR-gyakorlat és runbookok (`docs/runbooks/`), titok-rotáció | ténylegesen mért RPO és RTO dokumentálva |
-
-## M9 – Lezárás
-
-| ID | Feladat | Elfogadási kritérium |
-|---|---|---|
-| T9.1 | README, dokumentáció véglegesítése, AI audit bizonyítékokkal | minden bizonyíték hivatkozott, reprodukálható |
-
-## Nyitott részletkérdések
-
-A feladattábláknál felsoroltakon túl:
-- Költség: Azure-erőforrás csak előzetes költségbecslés és külön egyeztetés után jön létre (T2.5, T2.6, T7.5). A VM a T2.6-tól fut; használaton kívül leállítható (deallocate).
-- Redis cache elkülönítése (M2): a `noeviction` mellett `maxmemory` esetén a cache-írások hibára futnak; döntés külön cache-adatbázisról vagy külön Redis-példányról.
+| ID | Feladat |
+|---|---|
+| T8.1 | Playwright a CI-ban: regisztráció és bejelentkezés; webhely, oldal, szerkesztés; publikálás |
+| T8.2 | README, architektúra véglegesítése, AI audit |
 
 ## Technikai adósság
 
-- MySQL healthcheck (`compose.yaml`): a `MYSQL_PWD` a MySQL 8.0 óta elavult, a 9.7.4-en működik. Eltávolítása esetén a healthcheck unhealthy lesz; csere: `--defaults-extra-file`.
-
-## Opcionális továbbfejlesztések
-
-Staging; autosave; draft visszaállítása pillanatképből; WYSIWYG; új komponenstípusok; szerepkörök; e-mail-megerősítés, jelszó-visszaállítás, 2FA, OAuth; saját domain és aldomaines címzés; Loki; Alertmanager; CodeQL; signed URL; Velero; point-in-time restore.
+- MySQL healthcheck (`compose.yaml`): a `MYSQL_PWD` elavult (a 9.7.4-en működik); csere: `--defaults-extra-file`.
+- Redis: `noeviction` mellett `maxmemory` esetén a cache-írások hibára futnak; a cache elkülönítése a backlogban.

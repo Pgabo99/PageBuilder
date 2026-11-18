@@ -1,0 +1,28 @@
+# Backlog
+
+A beadandó után, igény szerint. A részletes, bővített terv a `docs/` többi tervfájljában van (fejlécükkel jelölve).
+
+## Alkalmazás
+
+- Médiafeltöltés és képkomponens; további komponenstípusok; WYSIWYG
+- Komponenstáblák (morph map) a JSON oszlop helyett
+- Optimista zárolás (409), autosave, elhagyási figyelmeztetés
+- Billentyűzetes sorrendezés
+- Előnézet sandboxolt iframe-ben
+- Publikálási előzmények, naplók, oldalverziók, pillanatképből rollback, atomi aktiválás, manifest
+- Scheduler: beragadt publikálások, release-megőrzés, médiatörlés
+- Szerepkörök; e-mail-megerősítés, jelszó-visszaállítás, 2FA, OAuth; rate limit finomhangolása
+- Saját domain és aldomaines címzés
+
+## DevOps
+
+- Kustomize-overlayek, staging környezet
+- Sealed Secrets, Key Vault, titok-rotáció
+- Terraform távoli state zárolással
+- cert-manager, CSP
+- Gitleaks, SBOM, image-aláírás, CodeQL
+- Nem root, multi-stage fejlesztői image-ek
+- JSON-naplózás, Laravel `/metrics`, Alertmanager, blackbox exporter, Application Insights, Loki
+- k6 terheléses mérés
+- Heti automatikus restore-teszt, DR-gyakorlat, runbookok, Velero, point-in-time restore
+- Redis cache elkülönítése (külön adatbázis vagy példány)
