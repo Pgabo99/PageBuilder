@@ -3,6 +3,7 @@ paths:
   - "**/Dockerfile*"
   - "**/docker-compose*.yml"
   - "**/compose*.yml"
+  - "**/compose*.yaml"
   - "docker/**"
   - ".github/**"
   - "infra/**"
