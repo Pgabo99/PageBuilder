@@ -30,6 +30,31 @@ services:
       retries: 5
       start_period: 10s
 
+  backend:
+    build:
+      context: ./backend
+      dockerfile: ../docker/php/Dockerfile
+      target: base
+    image: pagebulder-backend:dev
+    # Egyetlen forrás a gyökér .env; a konténer-környezet elsőbbséget élvez a backend/.env-vel szemben.
+    environment:
+      DB_DATABASE: ${MYSQL_DATABASE:?másold a .env.example-t .env néven}
+      DB_USERNAME: ${MYSQL_USER:?másold a .env.example-t .env néven}
+      DB_PASSWORD: ${MYSQL_PASSWORD:?másold a .env.example-t .env néven}
+    volumes:
+      - ./backend:/var/www/backend
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "SCRIPT_NAME=/ping SCRIPT_FILENAME=/ping REQUEST_METHOD=GET cgi-fcgi -bind -connect 127.0.0.1:9000 | grep -q pong"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
 volumes:
   mysql-data:
   redis-data:
