@@ -14,7 +14,8 @@ Vizuális weboldalszerkesztő egyetemi Cloud és DevOps beadandóhoz: webhelyek 
 - [DevOps](docs/devops.md)
 - [Tesztelési stratégia](docs/testing-strategy.md)
 - [Biztonság](docs/security.md)
-- [Ütemterv](docs/roadmap.md)
+- [Ütemterv (MVP)](docs/roadmap.md)
+- [Backlog](docs/backlog.md)
 - [AI audit](docs/ai-audit.md)
 
 ## Indítás
