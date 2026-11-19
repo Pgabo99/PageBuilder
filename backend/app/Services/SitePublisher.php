@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Http\Requests\StoreWebsiteRequest;
 use App\Models\Website;
 use App\Support\SiteRenderContext;
 use Illuminate\Filesystem\Filesystem;
@@ -52,6 +53,11 @@ class SitePublisher
     /** A publikált könyvtár törlése (webhely törlésekor, slugváltáskor). */
     public function remove(string $slug): void
     {
+        // Csak érvényes webcím: a kapott érték nem hagyhatja el a publikálási gyökeret.
+        if (preg_match(StoreWebsiteRequest::SLUG_PATTERN, $slug) !== 1) {
+            return;
+        }
+
         $this->files->deleteDirectory($this->directory($slug));
     }
 

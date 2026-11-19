@@ -19,8 +19,6 @@ x-backend: &backend
     DB_TEST_PASSWORD: ${MYSQL_TEST_PASSWORD:?másold a .env.example-t .env néven}
   volumes:
     - ./backend:/var/www/backend
-    # A publikált webhelyek: a backend és a worker írja, az Nginx csak olvassa.
-    - sites-data:/var/www/sites
 
 services:
   mysql:
@@ -71,6 +69,10 @@ services:
 
   worker:
     <<: *backend
+    volumes:
+      - ./backend:/var/www/backend
+      # A publikált webhelyek kötetét kizárólag a worker írja és törli; az Nginx csak olvassa.
+      - sites-data:/var/www/sites
     # A --timeout kisebb a Redis queue retry_after értékénél (90 s), így egy job nem fut kétszer párhuzamosan.
     command: ["php", "artisan", "queue:work", "--tries=3", "--timeout=60"]
     depends_on:
