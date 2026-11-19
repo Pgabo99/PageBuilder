@@ -11,13 +11,36 @@ export interface WebsitePayload {
   slug: string
 }
 
+export interface HeadingComponent {
+  id: string
+  type: 'heading'
+  text: string
+  level: 1 | 2 | 3
+}
+
+export interface TextComponent {
+  id: string
+  type: 'text'
+  text: string
+}
+
+export interface ButtonComponent {
+  id: string
+  type: 'button'
+  label: string
+  url: string
+}
+
+export type PageComponent = HeadingComponent | TextComponent | ButtonComponent
+export type ComponentType = PageComponent['type']
+
 export interface Page {
   id: number
   website_id: number
   title: string
   slug: string
   position: number
-  content: unknown[]
+  content: PageComponent[]
   created_at: string
   updated_at: string
 }
@@ -25,5 +48,5 @@ export interface Page {
 export interface PagePayload {
   title: string
   slug: string
-  content: unknown[]
+  content: PageComponent[]
 }
