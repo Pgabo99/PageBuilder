@@ -24,7 +24,7 @@ Szolgáltatások: `nginx`, `backend` (PHP-FPM), `worker`, `scheduler`, `mysql`, 
 - A backend healthcheckje a PHP-FPM `/ping` végpontja (`cgi-fcgi`).
 - Nginx: egyetlen host port (`127.0.0.1:${NGINX_PORT:-8080}`); csak a `backend/public` van mountolva, így a `.env` és a többi backend-fájl nem érhető el HTTP-n; az `APP_URL`-t a Compose adja.
 - Worker: a backend image-éből (`x-backend` anchor), `queue:work --timeout=60`, ami kisebb a Redis queue `retry_after` (90 s) értékénél; healthcheck: `pgrep`.
-- Közös origin: az Nginx az `/api`, `/sanctum`, `/up` útvonalat a Laravelhez, minden mást a Vite dev szerverhez (WebSocket/HMR) továbbít; a rejtett fájlokat mindkét irányban tiltja. A frontend `node_modules` named volume-ban van; a HMR a `NGINX_PORT`-on, pollinggal (Windowsos bind mount) működik.
+- Közös origin: az Nginx az `/api`, `/sanctum`, `/up` útvonalat a Laravelhez, minden mást a Vite dev szerverhez (WebSocket/HMR) továbbít; a rejtett fájlokat mindkét irányban tiltja (kivétel a Vite `/node_modules/.vite/` függőségei). A frontend `node_modules` named volume-ban van; a HMR a `NGINX_PORT`-on, pollinggal (Windowsos bind mount) működik.
 - A `DB_TEST_*` változók és a tesztfelhasználó csak a lokális és a CI-környezetben léteznek; az éles backend környezetébe nem kerülnek (a `mysql_testing` kapcsolat ott hitelesítő adat nélkül nem használható).
 
 ## CI (MVP)
