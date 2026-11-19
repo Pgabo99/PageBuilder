@@ -41,7 +41,7 @@ flowchart LR
 | Belépési pont | Útvonal | Elérés |
 |---|---|---|
 | Szerkesztő SPA | `/` | nyilvános, hitelesítés után használható |
-| REST API | `/api/*` | Sanctum SPA cookie |
+| REST API | `/api/v1/*` | Sanctum SPA cookie (CSRF: `/sanctum/csrf-cookie`); auth: `register`, `login`, `logout`, `user` |
 | Publikált webhelyek | `/sites/{slug}/` | nyilvános, statikus |
 | Health | `/up` | nyilvános |
 | Grafana, Argo CD, Prometheus | — | `kubectl port-forward` |

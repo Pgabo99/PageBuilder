@@ -51,7 +51,7 @@ Regisztráció és bejelentkezés (Sanctum); webhelyek és oldalak CRUD, Policy-
 
 | ID | Feladat |
 |---|---|
-| T3.1 | Auth API (register, login, logout, user); Pest: siker és hibautak |
+| T3.1 ✅ | Auth API (register, login, logout, user); Pest: siker és hibautak |
 | T3.2 | Frontend: API-kliens, auth store, login és regisztráció nézet, router guard |
 
 ## M4 – Webhelyek és szerkesztő
