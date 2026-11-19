@@ -6,6 +6,7 @@ import { errorMessage } from '@/api/client'
 import { pagesApi } from '@/api/pages'
 import { websitesApi } from '@/api/websites'
 import ConfirmButton from '@/components/ConfirmButton.vue'
+import PublishPanel from '@/components/PublishPanel.vue'
 import StatusBlock from '@/components/StatusBlock.vue'
 import { useAsyncData } from '@/composables/useAsyncData'
 
@@ -69,6 +70,8 @@ const removePage = (id: number) =>
       </div>
 
       <p v-if="actionError" class="alert" role="alert">{{ actionError }}</p>
+
+      <PublishPanel v-if="website.data.value" :website="website.data.value" />
 
       <div class="page-head">
         <h2>Oldalak</h2>

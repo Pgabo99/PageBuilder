@@ -24,6 +24,10 @@ const website: Website = {
   id: 7,
   name: 'Próba oldal',
   slug: 'proba-oldal',
+  publish_status: null,
+  published_at: null,
+  published_url: null,
+  publish_error: null,
   created_at: '',
   updated_at: '',
 }
