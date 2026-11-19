@@ -6,6 +6,7 @@ const props = defineProps<{
   type?: string
   autocomplete?: string
   error?: string[]
+  hint?: string
 }>()
 
 const model = defineModel<string>({ required: true })
@@ -28,6 +29,7 @@ const hasError = computed(() => (props.error?.length ?? 0) > 0)
       required
     />
     <p v-if="hasError" :id="errorId" class="field__error">{{ error?.join(' ') }}</p>
+    <p v-else-if="hint" class="muted field__hint">{{ hint }}</p>
   </div>
 </template>
 
@@ -50,6 +52,11 @@ input {
 
 input[aria-invalid='true'] {
   border-color: var(--color-danger);
+}
+
+.field__hint {
+  margin: 0;
+  font-size: 0.875rem;
 }
 
 .field__error {
