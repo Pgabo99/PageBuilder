@@ -1,7 +1,13 @@
+export type PublishStatus = 'queued' | 'running' | 'succeeded' | 'failed'
+
 export interface Website {
   id: number
   name: string
   slug: string
+  publish_status: PublishStatus | null
+  published_at: string | null
+  published_url: string | null
+  publish_error: string | null
   created_at: string
   updated_at: string
 }

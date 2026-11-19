@@ -69,7 +69,7 @@ Regisztráció és bejelentkezés (Sanctum); webhelyek és oldalak CRUD, Policy-
 |---|---|
 | T5.1 ✅ | Publish végpont és job: Blade → statikus HTML, állapot |
 | T5.2 ✅ | Nginx `/sites/{slug}/` kiszolgálás, közös kötet |
-| T5.3 | Publikálás gomb és állapot a felületen (polling) |
+| T5.3 ✅ | Publikálás gomb és állapot a felületen (polling) |
 
 ## M6 – Infrastruktúra és GitOps
 
