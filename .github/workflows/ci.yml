@@ -11,7 +11,8 @@ permissions:
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # A main-en a publikálás nem szakadhat meg félúton.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   backend:
@@ -106,3 +107,78 @@ jobs:
           && npm run format:check
           && npm run type-check
           && npm run test:unit -- --run"
+
+  # Csak a main-en, minden ellenőrzés után; latest tag nincs, a deploy a commit SHA-ra épül.
+  publish:
+    name: publish
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [backend, frontend, security, images]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      TRIVY: aquasec/trivy:0.76.2@sha256:8f6bb947dbc528902e11f2f5be52f7b519f6a39d5d148f41166f2040499768fb
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Image-nevek
+        run: |
+          owner="${GITHUB_REPOSITORY_OWNER,,}"
+          echo "BACKEND_IMAGE=ghcr.io/$owner/pagebulder-backend:$GITHUB_SHA" >> "$GITHUB_ENV"
+          echo "NGINX_IMAGE=ghcr.io/$owner/pagebulder-nginx:$GITHUB_SHA" >> "$GITHUB_ENV"
+
+      - name: Build
+        run: |
+          label="org.opencontainers.image.source=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
+          docker build --target prod --label "$label" -t "$BACKEND_IMAGE" -f docker/php/Dockerfile backend
+          docker build --label "$label" -t "$NGINX_IMAGE" -f docker/nginx/Dockerfile .
+
+      # Mindkét image-nek át kell mennie, mielőtt bármelyik publikálódik.
+      - name: Trivy image
+        run: |
+          for img in "$BACKEND_IMAGE" "$NGINX_IMAGE"; do
+            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v trivy-cache:/root/.cache "$TRIVY" \
+              image --scanners vuln,secret --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 "$img"
+          done
+
+      - name: Push a GHCR-be
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          docker push "$BACKEND_IMAGE"
+          docker push "$NGINX_IMAGE"
+          echo "BACKEND_DIGEST=$(docker inspect --format '{{index .RepoDigests 0}}' "$BACKEND_IMAGE")" >> "$GITHUB_ENV"
+          echo "NGINX_DIGEST=$(docker inspect --format '{{index .RepoDigests 0}}' "$NGINX_IMAGE")" >> "$GITHUB_ENV"
+
+      - name: Letöltés digest alapján és füstteszt
+        run: |
+          docker rmi "$BACKEND_IMAGE" "$NGINX_IMAGE"
+          docker pull "$BACKEND_DIGEST"
+          docker pull "$NGINX_DIGEST"
+          docker network create smoke
+          # Adatbázis nélkül: az /up és a SPA nem igényel DB-t.
+          docker run -d --name smoke-backend --network smoke --network-alias backend \
+            -e APP_ENV=production -e APP_KEY="base64:$(head -c 32 /dev/urandom | base64)" \
+            -e CACHE_STORE=array -e SESSION_DRIVER=array -e LOG_CHANNEL=stderr "$BACKEND_DIGEST"
+          docker run -d --name smoke-nginx --network smoke -p 127.0.0.1:8080:8080 "$NGINX_DIGEST"
+          for path in / /up; do
+            curl -fsS --retry 10 --retry-delay 2 --retry-all-errors -o /dev/null "http://127.0.0.1:8080$path"
+            echo "$path OK"
+          done
+
+      - name: Összefoglaló
+        if: always()
+        run: |
+          {
+            echo "### Publikált image-ek"
+            echo "| Image | Tag | Digest |"
+            echo "|---|---|---|"
+            echo "| backend | \`$BACKEND_IMAGE\` | \`${BACKEND_DIGEST#*@}\` |"
+            echo "| nginx | \`$NGINX_IMAGE\` | \`${NGINX_DIGEST#*@}\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Kijelentkezés
+        if: always()
+        run: docker logout ghcr.io
