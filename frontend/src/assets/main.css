@@ -11,6 +11,7 @@
   --color-danger: #cf222e;
   --color-danger-hover: #a40e26;
   --color-danger-bg: #ffebe9;
+  --color-success: #1a7f37;
 
   --space-1: 0.25rem;
   --space-2: 0.5rem;
@@ -38,6 +39,7 @@
   --color-danger: #ff7b85;
   --color-danger-hover: #ff9aa2;
   --color-danger-bg: #3a1c20;
+  --color-success: #3fb950;
 
   color-scheme: dark;
 }

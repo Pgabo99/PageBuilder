@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 
 import { errorMessage } from '@/api/client'
 import ThemeToggle from '@/components/ThemeToggle.vue'
+import ToastHost from '@/components/ToastHost.vue'
 import { useAuthStore } from '@/stores/auth'
 
 const auth = useAuthStore()
@@ -40,6 +41,7 @@ async function logout(): Promise<void> {
   </header>
   <p v-if="logoutError" class="alert" role="alert">{{ logoutError }}</p>
   <RouterView />
+  <ToastHost />
 </template>
 
 <style scoped>
