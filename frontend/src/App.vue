@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import { errorMessage } from '@/api/client'
+import ThemeToggle from '@/components/ThemeToggle.vue'
 import { useAuthStore } from '@/stores/auth'
 
 const auth = useAuthStore()
@@ -27,11 +28,14 @@ async function logout(): Promise<void> {
 <template>
   <header class="header">
     <RouterLink to="/" class="header__brand">PageBulder</RouterLink>
-    <div v-if="auth.isAuthenticated" class="header__user">
-      <span class="muted">{{ auth.user?.name }}</span>
-      <button class="btn btn--secondary" type="button" :disabled="loggingOut" @click="logout">
-        Kijelentkezés
-      </button>
+    <div class="header__user">
+      <ThemeToggle />
+      <template v-if="auth.isAuthenticated">
+        <span class="muted">{{ auth.user?.name }}</span>
+        <button class="btn btn--secondary" type="button" :disabled="loggingOut" @click="logout">
+          Kijelentkezés
+        </button>
+      </template>
     </div>
   </header>
   <p v-if="logoutError" class="alert" role="alert">{{ logoutError }}</p>

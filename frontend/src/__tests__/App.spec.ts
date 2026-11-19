@@ -23,6 +23,6 @@ describe('App', () => {
     const wrapper = mount(App, { global: { plugins: [router] } })
 
     expect(wrapper.text()).toContain('Árvíztűrő Tükörfúrógép')
-    expect(wrapper.find('button').text()).toBe('Kijelentkezés')
+    expect(wrapper.findAll('button').map((b) => b.text())).toContain('Kijelentkezés')
   })
 })
