@@ -2,6 +2,7 @@
 
 use App\Enums\PublishStatus;
 use App\Jobs\PublishWebsite;
+use App\Jobs\RemovePublishedSite;
 use App\Models\Page;
 use App\Models\User;
 use App\Models\Website;
@@ -196,5 +197,46 @@ describe('állapot és takarítás', function () {
         $this->actingAs($this->user)->deleteJson("/api/v1/websites/{$this->website->id}")->assertNoContent();
 
         expect(is_dir("{$this->dir}/proba"))->toBeFalse();
+    });
+
+    it('a törlés a workerre bízza a könyvtár eltávolítását (a webes kérés nem ír a kötetre)', function () {
+        runJob($this->website);
+        Queue::fake();
+
+        $this->actingAs($this->user)->deleteJson("/api/v1/websites/{$this->website->id}")->assertNoContent();
+
+        Queue::assertPushed(RemovePublishedSite::class, fn ($job) => $job->slug === 'proba');
+        expect(is_dir("{$this->dir}/proba"))->toBeTrue();
+    });
+
+    it('publikálatlan webhely törlésekor nem állít sorba törlést', function () {
+        Queue::fake();
+        $unpublished = Website::factory()->for($this->user)->create();
+
+        $this->actingAs($this->user)->deleteJson("/api/v1/websites/{$unpublished->id}")->assertNoContent();
+
+        Queue::assertNothingPushed();
+    });
+
+    it('a törlő job nem töröl, ha a webcímet közben másik webhely publikálta', function () {
+        runJob($this->website);
+        $other = Website::factory()->for($this->user)->create(['slug' => 'masik']);
+        $other->forceFill(['published_slug' => 'proba'])->save();
+        $this->website->delete();
+
+        (new RemovePublishedSite('proba'))->handle(app(SitePublisher::class));
+
+        expect(is_dir("{$this->dir}/proba"))->toBeTrue();
+    });
+
+    it('a törlő job csak érvényes webcímet fogad el, a gyökéren kívülre nem nyúl', function () {
+        $outside = dirname($this->dir).'/pb-outside-'.bin2hex(random_bytes(3));
+        mkdir($outside);
+        $relative = '../'.basename($outside);
+
+        (new RemovePublishedSite($relative))->handle(app(SitePublisher::class));
+
+        expect(is_dir($outside))->toBeTrue();
+        rmdir($outside);
     });
 });
