@@ -6,11 +6,13 @@ import { websitesApi } from '@/api/websites'
 import FormField from '@/components/FormField.vue'
 import { useForm } from '@/composables/useForm'
 import { errorMessage } from '@/api/client'
+import { useToast } from '@/composables/useToast'
 import { slugify } from '@/utils/slug'
 
 const route = useRoute()
 const router = useRouter()
 const { submitting, errors, message, submit } = useForm()
+const toast = useToast()
 
 const websiteId = computed(() => (route.params.id ? Number(route.params.id) : null))
 const editing = computed(() => websiteId.value !== null)
@@ -52,7 +54,10 @@ async function onSubmit(): Promise<void> {
         : await websitesApi.update(savedId, { ...form })
     savedId = website.id
   })
-  if (ok && savedId !== null) await router.push({ name: 'website', params: { id: savedId } })
+  if (ok && savedId !== null) {
+    toast.success(editing.value ? 'Webhely mentve.' : 'Webhely létrehozva.')
+    await router.push({ name: 'website', params: { id: savedId } })
+  }
 }
 </script>
 
