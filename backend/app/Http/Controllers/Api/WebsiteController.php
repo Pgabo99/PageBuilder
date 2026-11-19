@@ -7,6 +7,7 @@ use App\Http\Requests\StoreWebsiteRequest;
 use App\Http\Requests\UpdateWebsiteRequest;
 use App\Http\Resources\WebsiteResource;
 use App\Models\Website;
+use App\Services\SitePublisher;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -42,10 +43,14 @@ class WebsiteController extends Controller
         return new WebsiteResource($website);
     }
 
-    public function destroy(Website $website): Response
+    public function destroy(Website $website, SitePublisher $publisher): Response
     {
         Gate::authorize('delete', $website);
         $website->delete();
+
+        if ($website->published_slug !== null) {
+            $publisher->remove($website->published_slug);
+        }
 
         return response()->noContent();
     }
