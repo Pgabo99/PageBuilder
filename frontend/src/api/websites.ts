@@ -14,5 +14,7 @@ export const websitesApi = {
     (await request<Resource<Website>>('POST', '/api/v1/websites', payload)).data,
   update: async (id: number, payload: WebsitePayload) =>
     (await request<Resource<Website>>('PUT', `/api/v1/websites/${id}`, payload)).data,
+  publish: async (id: number) =>
+    (await request<Resource<Website>>('POST', `/api/v1/websites/${id}/publish`)).data,
   remove: (id: number) => request<void>('DELETE', `/api/v1/websites/${id}`),
 }
