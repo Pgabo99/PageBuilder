@@ -14,6 +14,9 @@ A beadandó után, igény szerint. A részletes, bővített terv a `docs/` több
 - Szerepkörök; e-mail-megerősítés, jelszó-visszaállítás, 2FA, OAuth; rate limit finomhangolása
 - Saját domain és aldomaines címzés
 
+- A 419-es CSRF-újrapróbálás böngészős ellenőrzése (jelenleg csak unit teszt fedi)
+- Magyar nyelvű backend-validációs üzenetek (a Laravel nyelve `en`)
+
 ## DevOps
 
 - Kustomize-overlayek, staging környezet
@@ -26,3 +29,4 @@ A beadandó után, igény szerint. A részletes, bővített terv a `docs/` több
 - k6 terheléses mérés
 - Heti automatikus restore-teszt, DR-gyakorlat, runbookok, Velero, point-in-time restore
 - Redis cache elkülönítése (külön adatbázis vagy példány)
+- A fejlesztői környezet válaszideje (0,4–4,5 s, Windowsos bind mount)
