@@ -45,7 +45,7 @@ Regisztráció és bejelentkezés (Sanctum); webhelyek és oldalak CRUD, Policy-
 | T2.1 ✅ | PR-workflow: lint, Pest, Vitest, `vue-tsc`; branch protection |
 | T2.2 ✅ | Security: Trivy fs, `composer audit`, `npm audit` |
 | T2.3 ✅ | Production image-ek (backend, nginx a SPA buildjével) |
-| T2.4 | Build, Trivy image scan, push GHCR-be `main`-en, SHA-taggel |
+| T2.4 ✅ | Build, Trivy image scan, push GHCR-be `main`-en, SHA-taggel |
 
 ## M3 – Hitelesítés
 
