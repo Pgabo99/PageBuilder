@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # A .env.example placeholder jelszavai csak az eldobható CI-adatbázisra érvényesek.
+      - name: Környezet
+        run: |
+          cp .env.example .env
+          cp backend/.env.example backend/.env
+
+      - name: MySQL és Redis
+        run: docker compose up -d --wait mysql redis
+
+      - name: Függőségek (composer.lock)
+        run: docker compose run --rm --no-deps backend composer install --no-interaction --no-progress
+
+      - name: APP_KEY
+        run: docker compose run --rm --no-deps backend php artisan key:generate
+
+      - name: Pint
+        run: docker compose run --rm --no-deps backend composer lint
+
+      - name: Pest
+        run: docker compose run --rm backend composer test
+
+  frontend:
+    name: frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Környezet
+        run: cp .env.example .env
+
+      - name: Függőségek és ellenőrzések (package-lock.json)
+        run: >-
+          docker compose run --rm --no-deps frontend sh -c
+          "npm ci --no-fund --no-audit
+          && npm run check:lint
+          && npm run format:check
+          && npm run type-check
+          && npm run test:unit -- --run"
