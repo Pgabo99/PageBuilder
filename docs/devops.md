@@ -1,6 +1,6 @@
 # DevOps
 
-> A „Lokális környezet” szakasz aktuális; a többi **bővített terv** a beadandó utáni továbbfejlesztéshez, nem karbantartott. Az MVP-hatókör: [roadmap](roadmap.md), a halasztott elemek: [backlog](backlog.md).
+> A „Lokális környezet” és a „CI (MVP)” szakasz aktuális; a többi **bővített terv** a beadandó utáni továbbfejlesztéshez, nem karbantartott. Az MVP-hatókör: [roadmap](roadmap.md), a halasztott elemek: [backlog](backlog.md).
 
 ## Repó-szerkezet
 
@@ -26,6 +26,11 @@ Szolgáltatások: `nginx`, `backend` (PHP-FPM), `worker`, `scheduler`, `mysql`, 
 - Worker: a backend image-éből (`x-backend` anchor), `queue:work --timeout=60`, ami kisebb a Redis queue `retry_after` (90 s) értékénél; healthcheck: `pgrep`.
 - Közös origin: az Nginx az `/api`, `/sanctum`, `/up` útvonalat a Laravelhez, minden mást a Vite dev szerverhez (WebSocket/HMR) továbbít; a rejtett fájlokat mindkét irányban tiltja. A frontend `node_modules` named volume-ban van; a HMR a `NGINX_PORT`-on, pollinggal (Windowsos bind mount) működik.
 - A `DB_TEST_*` változók és a tesztfelhasználó csak a lokális és a CI-környezetben léteznek; az éles backend környezetébe nem kerülnek (a `mysql_testing` kapcsolat ott hitelesítő adat nélkül nem használható).
+
+## CI (MVP)
+
+- `.github/workflows/ci.yml` PR-ra és `main`-re: `backend` (Pint, Pest) és `frontend` (Oxlint/ESLint, Prettier, `type-check`, Vitest) job, ugyanazon a Compose-stacken, mint lokálisan; lockfile alapú telepítés, fájlmódosítás nélküli ellenőrzések; hitelesítő adatként csak a `.env.example` placeholderei (eldobható CI-adatbázis).
+- `main` branch protection (nyilvános repó, ingyenes csomag): kötelező PR, kötelező és naprakész `backend` és `frontend` ellenőrzés, 0 jóváhagyás, force push és törlés tiltva, adminra is.
 
 ## Image-ek
 
