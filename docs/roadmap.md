@@ -35,7 +35,7 @@ Regisztráció és bejelentkezés (Sanctum); webhelyek és oldalak CRUD, Policy-
 | T1.3/2 ✅ | Compose: backend, teszt-adatbázis |
 | T1.3/3 ✅ | Compose: Nginx, `/up` a hostról, `.env` tiltva |
 | T1.3/4 ✅ | Compose: frontend dev szerver az Nginx mögött |
-| T1.3/5 | Compose: `worker` (`queue:work`) |
+| T1.3/5 ✅ | Compose: `worker` (`queue:work`) |
 | T1.4 | Pint, ESLint és Prettier (hivatalos Vue-konfig), Pest; egységes parancsok |
 
 ## M2 – CI és artifact

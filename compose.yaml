@@ -1,5 +1,24 @@
 name: pagebulder
 
+# A backend és a worker közös beállításai (image, hitelesítő adatok, kód).
+x-backend: &backend
+  build:
+    context: ./backend
+    dockerfile: ../docker/php/Dockerfile
+    target: base
+  image: pagebulder-backend:dev
+  # Egyetlen forrás a gyökér .env; a konténer-környezet elsőbbséget élvez a backend/.env-vel szemben.
+  environment:
+    APP_URL: http://localhost:${NGINX_PORT:-8080}
+    DB_DATABASE: ${MYSQL_DATABASE:?másold a .env.example-t .env néven}
+    DB_USERNAME: ${MYSQL_USER:?másold a .env.example-t .env néven}
+    DB_PASSWORD: ${MYSQL_PASSWORD:?másold a .env.example-t .env néven}
+    DB_TEST_DATABASE: ${MYSQL_DATABASE:?másold a .env.example-t .env néven}_testing
+    DB_TEST_USERNAME: ${MYSQL_TEST_USER:?másold a .env.example-t .env néven}
+    DB_TEST_PASSWORD: ${MYSQL_TEST_PASSWORD:?másold a .env.example-t .env néven}
+  volumes:
+    - ./backend:/var/www/backend
+
 services:
   mysql:
     image: mysql:9.7.4@sha256:df90258da46f6e7ff8574ff84f17618aba0765cac749928299c69fd4e7cb8ad8
@@ -34,22 +53,7 @@ services:
       start_period: 10s
 
   backend:
-    build:
-      context: ./backend
-      dockerfile: ../docker/php/Dockerfile
-      target: base
-    image: pagebulder-backend:dev
-    # Egyetlen forrás a gyökér .env; a konténer-környezet elsőbbséget élvez a backend/.env-vel szemben.
-    environment:
-      APP_URL: http://localhost:${NGINX_PORT:-8080}
-      DB_DATABASE: ${MYSQL_DATABASE:?másold a .env.example-t .env néven}
-      DB_USERNAME: ${MYSQL_USER:?másold a .env.example-t .env néven}
-      DB_PASSWORD: ${MYSQL_PASSWORD:?másold a .env.example-t .env néven}
-      DB_TEST_DATABASE: ${MYSQL_DATABASE:?másold a .env.example-t .env néven}_testing
-      DB_TEST_USERNAME: ${MYSQL_TEST_USER:?másold a .env.example-t .env néven}
-      DB_TEST_PASSWORD: ${MYSQL_TEST_PASSWORD:?másold a .env.example-t .env néven}
-    volumes:
-      - ./backend:/var/www/backend
+    <<: *backend
     depends_on:
       mysql:
         condition: service_healthy
@@ -57,6 +61,22 @@ services:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "SCRIPT_NAME=/ping SCRIPT_FILENAME=/ping REQUEST_METHOD=GET cgi-fcgi -bind -connect 127.0.0.1:9000 | grep -q pong"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  worker:
+    <<: *backend
+    # A --timeout kisebb a Redis queue retry_after értékénél (90 s), így egy job nem fut kétszer párhuzamosan.
+    command: ["php", "artisan", "queue:work", "--tries=3", "--timeout=60"]
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f 'queue:work' > /dev/null"]
       interval: 10s
       timeout: 5s
       retries: 5

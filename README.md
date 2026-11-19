@@ -34,7 +34,8 @@ docker compose exec backend php artisan migrate
 docker compose exec backend php artisan test
 ```
 
-- Fut: `mysql`, `redis`, `backend` (PHP-FPM), `frontend` (Vite), `nginx`. Csak az Nginx érhető el a hostról: http://localhost:8080 (`NGINX_PORT`); a SPA a `/`, a Laravel az `/api`, `/sanctum`, `/up` alatt, HMR-rel. A többi szolgáltatás a [T1.3](docs/roadmap.md) további lépéseiben készül.
+- Fut: `mysql`, `redis`, `backend` (PHP-FPM), `worker` (Redis queue), `frontend` (Vite), `nginx`. Csak az Nginx érhető el a hostról: http://localhost:8080 (`NGINX_PORT`); a SPA a `/`, a Laravel az `/api`, `/sanctum`, `/up` alatt, HMR-rel. A többi szolgáltatás a [T1.3](docs/roadmap.md) további lépéseiben készül.
 - A hitelesítő adatok és a teszt-adatbázis részletei: [DevOps](docs/devops.md#lokális-környezet-docker-compose).
 - A teszt-adatbázist új MySQL volume-on az init szkript hozza létre. Korábbi (T1.3/1-es) volume esetén, adatvesztés nélkül: `docker compose up -d --wait mysql`, majd `docker compose exec mysql sh /docker-entrypoint-initdb.d/01-testing-db.sh`.
+- A worker a kódot induláskor tölti be: backend-módosítás után `docker compose restart worker`.
 - Leállítás: `docker compose down` (a `-v` az adat-volume-okat is törli).
