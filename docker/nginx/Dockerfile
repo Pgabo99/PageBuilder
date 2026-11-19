@@ -15,6 +15,9 @@ FROM nginx:1.30.7-alpine3.24@sha256:bef154735288bc38d99fac41ae63730684bcc6615036
 RUN sed -i 's,^pid .*;,pid /tmp/nginx.pid;,' /etc/nginx/nginx.conf \
     && chown -R nginx:nginx /var/cache/nginx
 
+# A publikált webhelyek helye (futáskor kötet csatlakozik rá).
+RUN mkdir -p /var/www/sites
+
 COPY docker/nginx/prod.conf /etc/nginx/conf.d/default.conf
 COPY --from=spa /app/dist /var/www/frontend
 COPY backend/public /var/www/backend/public
