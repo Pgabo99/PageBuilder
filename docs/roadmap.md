@@ -61,7 +61,7 @@ Regisztráció és bejelentkezés (Sanctum); webhelyek és oldalak CRUD, Policy-
 | T4.1 ✅ | Webhelyek API és Policy (idegen erőforrásra 404) |
 | T4.2 ✅ | Oldalak API, `content` JSON validálása (3 típus) |
 | T4.3 ✅ | Frontend: webhely- és oldalkezelés |
-| T4.4 | Szerkesztő: komponensek hozzáadása, szerkesztése, törlése, drag & drop, mentés |
+| T4.4 ✅ | Szerkesztő: komponensek hozzáadása, szerkesztése, törlése, drag & drop, mentés |
 
 ## M5 – Publikálás
 
