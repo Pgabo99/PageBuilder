@@ -8,9 +8,8 @@ paths:
 
 ## Séma
 
-- Normalizált relációs séma; az oldalstruktúra relációs táblákban él, nem egyetlen JSON mezőben.
-- Minden oldalkomponens-típus saját táblában van (pl. `text_components`, `image_components`).
-- A `page_components` tábla rögzíti a sorrendet és az oldalhoz tartozást, a konkrét komponensre polimorf kapcsolattal (`component_type`, `component_id`) hivatkozik.
+- MVP: a felhasználók, webhelyek és oldalak relációs táblákban élnek; az oldal komponensei sorrendben, egyetlen JSON oszlopban (`pages.content`) vannak. A JSON szerkezetét az API validálja (`App\Support\PageContentRules`), az ismeretlen mezők eldobódnak.
+- A relációs komponensmodell (komponenstípusonként tábla, `page_components`, polimorf kapcsolat) a `docs/backlog.md`-ben van; bevezetésekor a korábbi szabályok érvényesek: `Relation::enforceMorphMap()`, típusvalidálás a morph map alapján, a komponens és a `page_components` sor egy tranzakcióban.
 - A szerkeszthető (draft) és a publikált tartalom elkülönül; a publikálás a draft állapotot másolja át, a publikált változat a draftból nem módosul közvetlenül.
 
 ## Integritás
