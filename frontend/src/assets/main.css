@@ -180,3 +180,15 @@ a.btn:not(.btn--secondary) {
 a.btn--secondary {
   color: var(--color-text);
 }
+
+.btn--small {
+  padding: var(--space-1) var(--space-2);
+}
+
+.status {
+  font-size: 0.875rem;
+}
+
+.status--dirty {
+  color: var(--color-danger);
+}

@@ -3,6 +3,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import HomeView from '@/views/HomeView.vue'
 import LoginView from '@/views/LoginView.vue'
+import PageEditorView from '@/views/PageEditorView.vue'
 import PageFormView from '@/views/PageFormView.vue'
 import RegisterView from '@/views/RegisterView.vue'
 import WebsiteFormView from '@/views/WebsiteFormView.vue'
@@ -41,6 +42,12 @@ const router = createRouter({
       path: '/websites/:websiteId(\\d+)/pages/new',
       name: 'page-new',
       component: PageFormView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/pages/:id(\\d+)',
+      name: 'page-edit',
+      component: PageEditorView,
       meta: { requiresAuth: true },
     },
     { path: '/login', name: 'login', component: LoginView, meta: { guestOnly: true } },

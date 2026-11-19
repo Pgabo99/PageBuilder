@@ -87,7 +87,9 @@ const removePage = (id: number) =>
         <ul class="list">
           <li v-for="page in pages.data.value" :key="page.id" class="list__item">
             <div>
-              <span class="list__title">{{ page.title }}</span>
+              <RouterLink class="list__title" :to="{ name: 'page-edit', params: { id: page.id } }">
+                {{ page.title }}
+              </RouterLink>
               <div class="muted">{{ page.slug }}</div>
             </div>
             <ConfirmButton label="Törlés" :busy="busy" @confirm="removePage(page.id)" />
