@@ -67,6 +67,28 @@ jobs:
       - name: npm audit
         run: docker compose run --rm --no-deps frontend npm audit --audit-level=high
 
+  # Production image-ek: teljes riport, majd csak a javítható HIGH/CRITICAL blokkol (--ignore-unfixed, AI-045).
+  images:
+    name: images
+    runs-on: ubuntu-latest
+    env:
+      TRIVY: aquasec/trivy:0.76.2@sha256:8f6bb947dbc528902e11f2f5be52f7b519f6a39d5d148f41166f2040499768fb
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Build
+        run: |
+          docker build --target prod -t pagebulder-backend:prod -f docker/php/Dockerfile backend
+          docker build -t pagebulder-nginx:prod -f docker/nginx/Dockerfile .
+
+      - name: Trivy image
+        run: |
+          trivy() { docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v trivy-cache:/root/.cache "$TRIVY" image --scanners vuln,secret "$@"; }
+          for img in pagebulder-backend:prod pagebulder-nginx:prod; do
+            trivy --exit-code 0 "$img"
+            trivy --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 "$img"
+          done
+
   frontend:
     name: frontend
     runs-on: ubuntu-latest
