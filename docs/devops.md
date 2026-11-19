@@ -30,7 +30,8 @@ Szolgáltatások: `nginx`, `backend` (PHP-FPM), `worker`, `scheduler`, `mysql`, 
 ## CI (MVP)
 
 - `.github/workflows/ci.yml` PR-ra és `main`-re: `backend` (Pint, Pest) és `frontend` (Oxlint/ESLint, Prettier, `type-check`, Vitest) job, ugyanazon a Compose-stacken, mint lokálisan; lockfile alapú telepítés, fájlmódosítás nélküli ellenőrzések; hitelesítő adatként csak a `.env.example` placeholderei (eldobható CI-adatbázis).
-- `main` branch protection (nyilvános repó, ingyenes csomag): kötelező PR, kötelező és naprakész `backend` és `frontend` ellenőrzés, 0 jóváhagyás, force push és törlés tiltva, adminra is.
+- `security` job, párhuzamosan: Trivy fs (`--scanners vuln,secret`, `aquasec/trivy` digest alapján), `composer audit --locked`, `npm audit`. Minden súlyosság megjelenik, csak a HIGH és CRITICAL blokkol; automatikus javítás nincs, sérülékenység figyelmen kívül hagyása csak külön jóváhagyással (`.trivyignore`, indoklással). A Trivy az npm fejlesztői függőségeket alapból nem vizsgálja, ezeket az `npm audit` lefedi.
+- `main` branch protection (nyilvános repó, ingyenes csomag): kötelező PR, kötelező és naprakész `backend`, `frontend` és `security` ellenőrzés, 0 jóváhagyás, force push és törlés tiltva, adminra is.
 
 ## Image-ek
 
