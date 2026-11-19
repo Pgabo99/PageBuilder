@@ -1,10 +1,15 @@
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { useAuthStore } from '@/stores/auth'
 import router from '@/router'
 import App from '../App.vue'
+
+// A kezdőoldal webhelylistát tölt: a hálózati hívást kiváltjuk.
+vi.mock('@/api/websites', () => ({
+  websitesApi: { list: vi.fn<() => Promise<never[]>>().mockResolvedValue([]) },
+}))
 
 describe('App', () => {
   beforeEach(() => setActivePinia(createPinia()))
