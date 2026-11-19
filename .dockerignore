@@ -1,0 +1,9 @@
+# A gyökér a production Nginx image build contextje: csak a szükséges fájlok (allowlist).
+*
+!docker/nginx/prod.conf
+!frontend
+!backend/public
+frontend/node_modules
+frontend/dist
+frontend/.env*
+backend/public/storage
