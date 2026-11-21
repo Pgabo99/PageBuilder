@@ -139,9 +139,12 @@ jobs:
       - name: Smoke teszt
         run: bash scripts/smoke.sh
 
-      - name: Szolgáltatásnaplók hiba esetén
+      # A Laravel naplója fájlba ír, ezért a konténerből olvassuk ki.
+      - name: Diagnosztika hiba esetén
         if: failure()
-        run: docker compose logs --tail 100
+        run: |
+          docker compose logs --tail 50
+          docker compose exec -T backend sh -c 'ls -lan storage storage/framework storage/logs; tail -n 20 storage/logs/laravel.log' || true
 
   # Csak a main-en, minden ellenőrzés után; latest tag nincs, a deploy a commit SHA-ra épül.
   terraform:
