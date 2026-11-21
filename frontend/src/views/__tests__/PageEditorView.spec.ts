@@ -6,10 +6,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { ValidationError } from '@/api/client'
 import { pagesApi } from '@/api/pages'
+import { websitesApi } from '@/api/websites'
 import router from '@/router'
 import { useConfirm } from '@/composables/useConfirm'
 import { useAuthStore } from '@/stores/auth'
-import type { Page, PagePayload } from '@/types/content'
+import type { Page, PagePayload, Website } from '@/types/content'
 
 vi.mock('@/api/pages', () => ({
   pagesApi: {
@@ -19,6 +20,10 @@ vi.mock('@/api/pages', () => ({
     create: vi.fn<(websiteId: number, payload: PagePayload) => Promise<Page>>(),
     remove: vi.fn<(id: number) => Promise<void>>(),
   },
+}))
+
+vi.mock('@/api/websites', () => ({
+  websitesApi: { get: vi.fn<(id: number) => Promise<Website>>() },
 }))
 
 const page: Page = {
@@ -61,6 +66,15 @@ describe('PageEditorView', () => {
     auth.initialized = true
     vi.mocked(pagesApi.get).mockResolvedValue(structuredClone(page))
     vi.mocked(pagesApi.update).mockReset()
+    vi.mocked(pagesApi.list)
+      .mockReset()
+      .mockResolvedValue([
+        page,
+        { ...page, id: 4, title: 'Kapcsolat', slug: 'kapcsolat', position: 2 },
+      ])
+    vi.mocked(websitesApi.get)
+      .mockReset()
+      .mockResolvedValue({ id: 1, slug: 'demo' } as Website)
   })
 
   it('betölti az oldal komponenseit, és nincs mentetlen módosítás', async () => {
@@ -122,6 +136,23 @@ describe('PageEditorView', () => {
 
     expect(titles(wrapper)).toEqual(['Címsor', 'Szöveg', 'Szöveg', 'Gomb'])
     expect(wrapper.text()).toContain('Nem mentett módosítások')
+  })
+
+  it('a gomb céljához az oldalak címét javasolja', async () => {
+    const wrapper = await mountEditor()
+
+    const options = wrapper.findAll('datalist option').map((o) => o.attributes('value'))
+    expect(options).toEqual(['/sites/demo/', '/sites/demo/kapcsolat/'])
+    const input = wrapper.find('input[list]')
+    expect(input.attributes('list')).toBe(wrapper.find('datalist').attributes('id'))
+  })
+
+  it('a javaslatok hibája nem akadályozza a szerkesztést', async () => {
+    vi.mocked(pagesApi.list).mockRejectedValue(new Error('hiba'))
+    const wrapper = await mountEditor()
+
+    expect(titles(wrapper)).toEqual(['Címsor', 'Szöveg', 'Gomb'])
+    expect(wrapper.find('datalist').exists()).toBe(false)
   })
 
   it('törli a komponenst', async () => {

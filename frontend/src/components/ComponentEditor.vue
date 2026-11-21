@@ -2,13 +2,14 @@
 import { useId } from 'vue'
 
 import type { PageComponent } from '@/types/content'
-import { componentLabel } from '@/utils/components'
+import { componentLabel, type PageTarget } from '@/utils/components'
 
 // Egy komponens szerkesztője: a mezők típusonként változnak, a hibák mezőnként jelennek meg.
 defineProps<{
   errors: Record<string, string[]>
   first: boolean
   last: boolean
+  targets?: PageTarget[]
 }>()
 
 const model = defineModel<PageComponent>({ required: true })
@@ -116,7 +117,18 @@ const uid = useId()
         </div>
         <div class="field">
           <label :for="`${uid}-url`">Cél (https://…, /útvonal vagy #horgony)</label>
-          <input :id="`${uid}-url`" v-model="model.url" :aria-invalid="!!errors.url" type="text" />
+          <input
+            :id="`${uid}-url`"
+            v-model="model.url"
+            :aria-invalid="!!errors.url"
+            :list="targets?.length ? `${uid}-targets` : undefined"
+            type="text"
+          />
+          <datalist v-if="targets?.length" :id="`${uid}-targets`">
+            <option v-for="target in targets" :key="target.url" :value="target.url">
+              {{ target.label }}
+            </option>
+          </datalist>
           <p v-if="errors.url" class="field__error">{{ errors.url.join(' ') }}</p>
         </div>
       </template>

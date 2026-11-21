@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { cloneComponent, createComponent, moveItem } from '../components'
+import { cloneComponent, createComponent, moveItem, pageTargets } from '../components'
 
 describe('moveItem', () => {
   it('előre és hátra mozgat, az eredetit nem módosítja', () => {
@@ -39,5 +39,19 @@ describe('cloneComponent', () => {
     expect(copy).toEqual({ ...original, id: copy.id })
     expect(copy.id).not.toBe(original.id)
     expect(copy).not.toBe(original)
+  })
+})
+
+describe('pageTargets', () => {
+  it('a pozíció szerinti első oldal a webhely gyökere, a többi az almappája', () => {
+    const pages = [
+      { title: 'Kapcsolat', slug: 'kapcsolat', position: 2 },
+      { title: 'Kezdőlap', slug: 'kezdolap', position: 1 },
+    ]
+
+    expect(pageTargets('demo', pages)).toEqual([
+      { label: 'Kezdőlap', url: '/sites/demo/' },
+      { label: 'Kapcsolat', url: '/sites/demo/kapcsolat/' },
+    ])
   })
 })

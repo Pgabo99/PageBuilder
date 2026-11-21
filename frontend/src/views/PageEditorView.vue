@@ -4,13 +4,21 @@ import { onBeforeRouteLeave, useRoute } from 'vue-router'
 
 import { errorMessage, ValidationError } from '@/api/client'
 import { pagesApi } from '@/api/pages'
+import { websitesApi } from '@/api/websites'
 import ComponentEditor from '@/components/ComponentEditor.vue'
 import FormField from '@/components/FormField.vue'
 import StatusBlock from '@/components/StatusBlock.vue'
 import { useConfirm } from '@/composables/useConfirm'
 import { useToast } from '@/composables/useToast'
 import type { ComponentType, Page, PageComponent } from '@/types/content'
-import { cloneComponent, componentTypes, createComponent, moveItem } from '@/utils/components'
+import {
+  cloneComponent,
+  componentTypes,
+  createComponent,
+  moveItem,
+  pageTargets,
+  type PageTarget,
+} from '@/utils/components'
 
 const route = useRoute()
 const toast = useToast()
@@ -20,6 +28,8 @@ const pageId = computed(() => Number(route.params.id))
 const page = ref<Page | null>(null)
 const loading = ref(true)
 const loadError = ref<string | null>(null)
+
+const targets = ref<PageTarget[]>([])
 
 const form = reactive<{ title: string; slug: string; content: PageComponent[] }>({
   title: '',
@@ -43,10 +53,24 @@ async function load(): Promise<void> {
     form.slug = page.value.slug
     form.content = page.value.content
     saved.value = snapshot()
+    void loadTargets(page.value.website_id)
   } catch (e) {
     loadError.value = errorMessage(e)
   } finally {
     loading.value = false
+  }
+}
+
+// A javaslatok kiegészítők: a hibájuk nem akadályozza a szerkesztést.
+async function loadTargets(websiteId: number): Promise<void> {
+  try {
+    const [website, pages] = await Promise.all([
+      websitesApi.get(websiteId),
+      pagesApi.list(websiteId),
+    ])
+    targets.value = pageTargets(website.slug, pages)
+  } catch {
+    targets.value = []
   }
 }
 
@@ -211,6 +235,7 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', warnBeforeUnloa
             :errors="componentErrors(index)"
             :first="index === 0"
             :last="index === form.content.length - 1"
+            :targets="targets"
             @up="move(index, index - 1)"
             @down="move(index, index + 1)"
             @duplicate="duplicate(index)"
