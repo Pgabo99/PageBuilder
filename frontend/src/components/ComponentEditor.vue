@@ -13,7 +13,7 @@ defineProps<{
 
 const model = defineModel<PageComponent>({ required: true })
 
-defineEmits<{ remove: []; up: []; down: []; dragstart: [event: DragEvent] }>()
+defineEmits<{ remove: []; duplicate: []; up: []; down: []; dragstart: [event: DragEvent] }>()
 
 const uid = useId()
 </script>
@@ -49,6 +49,14 @@ const uid = useId()
           @click="$emit('down')"
         >
           ↓
+        </button>
+        <button
+          class="btn btn--secondary btn--small"
+          type="button"
+          aria-label="Komponens másolása"
+          @click="$emit('duplicate')"
+        >
+          ⧉
         </button>
         <button
           class="btn btn--secondary btn--small"
