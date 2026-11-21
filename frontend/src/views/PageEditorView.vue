@@ -7,12 +7,14 @@ import { pagesApi } from '@/api/pages'
 import ComponentEditor from '@/components/ComponentEditor.vue'
 import FormField from '@/components/FormField.vue'
 import StatusBlock from '@/components/StatusBlock.vue'
+import { useConfirm } from '@/composables/useConfirm'
 import { useToast } from '@/composables/useToast'
 import type { ComponentType, Page, PageComponent } from '@/types/content'
 import { componentTypes, createComponent, moveItem } from '@/utils/components'
 
 const route = useRoute()
 const toast = useToast()
+const { confirm } = useConfirm()
 const pageId = computed(() => Number(route.params.id))
 
 const page = ref<Page | null>(null)
@@ -131,7 +133,16 @@ function warnBeforeUnload(event: BeforeUnloadEvent): void {
   if (dirty.value) event.preventDefault()
 }
 
-onBeforeRouteLeave(() => !dirty.value || window.confirm(leaveMessage))
+onBeforeRouteLeave(
+  () =>
+    !dirty.value ||
+    confirm({
+      title: 'Nem mentett módosítások',
+      message: leaveMessage,
+      confirmLabel: 'Elhagyás',
+      danger: true,
+    }),
+)
 onMounted(() => {
   window.addEventListener('beforeunload', warnBeforeUnload)
   void load()

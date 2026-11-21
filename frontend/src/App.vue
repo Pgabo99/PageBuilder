@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import { errorMessage } from '@/api/client'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import ThemeToggle from '@/components/ThemeToggle.vue'
 import ToastHost from '@/components/ToastHost.vue'
 import { useAuthStore } from '@/stores/auth'
@@ -41,6 +42,7 @@ async function logout(): Promise<void> {
   </header>
   <p v-if="logoutError" class="alert" role="alert">{{ logoutError }}</p>
   <RouterView />
+  <ConfirmDialog />
   <ToastHost />
 </template>
 

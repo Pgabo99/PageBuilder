@@ -1,13 +1,15 @@
-import { flushPromises, mount } from '@vue/test-utils'
+import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { h } from 'vue'
+import { RouterView } from 'vue-router'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { ValidationError } from '@/api/client'
 import { pagesApi } from '@/api/pages'
 import router from '@/router'
+import { useConfirm } from '@/composables/useConfirm'
 import { useAuthStore } from '@/stores/auth'
 import type { Page, PagePayload } from '@/types/content'
-import PageEditorView from '../PageEditorView.vue'
 
 vi.mock('@/api/pages', () => ({
   pagesApi: {
@@ -34,9 +36,14 @@ const page: Page = {
   updated_at: '',
 }
 
+// A mountolt szerkesztők elhagyás-őrei élnek, amíg le nem szereljük őket.
+const mounted: VueWrapper[] = []
+
 async function mountEditor() {
   await router.replace('/pages/3')
-  const wrapper = mount(PageEditorView, { global: { plugins: [router] } })
+  // RouterView-n át renderelünk: az elhagyás-őr csak így regisztrálódik az útvonalhoz.
+  const wrapper = mount({ render: () => h(RouterView) }, { global: { plugins: [router] } })
+  mounted.push(wrapper)
   await flushPromises()
   return wrapper
 }
@@ -45,6 +52,8 @@ const titles = (wrapper: Awaited<ReturnType<typeof mountEditor>>) =>
   wrapper.findAll('.component').map((c) => c.find('strong').text())
 
 describe('PageEditorView', () => {
+  afterEach(() => mounted.splice(0).forEach((wrapper) => wrapper.unmount()))
+
   beforeEach(() => {
     setActivePinia(createPinia())
     const auth = useAuthStore()
@@ -126,5 +135,39 @@ describe('PageEditorView', () => {
 
     expect(wrapper.findAll('.component')[2]!.text()).toContain('Hibás cím.')
     expect(wrapper.find('[role="alert"]').text()).toContain('Javítsd a jelölt mezőket')
+  })
+
+  it('mentetlen módosításnál az elhagyás előtt rákérdez; a mégsem a lapon tart', async () => {
+    const wrapper = await mountEditor()
+    await wrapper.find('[aria-label="Komponens törlése"]').trigger('click')
+
+    const navigation = router.push('/')
+    await flushPromises()
+    expect(useConfirm().pending.value?.title).toBe('Nem mentett módosítások')
+
+    useConfirm().answer(false)
+    await navigation
+    expect(router.currentRoute.value.path).toBe('/pages/3')
+  })
+
+  it('mentetlen módosításnál a megerősítés elengedi a navigációt', async () => {
+    const wrapper = await mountEditor()
+    await wrapper.find('[aria-label="Komponens törlése"]').trigger('click')
+
+    const navigation = router.push('/')
+    await flushPromises()
+    useConfirm().answer(true)
+    await navigation
+
+    expect(router.currentRoute.value.path).toBe('/')
+  })
+
+  it('mentett állapotban kérdés nélkül elhagyható', async () => {
+    await mountEditor()
+
+    await router.push('/')
+
+    expect(useConfirm().pending.value).toBeNull()
+    expect(router.currentRoute.value.path).toBe('/')
   })
 })

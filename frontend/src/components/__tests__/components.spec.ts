@@ -1,7 +1,6 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 
-import ConfirmButton from '../ConfirmButton.vue'
 import StatusBlock from '../StatusBlock.vue'
 
 const base = { loading: false, error: null, empty: false, emptyText: 'Nincs elem.' }
@@ -31,28 +30,5 @@ describe('StatusBlock', () => {
     const wrapper = mount(StatusBlock, { props: base, slots: { default: '<p>Tartalom</p>' } })
 
     expect(wrapper.text()).toBe('Tartalom')
-  })
-})
-
-describe('ConfirmButton', () => {
-  it('az első kattintás rákérdez, a megerősítés végrehajt', async () => {
-    const wrapper = mount(ConfirmButton, { props: { label: 'Törlés' } })
-
-    await wrapper.find('button').trigger('click')
-    expect(wrapper.emitted('confirm')).toBeUndefined()
-    expect(wrapper.text()).toContain('Biztos?')
-
-    await wrapper.findAll('button')[0]!.trigger('click')
-    expect(wrapper.emitted('confirm')).toHaveLength(1)
-  })
-
-  it('a mégsem visszaáll az alaphelyzetre', async () => {
-    const wrapper = mount(ConfirmButton, { props: { label: 'Törlés' } })
-
-    await wrapper.find('button').trigger('click')
-    await wrapper.findAll('button')[1]!.trigger('click')
-
-    expect(wrapper.text()).toBe('Törlés')
-    expect(wrapper.emitted('confirm')).toBeUndefined()
   })
 })
