@@ -75,15 +75,29 @@ flowchart LR
 
 ## Infrastruktúra (Terraform, Azure)
 
-| Stack | Erőforrások |
-|---|---|
-| `infra/bootstrap` | resource group és storage account a Terraform state-hez (zárolással); Key Vault; backup storage account (lifecycle: 7 napi, 4 heti); `prevent_destroy` |
-| `infra/main` | VNet, NSG (80/443 nyitva, SSH csak megadott IP-ről, a k3s API zárva), statikus publikus IP DNS-címkével, VM (2 vCPU, 4 GB, cloud-init: k3s), Log Analytics és Application Insights availability test |
+Egyetlen stack az `infra/` könyvtárban (az MVP-ben nincs bootstrap-stack és Key Vault):
 
-- Az Azure-hitelesítés OIDC-vel (federated credential) történik. A `plan` a CI-ban fut, az `apply` jóváhagyás után.
-- A hosztnév és a régió változó, nincs hardcode-olva.
-- A Key Vault és a backup-tároló életciklusa független a VM-étől és a clusterétől.
-- Költség: a VM leállítható (deallocate), amikor nincs használatban.
+| Erőforrás | Megjegyzés |
+|---|---|
+| Resource group, VNet, alhálózat | az alhálózaton `Microsoft.Storage` service endpoint (ingyenes) |
+| NSG | bejövő: 80/443 az internetről, 22 csak `ssh_allowed_cidr`-ről; minden más (k3s API 6443, MySQL, Redis, Prometheus, Grafana) az Azure `DenyAllInbound` miatt zárt |
+| Statikus publikus IP | `<dns_label>.<régió>.cloudapp.azure.com` |
+| Linux VM (Ubuntu 24.04) | méret a `vm_size` változóból (alap `Standard_B2s`, 4 GB), csak SSH-kulcs, cloud-init: k3s |
+| Backup storage account | LRS, privát konténer, tiltó hálózati alapértelmezés (csak a VM alhálózata és a `backup_allowed_ips`), `backup_retention_days` utáni törlés |
+| Leállítási ütemezés | opcionális (`auto_shutdown_time`), a felejtett VM költsége ellen |
+
+Használat (a Terraform konténerből fut; `az login` és `terraform.tfvars` a felhasználó dolga, a `terraform.tfvars.example` alapján):
+
+```
+docker run --rm -v "$PWD/infra:/work" -w /work hashicorp/terraform:1.17.1 init
+... plan / apply     # az apply csak külön jóváhagyással
+```
+
+- A state lokális (`terraform.tfstate`), a `.gitignore` kizárja a state-et, a `*.tfvars` és a `*.tfplan` fájlokat; a `.terraform.lock.hcl` commitolt. A state titkot nem tartalmaz (az SSH-nek csak a nyilvános kulcsa kerül be).
+- Tesztek: `terraform fmt -check`, `validate` és `terraform test` (mock provider, a NSG-portok, a kulcsos belépés, a privát backup-tároló és a változó-validációk ellenőrzése); a CI `terraform` jobja futtatja. Az `apply` a CI-ban nincs.
+- A k3s a hivatalos telepítővel (`get.k3s.io`) települ a `stable` csatornáról (`k3s_channel`); a kubeconfig csak rootnak olvasható.
+- Trivy `config` scan (2026-11-21): az NSG HTTP/HTTPS-szabálya (AZU-0047, CRITICAL) és a NIC publikus IP-je (AZU-0076) a publikus weboldal miatt szándékos; a tárolónaplózás, a CMK, az infrastruktúra-szintű titkosítás és a georedundancia (AZU-0057/0058/0060/0061) többletköltség vagy -komponens (Log Analytics, Key Vault, GRS), az MVP-ben nincs. A hálózati alapértelmezés (AZU-0012) javítva.
+- A VM leállítható (deallocate), amikor nincs használatban.
 
 ## Platformkomponensek a clusterben
 
