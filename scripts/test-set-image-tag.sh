@@ -4,7 +4,7 @@ set -uo pipefail
 
 cd "$(dirname "$0")/.."
 
-SCRIPT=scripts/set-image-tag.sh
+SCRIPT="bash scripts/set-image-tag.sh"
 OLD=004f1bb5c20420c331aea432df06c8c00df5dae5
 NEW=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 failures=0
