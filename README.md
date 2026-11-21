@@ -79,8 +79,8 @@ A jelszavakat helyi használatra a placeholder is megteszi; máshol az első ind
 ### Backup és restore (MySQL)
 
 - `bash scripts/backup.sh`: mentés a futó stackről a `backups/` mappába (`<db>-<UTC>.sql.gz` és `.sha256`; a mappa nincs verziókezelésben, mert valódi adatot tartalmazhat). Csak olvas, az app-felhasználóval fut. Ütemezéshez a `cron` (Linux, macOS) vagy a Windows Feladatütemező hívhatja a szkriptet; beépített ütemezés nincs.
-- `bash scripts/restore.sh backups/<mentés>.sql.gz`: ellenőrzi a checksumot, majd külön `<db>_restore` adatbázisba tölt, és táblánként (sorszám, `CHECKSUM TABLE`) összeveti az élő adatbázissal. Az élő adatbázis felülírása csak `--live` és `CONFIRM_RESTORE_LIVE=yes` mellett lehetséges (destruktív; előtte `docker compose stop backend worker`).
-- Hatókör: csak a MySQL; a publikált oldalak újragenerálhatók, a Redis nincs mentve. A teljes gyakorlat (katasztrófa és visszaállítás, mért RPO/RTO): T7.3.
+- `bash scripts/restore.sh backups/<mentés>.sql.gz`: ellenőrzi a checksumot, majd külön `<db>_restore` adatbázisba tölt, és táblánként (sorszám, `CHECKSUM TABLE`) összeveti az élő adatbázissal. Az élő adatbázis felülírása csak `--live` és `CONFIRM_RESTORE_LIVE=yes` mellett lehetséges (destruktív; előtte `docker compose stop backend worker`, utána `docker compose up -d --wait backend worker && docker compose restart nginx`: az Nginx induláskor oldja fel a backend címét, az újraindított backend új IP-t kaphat, és enélkül 502 a válasz).
+- Hatókör: csak a MySQL; a publikált oldalak újragenerálhatók, a Redis nincs mentve. A teljes gyakorlat (adatvesztés, élő visszaállítás, mért RPO és RTO): `bash scripts/recovery-drill.sh` az elkülönített `pagebuilder-recovery` projekten, mesterséges adattal; a fejlesztői adataidhoz nem nyúl.
 
 ### E2E tesztek (Playwright)
 

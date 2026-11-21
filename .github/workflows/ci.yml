@@ -187,6 +187,17 @@ jobs:
       - name: Ellenőrzés
         run: bash scripts/check-secrets.sh
 
+  # Katasztrófa-gyakorlat az elkülönített pagebuilder-recovery projekten (scripts/recovery-drill.sh), mesterséges adattal;
+  # nem kötelező check. Az eredménytáblát a job összefoglalójába írja.
+  recovery:
+    name: recovery
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Katasztrófa-gyakorlat
+        run: bash scripts/recovery-drill.sh
+
   # A deploy-szkriptek tesztje (a manifestek másolatán fut).
   scripts:
     name: scripts
