@@ -134,6 +134,7 @@ const uid = useId()
 
 .component__head {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-3);
   margin-bottom: var(--space-3);
@@ -154,6 +155,18 @@ const uid = useId()
   gap: var(--space-3);
 }
 
+/* Érintőképernyőn nincs HTML5 húzás: a fel/le gomb marad, a gombok nagyobbak. */
+@media (pointer: coarse) {
+  .component__handle {
+    display: none;
+  }
+
+  .component__head .btn {
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+  }
+}
+
 .field {
   display: grid;
   gap: var(--space-1);
@@ -166,6 +179,7 @@ label {
 input,
 select,
 textarea {
+  min-width: 0;
   padding: var(--space-2) var(--space-3);
   font: inherit;
   border: 1px solid var(--color-border);
