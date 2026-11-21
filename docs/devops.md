@@ -202,7 +202,13 @@ A beadandóban rövidebb ablakban, reprodukálható k6 terheléssel demonstrálj
 
 Sealed Secrets (titkosítva a gitben). A controller kulcsa az Azure Key Vaultban van, amely a Terraform state-ben nem tárol titokértéket. A CI-titkok GitHub Secrets-ben vannak; GHCR-hez `GITHUB_TOKEN`. Visszaállítás és rotáció: `docs/runbooks/` (T8.3 feladat).
 
-## Backup és restore
+## Backup és restore (helyi, megvalósítva)
+
+- `scripts/backup.sh`: `mysqldump --single-transaction --set-gtid-purged=OFF` az alkalmazás felhasználójával (legkisebb jogosultság), a jelszó a konténer környezetéből jön (`MYSQL_PWD`), a mentés `backups/` alá kerül (gitignore), `.sha256`-tal; csonka dumpot (hiányzó `Dump completed` sor) elutasít. A `--set-gtid-purged=OFF` azért kell, mert a MySQL 9 image-ben a GTID alapból be van kapcsolva, és az `AUTO` érték `FLUSH TABLES`-t kérne (RELOAD jog az app-felhasználónak nincs, és nem is adjuk); az egy adatbázis visszaállításához a GTID-utasítások nem kellenek. A maszkolási szabályokról szóló mysqldump-figyelmeztetést (nincs SELECT jog a `mysql` sémára, a projekt nem használ ilyet) a szkript szűri.
+- `scripts/restore.sh`: checksum-ellenőrzés, majd alapból külön `<db>_restore` adatbázisba tölt (root, jelszó a konténer környezetéből). Manifeszt (`--manifest`: tábla, sorszám, `CHECKSUM TABLE`) a visszaállítás ellenőrzéséhez: `--expect <manifeszt>` eltérésnél hibával áll le. Az élő adatbázis felülírása csak `--live` és `CONFIRM_RESTORE_LIVE=yes` mellett lehetséges. Minden védelem az adatbázis érintése előtt fut (teszt: `scripts/test-backup-restore.sh`, CI `scripts` job).
+- Korlát: a manifeszt a mentés után, külön készül, ezért folyamatos írás mellett nem pontos összehasonlítási alap (a gyakorlatban a restore külön adatbázisba tölt, és az eltérést jelzi). Hatókör: csak a MySQL.
+
+## Backup és restore (bővített terv)
 
 | Elem | Érték |
 |---|---|

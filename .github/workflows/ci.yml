@@ -197,6 +197,9 @@ jobs:
       - name: set-image-tag.sh
         run: bash scripts/test-set-image-tag.sh
 
+      - name: backup.sh és restore.sh védelmei
+        run: bash scripts/test-backup-restore.sh
+
   # Csak a main-en, minden ellenőrzés után; latest tag nincs, a deploy a commit SHA-ra épül.
   terraform:
     name: terraform

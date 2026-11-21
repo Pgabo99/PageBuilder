@@ -38,3 +38,6 @@ crash.log
 # Playwright
 playwright-report/
 test-results/
+
+# Helyi adatbázis-mentések (valódi adatot tartalmazhatnak)
+backups/
