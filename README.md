@@ -78,7 +78,7 @@ A jelszavakat helyi használatra a placeholder is megteszi; máshol az első ind
 
 ### E2E tesztek (Playwright)
 
-`bash scripts/e2e.sh`: elkülönített Compose-projektben (`pagebuilder-e2e`, saját adatbázis, volume-ok és a 18081-es port; a fejlesztői stack és adatai érintetlenek) indítja a stacket, lefuttatja a Chromium-teszteket, majd csak ezt a projektet takarítja, hiba esetén is. Az első futás letölti a pinnelt Playwright image-et. A riport: `e2e/playwright-report/` (`npx playwright show-report` vagy a `index.html` megnyitása). Az `e2e/e2e.env` csak placeholder értékeket tartalmaz; a regisztráció és belépés percenkénti korlátja itt 100 (`AUTH_THROTTLE_PER_MINUTE`), máshol 5.
+`bash scripts/e2e.sh`: elkülönített Compose-projektben (`pagebuilder-e2e`, saját adatbázis, volume-ok és a 18081-es port; a fejlesztői stack és adatai érintetlenek) indítja a stacket, lefuttatja a Chromium-teszteket, majd csak ezt a projektet takarítja, hiba esetén is. Az első futás letölti a pinnelt Playwright image-et. A riport: `e2e/playwright-report/` (`npx playwright show-report` vagy a `index.html` megnyitása). Folyamatok (`e2e/tests/`, Chromium, 1 worker, mind saját felhasználóval és adattal, ezért külön is futtathatók): szerkesztés és mentés (oldalfrissítés után is ellenőrizve), publikálás és a publikált oldal tartalma, hibaút (hibás belépés; oldal nélküli webhely publikálása). Egyes tesztek: `E2E_ARGS="tests/errors.spec.ts" bash scripts/e2e.sh`. Az `e2e/e2e.env` csak placeholder értékeket tartalmaz; a regisztráció és belépés percenkénti korlátja itt 100 (`AUTH_THROTTLE_PER_MINUTE`), máshol 5.
 
 ### Hibaelhárítás
 
