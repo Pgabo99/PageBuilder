@@ -60,6 +60,10 @@ jobs:
           trivy --exit-code 0
           trivy --severity HIGH,CRITICAL --exit-code 1
 
+      # A Kubernetes-manifesztek hibás beállításai; az infra/ elfogadott kivételei (docs/devops.md) miatt csak a deploy/.
+      - name: Trivy config (deploy)
+        run: docker run --rm -v "$PWD/deploy:/src:ro" "$TRIVY" config --severity HIGH,CRITICAL --exit-code 1 /src
+
       - name: composer audit
         run: |
           docker compose run --rm --no-deps backend composer audit --locked || true
