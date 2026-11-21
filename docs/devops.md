@@ -214,8 +214,9 @@ Sealed Secrets (titkosítva a gitben). A controller kulcsa az Azure Key Vaultban
   | Futás | RPO | RTO | ebből restore + manifeszt | mentés | mentés mérete | elveszett felhasználó |
   |---|---|---|---|---|---|---|
   | helyi (Windows 11, Docker Desktop, 2026-11-21) | 34 s | 76 s | 13 s | 1 s | 2364 bájt | 1 (2 → 1) |
+  | CI (`ubuntu-latest`, PR #105) | 5 s | 18 s | 2 s | 0 s | 2353 bájt | 1 (2 → 1) |
 
-  A CI-futás ugyanezt a táblát a job összefoglalójába írja (Linux, GitHub-runner).
+  A két futás közti különbséget a környezet adja (Windowson a bind mount és a Docker Desktop lassabb); a CI a job összefoglalójába is kiírja a táblát. Az értékek nem általánosíthatók.
 - Korlát: a manifeszt a mentés után, külön készül, ezért folyamatos írás mellett nem pontos összehasonlítási alap (a gyakorlatban a restore külön adatbázisba tölt, és az eltérést jelzi). Hatókör: csak a MySQL.
 
 ## Backup és restore (bővített terv)
