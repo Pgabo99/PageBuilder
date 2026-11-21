@@ -17,6 +17,8 @@ x-backend: &backend
     DB_TEST_DATABASE: ${MYSQL_DATABASE:?másold a .env.example-t .env néven}_testing
     DB_TEST_USERNAME: ${MYSQL_TEST_USER:?másold a .env.example-t .env néven}
     DB_TEST_PASSWORD: ${MYSQL_TEST_PASSWORD:?másold a .env.example-t .env néven}
+    # Alapérték 5; csak az elkülönített E2E-projekt emeli (e2e/e2e.env).
+    AUTH_THROTTLE_PER_MINUTE: ${AUTH_THROTTLE_PER_MINUTE:-5}
   volumes:
     - ./backend:/var/www/backend
 
@@ -95,7 +97,7 @@ services:
     image: pagebuilder-frontend:dev
     command: ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173", "--strictPort"]
     environment:
-      HMR_CLIENT_PORT: ${NGINX_PORT:-8080}
+      HMR_CLIENT_PORT: ${HMR_CLIENT_PORT:-${NGINX_PORT:-8080}}
       VITE_USE_POLLING: "true"
     volumes:
       - ./frontend:/app
@@ -129,8 +131,26 @@ services:
       retries: 5
       start_period: 5s
 
+  # E2E (profil: e2e): az nginx hálózati névterében fut, így a böngésző localhost-on éri el az alkalmazást
+  # (a Sanctum alapból stateful hoszt). Indítás: scripts/e2e.sh.
+  e2e:
+    profiles: [e2e]
+    image: mcr.microsoft.com/playwright:v1.65.0-noble@sha256:9beb546099e11f52d62e505537914870e01a67e0e6b00ae41da4775324e73dbe
+    network_mode: "service:nginx"
+    init: true
+    ipc: host
+    working_dir: /e2e
+    command: ["sh", "-c", "npm ci --no-fund --no-audit && npx playwright test"]
+    volumes:
+      - ./e2e:/e2e
+      - e2e-node-modules:/e2e/node_modules
+    depends_on:
+      nginx:
+        condition: service_healthy
+
 volumes:
   mysql-data:
   redis-data:
   frontend-node-modules:
   sites-data:
+  e2e-node-modules:

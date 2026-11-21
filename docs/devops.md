@@ -30,6 +30,12 @@ Szolgáltatások: `nginx`, `backend` (PHP-FPM), `worker`, `scheduler`, `mysql`, 
 - Közös origin: az Nginx az `/api`, `/sanctum`, `/up` útvonalat a Laravelhez, minden mást a Vite dev szerverhez (WebSocket/HMR) továbbít; a rejtett fájlokat mindkét irányban tiltja (kivétel a Vite `/node_modules/.vite/` függőségei). A frontend `node_modules` named volume-ban van; a HMR a `NGINX_PORT`-on, pollinggal (Windowsos bind mount) működik.
 - A `DB_TEST_*` változók és a tesztfelhasználó csak a lokális és a CI-környezetben léteznek; az éles backend környezetébe nem kerülnek (a `mysql_testing` kapcsolat ott hitelesítő adat nélkül nem használható).
 
+## E2E (Playwright)
+
+- `scripts/e2e.sh` a Compose `e2e` profiljával fut: saját projekt (`pagebuilder-e2e`, fix név), saját adatbázis, volume-ok és port (`e2e/e2e.env`, csak placeholderek); a `down -v` takarítás csak ezt a projektet érinti. A Playwright (hivatalos image, verzió és digest rögzítve) az `nginx` hálózati névterében fut, így az alkalmazás `http://localhost` címen érhető el, és a Sanctum stateful hosztja külön beállítás nélkül egyezik.
+- Az auth-korlát (regisztráció és belépés közös, IP-nkénti) alapértéke 5/perc. Az `AUTH_THROTTLE_PER_MINUTE` csak pozitív egész értékkel írja felül; minden más (0, negatív, szöveg, üres) az alapértékre esik vissza, így elírás nem kapcsolja ki a korlátot. Csak az E2E-projekt emeli.
+- Egy böngésző (Chromium), egy worker; hibánál trace és képernyőkép a HTML-riportban.
+
 ## CI (MVP)
 
 - `.github/workflows/ci.yml` PR-ra és `main`-re: `backend` (Pint, Pest) és `frontend` (Oxlint/ESLint, Prettier, `type-check`, Vitest) job, ugyanazon a Compose-stacken, mint lokálisan; lockfile alapú telepítés, fájlmódosítás nélküli ellenőrzések; hitelesítő adatként csak a `.env.example` placeholderei (eldobható CI-adatbázis).

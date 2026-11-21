@@ -34,3 +34,7 @@ coverage/
 .phpunit.result.cache
 *.tfplan
 crash.log
+
+# Playwright
+playwright-report/
+test-results/
