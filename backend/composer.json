@@ -1,6 +1,6 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "pagebulder/backend",
+    "name": "pagebuilder/backend",
     "type": "project",
     "description": "A PageBuilder vizuális weboldalszerkesztő Laravel REST API-ja.",
     "license": "MIT",

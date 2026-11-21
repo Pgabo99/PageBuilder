@@ -29,7 +29,7 @@ async function logout(): Promise<void> {
 
 <template>
   <header class="header">
-    <RouterLink to="/" class="header__brand">PageBulder</RouterLink>
+    <RouterLink to="/" class="header__brand">PageBuilder</RouterLink>
     <div class="header__user">
       <ThemeToggle />
       <template v-if="auth.isAuthenticated">

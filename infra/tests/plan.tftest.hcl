@@ -2,7 +2,7 @@
 mock_provider "azurerm" {}
 
 variables {
-  dns_label        = "pagebulder-teszt"
+  dns_label        = "pagebuilder-teszt"
   ssh_allowed_cidr = "203.0.113.7/32"
   ssh_public_key   = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILtspn8IE8TgL2Anle5l5CKrTomiVnavoAJa+UrLgalB teszt"
 }

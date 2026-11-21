@@ -13,7 +13,7 @@ variable "location" {
 variable "name_prefix" {
   description = "Az erőforrások névelőtagja (kisbetű, számjegy)."
   type        = string
-  default     = "pagebulder"
+  default     = "pagebuilder"
 
   validation {
     condition     = can(regex("^[a-z][a-z0-9]{2,12}$", var.name_prefix))

@@ -1,4 +1,4 @@
-name: pagebulder
+name: pagebuilder
 
 # A backend és a worker közös beállításai (image, hitelesítő adatok, kód).
 x-backend: &backend
@@ -6,7 +6,7 @@ x-backend: &backend
     context: ./backend
     dockerfile: ../docker/php/Dockerfile
     target: base
-  image: pagebulder-backend:dev
+  image: pagebuilder-backend:dev
   # Egyetlen forrás a gyökér .env; a konténer-környezet elsőbbséget élvez a backend/.env-vel szemben.
   environment:
     APP_URL: http://localhost:${NGINX_PORT:-8080}
@@ -92,7 +92,7 @@ services:
       context: ./frontend
       dockerfile: ../docker/node/Dockerfile
       target: base
-    image: pagebulder-frontend:dev
+    image: pagebuilder-frontend:dev
     command: ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173", "--strictPort"]
     environment:
       HMR_CLIENT_PORT: ${NGINX_PORT:-8080}
