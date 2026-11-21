@@ -8,6 +8,8 @@ export interface Website {
   published_at: string | null
   published_url: string | null
   publish_error: string | null
+  accent_color: string | null
+  page_theme: 'light' | 'dark' | null
   created_at: string
   updated_at: string
 }
@@ -15,6 +17,8 @@ export interface Website {
 export interface WebsitePayload {
   name: string
   slug: string
+  accent_color: string | null
+  page_theme: 'light' | 'dark' | null
 }
 
 export interface HeadingComponent {

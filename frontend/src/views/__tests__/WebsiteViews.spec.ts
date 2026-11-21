@@ -28,6 +28,8 @@ const website: Website = {
   published_at: null,
   published_url: null,
   publish_error: null,
+  accent_color: null,
+  page_theme: null,
   created_at: '',
   updated_at: '',
 }
@@ -112,5 +114,59 @@ describe('WebsiteFormView', () => {
 
     expect(router.currentRoute.value.name).toBe('website')
     expect(router.currentRoute.value.params.id).toBe('7')
+  })
+
+  it('alapból nem küld színt és témát (alapértelmezett megjelenés)', async () => {
+    vi.mocked(websitesApi.create).mockResolvedValue(website)
+    const wrapper = mountView(WebsiteFormView)
+    await wrapper.findAll('input')[0]!.setValue('Név')
+
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
+
+    expect(websitesApi.create).toHaveBeenCalledWith({
+      name: 'Név',
+      slug: 'nev',
+      accent_color: null,
+      page_theme: null,
+    })
+  })
+
+  it('a kiválasztott kiemelőszínt és a sötét témát elküldi, az alapértelmezett visszaállítja', async () => {
+    vi.mocked(websitesApi.create).mockResolvedValue(website)
+    const wrapper = mountView(WebsiteFormView)
+    await wrapper.findAll('input')[0]!.setValue('Név')
+
+    await wrapper.find('input[type="color"]').setValue('#e11d48')
+    await wrapper.find('select').setValue('dark')
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
+
+    expect(websitesApi.create).toHaveBeenLastCalledWith({
+      name: 'Név',
+      slug: 'nev',
+      accent_color: '#e11d48',
+      page_theme: 'dark',
+    })
+
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text() === 'Alapértelmezett')!
+      .trigger('click')
+    expect(wrapper.find('button.btn--small').exists()).toBe(false)
+  })
+
+  it('szerkesztéskor betölti a mentett színt és témát', async () => {
+    await router.replace('/websites/7/edit')
+    vi.mocked(websitesApi.get).mockResolvedValue({
+      ...website,
+      accent_color: '#112233',
+      page_theme: 'dark',
+    })
+    const wrapper = mountView(WebsiteFormView)
+    await flushPromises()
+
+    expect((wrapper.find('input[type="color"]').element as HTMLInputElement).value).toBe('#112233')
+    expect((wrapper.find('select').element as HTMLSelectElement).value).toBe('dark')
   })
 })
