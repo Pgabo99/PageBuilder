@@ -130,6 +130,8 @@ jobs:
           docker compose run --rm --no-deps backend composer install --no-interaction --no-progress
           docker compose run --rm --no-deps frontend npm ci --no-fund --no-audit
           docker compose run --rm --no-deps backend php artisan key:generate
+          # Linuxon a bind mountolt storage a hosté, a PHP-FPM (www-data) nem írhatna bele.
+          docker compose run --rm --no-deps backend chmod -R a+rwX storage bootstrap/cache
 
       - name: Indítás és migráció
         run: |

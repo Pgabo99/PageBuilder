@@ -44,6 +44,7 @@ docker compose build
 docker compose run --rm --no-deps backend composer install
 docker compose run --rm --no-deps frontend npm ci
 docker compose run --rm --no-deps backend php artisan key:generate   # csak első alkalommal
+docker compose run --rm --no-deps backend chmod -R a+rwX storage bootstrap/cache
 docker compose up -d --wait                                          # minden szolgáltatás healthy
 docker compose exec backend php artisan migrate
 bash scripts/smoke.sh
@@ -79,6 +80,7 @@ A jelszavakat helyi használatra a placeholder is megteszi; máshol az első ind
 
 - `másold a .env.example-t .env néven`: hiányzik a `.env`.
 - Foglalt port: `NGINX_PORT` átírása a `.env`-ben, majd `docker compose up -d --wait`.
+- `/up` 500-as hibát ad Linuxon: a PHP-FPM (`www-data`) nem ír a hoszt felhasználójának `storage/` könyvtárába; a fenti `chmod` lépés pótolja.
 - Docker Desktopon a bind mount lassú, és az első kérések átmenetileg `I/O error`-ral hibázhatnak (Laravel-napló): várj, majd futtasd újra a smoke tesztet.
 - A smoke teszt minden futáskor új felhasználót regisztrál; a regisztráció és belépés korlátja 5/perc, ezért 429 esetén várj egy percet.
 - Leállítás: `docker compose down` (a `-v` az adat-volume-okat is törli).
