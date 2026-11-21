@@ -6,6 +6,8 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+# DC: a docker compose parancs felülírható (pl. --env-file megadásához az elkülönített gyakorlatoknál).
+DC="${DC:-docker compose}"
 PORT="${NGINX_PORT:-$(sed -n 's/^NGINX_PORT=//p' .env 2>/dev/null | tail -n 1)}"
 BASE="http://localhost:${PORT:-8080}"
 RUN_ID="$(date +%s)"
@@ -17,7 +19,7 @@ ok() { echo "OK   $*"; }
 
 # 1. Szolgáltatások: mind fut és healthy.
 for service in mysql redis backend worker frontend nginx; do
-  health="$(docker compose ps --format '{{.Health}}' "$service")"
+  health="$($DC ps --format '{{.Health}}' "$service")"
   [ "$health" = "healthy" ] || fail "a(z) $service nem healthy (állapot: '${health:-nem fut}')"
 done
 ok "mysql, redis, backend, worker, frontend, nginx healthy"
