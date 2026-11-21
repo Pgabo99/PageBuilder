@@ -35,7 +35,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: nginx
-          image: ghcr.io/pgabo99/pagebuilder-nginx:278df525ed5ba9c42bedd3956d32dc5f21bf07f9
+          image: ghcr.io/pgabo99/pagebuilder-nginx:7e524795c0e83751e43909f2ae22ac65e97e08ed
           ports:
             - name: http
               containerPort: 8080
