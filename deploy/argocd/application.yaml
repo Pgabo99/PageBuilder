@@ -1,0 +1,30 @@
+# Az alkalmazás GitOps-forrása: a main ág deploy/app könyvtára. Egyszeri `kubectl apply`, utána az Argo CD
+# minden commitot szinkronizál; a rollback a tag-commit `git revert`-je.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: pagebulder
+  namespace: argocd
+spec:
+  project: default
+  source:
+    # Nyilvános repó: nincs szükség hitelesítő adatra.
+    repoURL: https://github.com/Pgabo99/PageBuilder.git
+    targetRevision: main
+    path: deploy/app
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: pagebulder
+  syncPolicy:
+    automated:
+      # A kézzel módosított erőforrásokat visszaállítja, a git-ből kikerülteket törli.
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 3m
