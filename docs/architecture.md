@@ -4,7 +4,7 @@
 
 A PageBuilder vizuális weboldalszerkesztő: a felhasználó webhelyeket és oldalakat hoz létre három komponenstípusból (címsor, szöveg, gomb/link), majd queue jobbal statikus HTML-ként publikálja őket. Egyetemi Cloud és DevOps beadandó, MVP-hatókörrel ([roadmap](roadmap.md)); a halasztott elemek a [backlogban](backlog.md).
 
-A rendszeren belül: SPA, Laravel API, queue worker, MySQL, Redis, publikált statikus fájlok, monitoring és backup. Kívül: felhasználók, GitHub (repó, Actions, GHCR), Let's Encrypt, Azure Blob (VM-en kívüli mentés).
+A rendszeren belül: SPA, Laravel API, queue worker, MySQL, Redis, publikált statikus fájlok, monitoring és backup. Kívül: felhasználók, GitHub (repó, Actions, GHCR). A mentés helyi; az Azure-elemek (VM, Blob, Let's Encrypt) a nem kitelepített terv részei.
 
 ```mermaid
 flowchart LR
@@ -60,7 +60,7 @@ flowchart LR
 |---|---|
 | Lokális | Docker Compose |
 | CI | GitHub Actions, ideiglenes Compose-stack |
-| Production | Azure VM, k3s, Argo CD |
+| Production (terv) | Azure VM, k3s, Argo CD: a konfiguráció kész, de nincs kitelepítve; a deploy és a rollback kind-clusteren igazolt |
 
 ## Döntésnapló
 
@@ -98,3 +98,4 @@ Az indoklás és az elvetett alternatívák az [AI auditban](ai-audit.md). A Q1�
 | Q28 | Törölt céloldal kezelése | [database-design](database-design.md) | AI-031 |
 | Q29 | Redis-perzisztencia (AOF), MySQL 9.7 LTS | [architecture](architecture.md), `compose.yaml` | AI-041 |
 | Q30 | MVP-egyszerűsítés: JSON-komponensek, 3 típus, egyszerűsített publikálás, Traefik ACME, sima manifestek | [roadmap](roadmap.md), [backlog](backlog.md) | AI-044 |
+| Q31 | Nincs Azure-kitelepítés: Terraform és `deploy/` megtartva; bizonyíték: Compose, kind + Argo CD, helyi backup és restore | [roadmap](roadmap.md) | AI-050 |

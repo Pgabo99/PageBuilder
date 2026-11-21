@@ -1,5 +1,7 @@
 # DevOps
 
+> **Hatókör:** nincs Azure-kitelepítés; a Terraform és a `deploy/` kész és tesztelt, de nem telepített, a bizonyíték helyben (Compose, kind) vagy CI-ban fut ([roadmap](roadmap.md)). Az Azure-specifikus szakaszok (TLS, Blob backup, Application Insights) a kitelepítéshez szólnak.
+>
 > A „Lokális környezet” és a „CI (MVP)” szakasz aktuális; a többi **bővített terv** a beadandó utáni továbbfejlesztéshez, nem karbantartott. Az MVP-hatókör: [roadmap](roadmap.md), a halasztott elemek: [backlog](backlog.md).
 
 ## Repó-szerkezet
@@ -70,7 +72,7 @@ flowchart LR
 ## GitOps, deploy és rollback
 
 - Az Argo CD a `main` ág `deploy/app` könyvtárát szinkronizálja (`deploy/argocd/application.yaml`: automated sync, self-heal, prune). A kézzel létrehozott `pagebulder-secrets` nem része a gitnek, ezért a prune nem érinti.
-- Alkalmazás-rollback: a tag-commit `git revert`-je; az Argo CD visszaállítja az előző image-et. Minden deploy és rollback commitként visszakereshető.
+- A tag-commit PR-ban érkezik (a branch protection érvényben marad); alkalmazás-rollback: a tag-commit `git revert`-je; az Argo CD visszaállítja az előző image-et. Minden deploy és rollback commitként visszakereshető.
 - A webhely-tartalom rollbackje alkalmazásszintű ([publishing.md](publishing.md)), ettől független.
 
 ### Argo CD bootstrap (a VM és a k3s létrejötte után, egyszer)

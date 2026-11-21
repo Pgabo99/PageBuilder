@@ -6,20 +6,20 @@ Státusz: ✅ kész · 🔄 folyamatban
 
 ## Követelmények és megoldás
 
+Hatókör: a rendszert nem telepítjük Azure-ba vagy más publikus felhőbe. A cél a reprodukálható futtatás és telepítés (Windows, Linux, macOS), a bizonyíték helyben vagy CI-ban futó, ténylegesen végrehajtott folyamat.
+
 | Szempont (pont) | MVP-megoldás |
 |---|---|
 | Rendszerhatár (5) | rövid architektúra-ábra és rendszerhatár ([architecture.md](architecture.md)) |
-| Setup és repository (5) | Compose-stack, README, branch protection, issue/PR workflow |
-| CI (9) | GitHub Actions PR-ra: Pint, ESLint, `vue-tsc`, Pest, Vitest, Playwright |
-| Artifact és security (7) | SHA-tagelt image-ek a GHCR-ben; Trivy (fs, image), `composer audit`, `npm audit` |
-| Deployment és rollback (9) | a CI átírja az image taget a `deploy/`-ban → Argo CD sync → smoke teszt; rollback: a tag-commit `git revert`-je |
-| GitOps (5) | k3s és Argo CD egy VM-en, sima manifestek (`deploy/`); a secret egyszeri `kubectl create secret` |
-| IaC (5) | Terraform: VM, NSG, publikus IP DNS-címkével, backup storage account; k3s cloud-inittel; lokális state |
-| Observability és SLO (7) | Prometheus és Grafana; SLI a Traefik-metrikákból (sikeres kérések aránya, p95), 2 SLO, 1 dashboard |
-| Recovery (4) | CronJob: napi `mysqldump` a VM-en és Azure Blobban (VM-en kívül); egyszer ténylegesen végrehajtott, ellenőrzött visszaállítás |
+| Setup és repository (5) | Compose-stack, README telepítési és futtatási útmutató (Windows, Linux, macOS), tiszta gépen reprodukálható indítás valódi secretek nélkül, branch protection, issue/PR workflow |
+| CI (9) | GitHub Actions PR-ra: Pint, ESLint, `vue-tsc`, Pest, Vitest, Playwright (felhasználói út) |
+| Artifact és security (7) | SHA-tagelt image-ek a GHCR-ben; Trivy (fs, image, config), `composer audit`, `npm audit` |
+| Deployment és rollback (9) | a CI az image taget PR-ban írja át a `deploy/`-ban (a branch protection érvényben marad); bizonyíték: kind-clusteren futtatott deploy és rollback (`git revert`) |
+| GitOps (5) | sima manifestek (`deploy/`), Argo CD `Application`; bizonyíték: külön indítható CI-job kind-en, valódi sync és rollback |
+| IaC (5) | Terraform (Azure VM, NSG, IP, storage) megtartva: `fmt`, `validate`, offline `terraform test` a CI-ban; `apply` nincs |
+| Observability és SLO (7) | Compose-profil: Prometheus, Grafana, exporterek; két mérhető SLO (rendelkezésre állás, p95), dashboard |
+| Recovery (4) | helyi backup és restore szkript; ténylegesen végrehajtott, ellenőrzött visszaállítás mért RPO/RTO-val |
 | AI audit (4) | [ai-audit.md](ai-audit.md), jelentős döntések |
-
-HTTPS: a k3s beépített Traefikje Let's Encrypt tanúsítványt kér az Azure DNS-címre.
 
 ## Alkalmazás (MVP)
 
@@ -75,25 +75,26 @@ Regisztráció és bejelentkezés (Sanctum); webhelyek és oldalak CRUD, Policy-
 
 | ID | Feladat |
 |---|---|
-| T6.1 ✅ | Terraform: VM k3s-sel, NSG, publikus IP DNS-címkével, backup storage account (a konfiguráció kész; az `apply` külön jóváhagyásra vár) |
+| T6.1 ✅ | Terraform: VM k3s-sel, NSG, publikus IP, backup storage account (megtartva; `apply` nem lesz) |
 | T6.2/1 ✅ | `deploy/app` manifestek (MySQL, Redis, backend, worker, Nginx, Ingress), titok nélkül |
-| T6.2/2 ✅ | Argo CD `Application` és bootstrap-leírás; a secret egyszeri létrehozása (a telepítés a VM után) |
-| T6.3 | Traefik HTTPS (Let's Encrypt) |
-| T6.4 | CI: image tag commit → Argo CD sync → smoke teszt; rollback `git revert`-tel, dokumentálva |
+| T6.2/2 ✅ | Argo CD `Application` és bootstrap-leírás |
+| T6.3 | Telepítési és futtatási útmutató (előfeltételek, `.env`, parancsok Windows, Linux, macOS); tiszta gépen reprodukálható indítás, secret nélküli `.env.example`, `.gitattributes` |
+| T6.4/1 | CI: image tag PR-ban a `deploy/`-ban (branch protection megkerülése nélkül) |
+| T6.4/2 | Külön indítható CI-job: kind, Argo CD, valódi sync, deploy és rollback (`git revert`) smoke teszttel |
 
 ## M7 – Observability és recovery
 
 | ID | Feladat |
 |---|---|
-| T7.1 | Prometheus és Grafana; SLI/SLO (rendelkezésre állás, p95), dashboard |
-| T7.2 | Backup CronJob: `mysqldump` PVC-re és Azure Blobba |
-| T7.3 | Ellenőrzött visszaállítás külön adatbázisba, dokumentálva |
+| T7.1 | Compose-profil (`monitoring`): Prometheus, Grafana, exporterek; két mérhető SLO (rendelkezésre állás, p95 válaszidő), dashboard |
+| T7.2 | Helyi backup és restore szkript (`mysqldump`, Compose-kötet) |
+| T7.3 | Ténylegesen végrehajtott, ellenőrzött visszaállítás külön adatbázisba, mért RPO/RTO, dokumentálva |
 
 ## M8 – E2E és lezárás
 
 | ID | Feladat |
 |---|---|
-| T8.1 | Playwright a CI-ban: regisztráció és bejelentkezés; webhely, oldal, szerkesztés; publikálás |
+| T8.1 | Playwright a CI-ban: tiszta stackről regisztráció és bejelentkezés; webhely, oldal, szerkesztés; publikálás |
 | T8.2 | README, architektúra véglegesítése, AI audit |
 
 ## Technikai adósság

@@ -19,6 +19,7 @@ A beadandó után, igény szerint. A részletes, bővített terv a `docs/` több
 
 ## DevOps
 
+- Tényleges kitelepítés (`terraform apply`, k3s VM), Traefik HTTPS (Let's Encrypt), VM-en kívüli (Azure Blob) backup
 - Kustomize-overlayek, staging környezet
 - Sealed Secrets, Key Vault, titok-rotáció
 - Terraform távoli state zárolással
