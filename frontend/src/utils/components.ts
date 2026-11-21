@@ -29,6 +29,22 @@ export function createComponent(type: ComponentType): PageComponent {
   }
 }
 
+export interface PageTarget {
+  label: string
+  url: string
+}
+
+/** A webhely oldalainak publikált címe; az első (pozíció szerinti) oldal a webhely gyökere. */
+export function pageTargets(
+  websiteSlug: string,
+  pages: readonly { title: string; slug: string; position: number }[],
+): PageTarget[] {
+  const base = `/sites/${websiteSlug}/`
+  return [...pages]
+    .sort((a, b) => a.position - b.position)
+    .map((page, index) => ({ label: page.title, url: index === 0 ? base : `${base}${page.slug}/` }))
+}
+
 /** Másolat új azonosítóval; a komponensek mezői egyszerű értékek, ezért a sekély másolat elég. */
 export function cloneComponent(component: PageComponent): PageComponent {
   return { ...component, id: newId() }
