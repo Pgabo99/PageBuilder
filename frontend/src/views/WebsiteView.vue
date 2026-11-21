@@ -5,10 +5,10 @@ import { useRoute, useRouter } from 'vue-router'
 import { errorMessage } from '@/api/client'
 import { pagesApi } from '@/api/pages'
 import { websitesApi } from '@/api/websites'
-import ConfirmButton from '@/components/ConfirmButton.vue'
 import PublishPanel from '@/components/PublishPanel.vue'
 import StatusBlock from '@/components/StatusBlock.vue'
 import { useAsyncData } from '@/composables/useAsyncData'
+import { useConfirm } from '@/composables/useConfirm'
 import { useToast } from '@/composables/useToast'
 
 const route = useRoute()
@@ -18,6 +18,7 @@ const websiteId = computed(() => Number(route.params.id))
 const website = useAsyncData(() => websitesApi.get(websiteId.value))
 const pages = useAsyncData(() => pagesApi.list(websiteId.value))
 const toast = useToast()
+const { confirm } = useConfirm()
 const actionError = ref<string | null>(null)
 const busy = ref(false)
 
@@ -33,19 +34,35 @@ async function run(action: () => Promise<void>): Promise<void> {
   }
 }
 
-const removeWebsite = () =>
-  run(async () => {
+const removeWebsite = async () => {
+  const confirmed = await confirm({
+    title: 'Webhely törlése',
+    message: `Biztosan törlöd a(z) „${website.data.value?.name}” webhelyet, minden oldalával és a publikált változatával együtt? A művelet nem vonható vissza.`,
+    confirmLabel: 'Törlés',
+    danger: true,
+  })
+  if (!confirmed) return
+  await run(async () => {
     await websitesApi.remove(websiteId.value)
     toast.success('Webhely törölve.')
     await router.push({ name: 'home' })
   })
+}
 
-const removePage = (id: number) =>
-  run(async () => {
+const removePage = async (id: number, title: string) => {
+  const confirmed = await confirm({
+    title: 'Oldal törlése',
+    message: `Biztosan törlöd a(z) „${title}” oldalt? A művelet nem vonható vissza.`,
+    confirmLabel: 'Törlés',
+    danger: true,
+  })
+  if (!confirmed) return
+  await run(async () => {
     await pagesApi.remove(id)
     toast.success('Oldal törölve.')
     await pages.reload()
   })
+}
 </script>
 
 <template>
@@ -69,7 +86,9 @@ const removePage = (id: number) =>
           >
             Szerkesztés
           </RouterLink>
-          <ConfirmButton label="Törlés" :busy="busy" @confirm="removeWebsite" />
+          <button class="btn btn--secondary" type="button" :disabled="busy" @click="removeWebsite">
+            Törlés
+          </button>
         </div>
       </div>
 
@@ -99,7 +118,14 @@ const removePage = (id: number) =>
               </RouterLink>
               <div class="muted">{{ page.slug }}</div>
             </div>
-            <ConfirmButton label="Törlés" :busy="busy" @confirm="removePage(page.id)" />
+            <button
+              class="btn btn--secondary"
+              type="button"
+              :disabled="busy"
+              @click="removePage(page.id, page.title)"
+            >
+              Törlés
+            </button>
           </li>
         </ul>
       </StatusBlock>
