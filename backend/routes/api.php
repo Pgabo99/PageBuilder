@@ -6,7 +6,7 @@ use App\Http\Controllers\Api\PublishController;
 use App\Http\Controllers\Api\WebsiteController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware('throttle:5,1')->group(function () {
+Route::middleware('throttle:auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login']);
 });

@@ -114,4 +114,16 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Regisztráció és bejelentkezés korlátja
+    |--------------------------------------------------------------------------
+    |
+    | Percenkénti kérésszám IP-nként (a két végpont közös korlátot használ). Az alapérték 5;
+    | csak az elkülönített E2E-környezet emeli. Érvénytelen érték esetén az alapérték marad.
+    |
+    */
+
+    'throttle_per_minute' => env('AUTH_THROTTLE_PER_MINUTE', 5),
+
 ];
