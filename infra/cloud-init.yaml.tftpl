@@ -1,0 +1,9 @@
+#cloud-config
+# A k3s a hivatalos telepítővel települ; a kubeconfig csak rootnak olvasható, a k3s API (6443)
+# az NSG miatt kívülről nem érhető el. A Traefik és a helyi tároló a k3s alapcsomagja.
+package_update: true
+package_upgrade: true
+packages:
+  - curl
+runcmd:
+  - curl -sfL https://get.k3s.io | INSTALL_K3S_CHANNEL=${k3s_channel} sh -s - server --write-kubeconfig-mode 600 --tls-san ${fqdn}

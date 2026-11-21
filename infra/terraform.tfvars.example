@@ -1,0 +1,7 @@
+# Másold terraform.tfvars néven (a fájl gitignore-olt), és töltsd ki.
+dns_label        = "pagebulder-pelda"
+ssh_allowed_cidr = "203.0.113.7/32"
+ssh_public_key   = "ssh-ed25519 AAAA... felhasznalo@gep"
+
+# vm_size            = "Standard_B2s" # 4 GB; 8 GB: Standard_B2ms
+# auto_shutdown_time = "2000"         # napi leállítás UTC szerint (költségtakarékos)
