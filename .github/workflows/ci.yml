@@ -112,6 +112,37 @@ jobs:
           && npm run type-check
           && npm run test:unit -- --run"
 
+  # A README első indítási lépései tiszta checkouton, majd a smoke teszt (scripts/smoke.sh).
+  install:
+    name: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Környezet
+        run: |
+          cp .env.example .env
+          cp backend/.env.example backend/.env
+
+      - name: Build és függőségek
+        run: |
+          docker compose build
+          docker compose run --rm --no-deps backend composer install --no-interaction --no-progress
+          docker compose run --rm --no-deps frontend npm ci --no-fund --no-audit
+          docker compose run --rm --no-deps backend php artisan key:generate
+
+      - name: Indítás és migráció
+        run: |
+          docker compose up -d --wait
+          docker compose exec -T backend php artisan migrate --force
+
+      - name: Smoke teszt
+        run: bash scripts/smoke.sh
+
+      - name: Szolgáltatásnaplók hiba esetén
+        if: failure()
+        run: docker compose logs --tail 100
+
   # Csak a main-en, minden ellenőrzés után; latest tag nincs, a deploy a commit SHA-ra épül.
   terraform:
     name: terraform
@@ -133,7 +164,7 @@ jobs:
   publish:
     name: publish
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [backend, frontend, security, images]
+    needs: [backend, frontend, security, images, install]
     runs-on: ubuntu-latest
     permissions:
       contents: read

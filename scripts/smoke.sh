@@ -30,11 +30,15 @@ ok "SPA (/)"
 
 # 3. API-hívás Sanctum SPA hitelesítéssel (CSRF-süti és Referer).
 api() {
-  local method="$1" path="$2" body="${3:-}" token
+  local method="$1" path="$2" body="${3:-}" token response
   token="$(awk '$6 == "XSRF-TOKEN" { print $7 }' "$JAR" | tail -n 1 | sed 's/%3D/=/g')"
-  curl -sS --fail-with-body -X "$method" "$BASE$path" -b "$JAR" -c "$JAR" \
+  response="$(curl -sS --fail-with-body -X "$method" "$BASE$path" -b "$JAR" -c "$JAR" \
     -H 'Accept: application/json' -H 'Content-Type: application/json' \
-    -H "Referer: $BASE/" -H "X-XSRF-TOKEN: $token" ${body:+-d "$body"}
+    -H "Referer: $BASE/" -H "X-XSRF-TOKEN: $token" ${body:+-d "$body"})" || {
+    echo "$method $path: $response" >&2
+    return 1
+  }
+  printf '%s' "$response"
 }
 json_field() { grep -o "\"$1\":\"\?[^\",}]*" | head -n 1 | sed 's/.*://; s/"//'; }
 
@@ -53,7 +57,7 @@ WEBSITE_ID="$(api POST /api/v1/websites "{\"name\":\"Smoke\",\"slug\":\"$SLUG\"}
 ok "webhely létrehozva (id: $WEBSITE_ID)"
 
 api POST "/api/v1/websites/$WEBSITE_ID/pages" \
-  "{\"title\":\"Kezdőlap\",\"slug\":\"index\",\"content\":[{\"id\":\"c1\",\"type\":\"heading\",\"text\":\"Smoke $RUN_ID\",\"level\":1}]}" \
+  "{\"title\":\"Home\",\"slug\":\"index\",\"content\":[{\"id\":\"c1\",\"type\":\"heading\",\"text\":\"Smoke $RUN_ID\",\"level\":1}]}" \
   >/dev/null || fail "az oldal létrehozása elbukott"
 ok "oldal létrehozva"
 

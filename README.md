@@ -18,23 +18,74 @@ Vizuális weboldalszerkesztő egyetemi Cloud és DevOps beadandóhoz: webhelyek 
 - [Backlog](docs/backlog.md)
 - [AI audit](docs/ai-audit.md)
 
-## Indítás
+## Telepítés és futtatás
 
-Követelmény: Docker (Compose v2) és Git; minden parancs konténerben fut. A lenti parancsok POSIX shellt igényelnek (Windows: Git Bash).
+Minden parancs konténerben fut; a gépen csak az alábbi előfeltételek kellenek.
+
+| OS | Előfeltétel |
+|---|---|
+| Windows 10/11 | Docker Desktop (WSL2 háttér), Git for Windows (Git Bash a smoke teszthez) |
+| Linux | Docker Engine Compose v2 bővítménnyel, Git, bash, curl |
+| macOS | Docker Desktop, Git (a bash és a curl alapból megvan) |
+
+Ellenőrzés: `docker compose version`. Szabad port kell a `127.0.0.1:8080`-on (`NGINX_PORT`).
+
+Ellenőrzött platformok: Linux (a CI `install` jobja minden PR-on) és Windows 11 (Docker Desktop, Git Bash). macOS-en nem ellenőriztük.
+
+### Első indítás
+
+Linux, macOS, Git Bash vagy WSL:
 
 ```sh
-cp .env.example .env                                         # a jelszavakat cseréld le
-[ -f backend/.env ] || cp backend/.env.example backend/.env
+git clone https://github.com/Pgabo99/PageBuilder.git && cd PageBuilder
+cp .env.example .env
+cp backend/.env.example backend/.env
 docker compose build
 docker compose run --rm --no-deps backend composer install
 docker compose run --rm --no-deps frontend npm ci
-docker compose run --rm --no-deps backend sh -c 'grep -q "^APP_KEY=." .env || php artisan key:generate'
-docker compose up -d --wait                                  # minden szolgáltatás healthy
+docker compose run --rm --no-deps backend php artisan key:generate   # csak első alkalommal
+docker compose up -d --wait                                          # minden szolgáltatás healthy
 docker compose exec backend php artisan migrate
-docker compose exec backend php artisan test
+bash scripts/smoke.sh
 ```
 
-- Fut: `mysql`, `redis`, `backend` (PHP-FPM), `worker` (Redis queue), `frontend` (Vite), `nginx`. Csak az Nginx érhető el a hostról: http://localhost:8080 (`NGINX_PORT`); a SPA a `/`, a Laravel az `/api`, `/sanctum`, `/up` alatt, HMR-rel. A többi szolgáltatás a [T1.3](docs/roadmap.md) további lépéseiben készül.
+PowerShell: csak a két másolás más, a többi sor azonos (a smoke tesztet Git Bash-ben futtasd):
+
+```powershell
+Copy-Item .env.example .env
+Copy-Item backend/.env.example backend/.env
+```
+
+Az alkalmazás: http://localhost:8080 (a SPA a `/`, a Laravel az `/api`, `/sanctum`, `/up` alatt, HMR-rel). Csak az Nginx érhető el a hostról.
+
+### Környezeti változók
+
+A gyökér `.env` (a `.env.example` másolata, nincs verziókezelésben) az egyetlen forrás; az `APP_KEY` a `backend/.env`-be generálódik. A repóban csak placeholder érték van.
+
+| Változó | Szerep | Alapérték |
+|---|---|---|
+| `MYSQL_DATABASE`, `MYSQL_USER`, `MYSQL_PASSWORD` | az alkalmazás adatbázisa | `pagebuilder`, `change-me` |
+| `MYSQL_ROOT_PASSWORD` | MySQL root | `change-me-root` |
+| `MYSQL_TEST_USER`, `MYSQL_TEST_PASSWORD` | teszt-adatbázis (`<MYSQL_DATABASE>_testing`) | `pagebuilder_test`, `change-me-test` |
+| `NGINX_PORT` | host port (csak `127.0.0.1`) | `8080` |
+
+A jelszavakat helyi használatra a placeholder is megteszi; máshol az első indítás előtt cseréld le. A MySQL a jelszavakat csak az első indításkor olvassa: utólagos csere az adat-volume törlését igényli (`docker compose down -v`, adatvesztés).
+
+### Ellenőrzés
+
+`bash scripts/smoke.sh` (a repó gyökeréből): minden szolgáltatás healthy, `/up`, SPA, majd egy felhasználói út az API-n: regisztráció, webhely, oldal, publikálás (queue és worker), a publikált oldal kiszolgálása. Hibánál nem nulla kilépési kóddal áll le. Ugyanezt futtatja a CI `install` jobja tiszta checkouton.
+
+### Hibaelhárítás
+
+- `másold a .env.example-t .env néven`: hiányzik a `.env`.
+- Foglalt port: `NGINX_PORT` átírása a `.env`-ben, majd `docker compose up -d --wait`.
+- Docker Desktopon a bind mount lassú, és az első kérések átmenetileg `I/O error`-ral hibázhatnak (Laravel-napló): várj, majd futtasd újra a smoke tesztet.
+- A smoke teszt minden futáskor új felhasználót regisztrál; a regisztráció és belépés korlátja 5/perc, ezért 429 esetén várj egy percet.
+- Leállítás: `docker compose down` (a `-v` az adat-volume-okat is törli).
+
+### Egyéb
+
+- Fut: `mysql`, `redis`, `backend` (PHP-FPM), `worker` (Redis queue), `frontend` (Vite), `nginx`.
 - A hitelesítő adatok és a teszt-adatbázis részletei: [DevOps](docs/devops.md#lokális-környezet-docker-compose).
 - A teszt-adatbázist új MySQL volume-on az init szkript hozza létre. Korábbi (T1.3/1-es) volume esetén, adatvesztés nélkül: `docker compose up -d --wait mysql`, majd `docker compose exec mysql sh /docker-entrypoint-initdb.d/01-testing-db.sh`.
 - Ellenőrzések (konténerből; a `check:*`/`*:check` és a `lint` (backend) nem módosít fájlt):
