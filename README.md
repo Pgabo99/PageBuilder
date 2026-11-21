@@ -76,6 +76,10 @@ A jelszavakat helyi használatra a placeholder is megteszi; máshol az első ind
 
 `bash scripts/smoke.sh` (a repó gyökeréből): minden szolgáltatás healthy, `/up`, SPA, majd egy felhasználói út az API-n: regisztráció, webhely, oldal, publikálás (queue és worker), a publikált oldal kiszolgálása. Hibánál nem nulla kilépési kóddal áll le. Ugyanezt futtatja a CI `install` jobja tiszta checkouton.
 
+### E2E tesztek (Playwright)
+
+`bash scripts/e2e.sh`: elkülönített Compose-projektben (`pagebuilder-e2e`, saját adatbázis, volume-ok és a 18081-es port; a fejlesztői stack és adatai érintetlenek) indítja a stacket, lefuttatja a Chromium-teszteket, majd csak ezt a projektet takarítja, hiba esetén is. Az első futás letölti a pinnelt Playwright image-et. A riport: `e2e/playwright-report/` (`npx playwright show-report` vagy a `index.html` megnyitása). Az `e2e/e2e.env` csak placeholder értékeket tartalmaz; a regisztráció és belépés percenkénti korlátja itt 100 (`AUTH_THROTTLE_PER_MINUTE`), máshol 5.
+
 ### Hibaelhárítás
 
 - `másold a .env.example-t .env néven`: hiányzik a `.env`.

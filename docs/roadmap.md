@@ -94,7 +94,8 @@ Regisztráció és bejelentkezés (Sanctum); webhelyek és oldalak CRUD, Policy-
 
 | ID | Feladat |
 |---|---|
-| T8.1 | Playwright a CI-ban: tiszta stackről regisztráció és bejelentkezés; webhely, oldal, szerkesztés; publikálás |
+| T8.1/1 ✅ | E2E-környezet: konfigurálható auth-korlát, Playwright Compose-profil, `scripts/e2e.sh`, próbateszt |
+| T8.1/2 | Három folyamat (szerkesztés és mentés; publikálás; hibaút) Playwrighttal, CI `e2e` job, hibakeresési artifact |
 | T8.2 | README, architektúra véglegesítése, AI audit |
 
 ## Technikai adósság
