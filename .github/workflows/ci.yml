@@ -7,8 +7,6 @@ on:
     branches: [main]
     # A tag-bump merge-e (csak deploy/) nem indít újabb image-buildet; a PR-ellenőrzések nem szűrtek.
     paths-ignore: ['deploy/**']
-  # A bump job ezzel indítja a CI-t a PR branchén: a GITHUB_TOKEN-nel nyitott PR nem indít pull_request futást.
-  workflow_dispatch:
 
 permissions:
   contents: read
@@ -255,7 +253,8 @@ jobs:
         run: docker logout ghcr.io
 
   # A publikált image-ek tagjét PR-ban írja át a deploy/app-ban. A magasabb jogok csak itt vannak.
-  # A PR nem kerüli meg a branch protectiont: a kötelező ellenőrzések a dispatch-futásból jönnek, a merge kézi.
+  # A PR nem kerüli meg a branch protectiont: a bot-PR pull_request futása kézi jóváhagyásra vár
+  # (Approve and run workflows), a merge is kézi.
   bump:
     name: bump
     needs: [publish]
@@ -264,7 +263,6 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-      actions: write
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
@@ -282,7 +280,7 @@ jobs:
       - name: Tag-csere
         run: bash scripts/set-image-tag.sh "$GITHUB_SHA"
 
-      - name: Branch, PR és CI indítása
+      - name: Branch és PR
         run: |
           if git diff --quiet; then
             echo "A manifestek már erre a SHA-ra mutatnak, nincs teendő."
@@ -296,7 +294,6 @@ jobs:
           git push origin "$branch"
           body="A deploy/app image-címkéi a(z) $GITHUB_SHA commit image-eire mutatnak.
 
-          Automatikus PR: az ellenőrzések workflow_dispatch-csel indultak a branchen. Rollback: a merge-commit git revert-je (PR-ban)."
+          Automatikus PR: az ellenőrzések a pull_request futás kézi jóváhagyása után indulnak. Rollback: a merge-commit git revert-je (PR-ban)."
           gh pr create --base main --head "$branch" --assignee "$GITHUB_REPOSITORY_OWNER" \
             --title "Image-tag frissítése: ${GITHUB_SHA::7}" --body "$body"
-          gh workflow run ci.yml --ref "$branch"

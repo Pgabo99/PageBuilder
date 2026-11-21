@@ -78,12 +78,14 @@ flowchart LR
 
 ### Tag-bump PR
 
-A `publish` után a `bump` job (csak `main` push; `contents`, `pull-requests` és `actions: write` jog kizárólag itt): ellenőrzi, hogy mindkét image elérhető a GHCR-ben (`docker manifest inspect`), a `scripts/set-image-tag.sh` cseréli a címkéket a `deploy/app`-ban (tesztje: `scripts/test-set-image-tag.sh`, CI `scripts` job), majd `deploy/image-<sha7>` branchet, PR-t nyit, és `workflow_dispatch`-csel elindítja a CI-t a branchen.
+A `publish` után a `bump` job (csak `main` push; `contents` és `pull-requests: write` jog kizárólag itt): ellenőrzi, hogy mindkét image elérhető a GHCR-ben (`docker manifest inspect`), a `scripts/set-image-tag.sh` cseréli a címkéket a `deploy/app`-ban (tesztje: `scripts/test-set-image-tag.sh`, CI `scripts` job), majd `deploy/image-<sha7>` branchet és PR-t nyit.
 
-- A `GITHUB_TOKEN`-nel nyitott PR nem indít `pull_request` futást; a dispatch-futás check-jei a PR head commitjára kerülnek, így a kötelező ellenőrzések teljesülhetnek. Nincs PAT, GitHub App és automatikus jóváhagyás; a merge kézi, a branch protection változatlan. Ha a dispatch-futás nem teljesíti a kötelező ellenőrzéseket, a tag-bumpot kézzel végezzük (`scripts/set-image-tag.sh <sha>`, saját PR).
-- Hurok ellen: a `push` trigger `paths-ignore: deploy/**`, így a bump merge-e nem épít újabb image-et. A PR-ellenőrzésekre ez nem hat.
+- **Kézi lépések:** a bot-PR `pull_request` futása `action_required` állapotban megáll; a PR oldalán az „Approve and run workflows” gombbal indul el, és a kötelező ellenőrzések ekkor teljesülnek. Utána a merge is kézi. A branch protection változatlan; nincs PAT, GitHub App és automatikus jóváhagyás.
+- **Igazolt (#85):** a `workflow_dispatch`-csel indított CI check-jei a PR head commitján zöldek voltak, mégis `BLOCKED` maradt a PR; a futás jóváhagyása és lefutása után `CLEAN`. Ezért nincs dispatch és `actions: write` jog.
+- Hurok ellen: a `push` trigger `paths-ignore: deploy/**`, így a bump merge-e nem épít újabb image-et (a #85 merge-e után nem indult futás). A PR-ellenőrzésekre ez nem hat.
 - Az automatikus PR assignee-je a repó tulajdonosa; milestone és label nincs rajta.
 - Előfeltétel: Settings → Actions → General → „Allow GitHub Actions to create and approve pull requests” (a workflow alapjogosultsága `read` marad).
+- Ha a bump nem használható, kézzel: `scripts/set-image-tag.sh <sha>`, saját PR.
 
 ### Argo CD bootstrap (a VM és a k3s létrejötte után, egyszer)
 
