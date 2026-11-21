@@ -1,0 +1,109 @@
+# Laravel (PHP-FPM). Az image tagjét a CI cseréli a commit SHA-jára (T6.4); a tag mindhárom helyen egyezik.
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: pagebulder
+spec:
+  selector:
+    app: backend
+  ports:
+    - name: fastcgi
+      port: 9000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: pagebulder
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 82 # www-data
+        runAsGroup: 82
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+        # A séma mindig a futtatott image-hez tartozik; ha a MySQL még nem kész, a konténer újraindul.
+        - name: migrate
+          image: ghcr.io/pgabo99/pagebulder-backend:004f1bb5c20420c331aea432df06c8c00df5dae5
+          command: ["php", "artisan", "migrate", "--force"]
+          envFrom:
+            - configMapRef:
+                name: pagebulder-config
+          env: &secret-env
+            - name: APP_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: pagebulder-secrets
+                  key: APP_KEY
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: pagebulder-secrets
+                  key: MYSQL_PASSWORD
+          securityContext: &container-security
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          # Read-only gyökér mellett csak ez a három hely írható (Blade-gyorsítótár, csomagjegyzék, /tmp).
+          volumeMounts: &rw-mounts
+            - name: tmp
+              mountPath: /tmp
+            - name: views
+              mountPath: /var/www/backend/storage/framework/views
+            - name: bootstrap-cache
+              mountPath: /var/www/backend/bootstrap/cache
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+      containers:
+        - name: backend
+          image: ghcr.io/pgabo99/pagebulder-backend:004f1bb5c20420c331aea432df06c8c00df5dae5
+          ports:
+            - name: fastcgi
+              containerPort: 9000
+          envFrom:
+            - configMapRef:
+                name: pagebulder-config
+          env: *secret-env
+          securityContext: *container-security
+          volumeMounts: *rw-mounts
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              memory: 384Mi
+          readinessProbe: &fpm-probe
+            exec:
+              command:
+                - sh
+                - -c
+                - SCRIPT_NAME=/ping SCRIPT_FILENAME=/ping REQUEST_METHOD=GET cgi-fcgi -bind -connect 127.0.0.1:9000 | grep -q pong
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            <<: *fpm-probe
+            initialDelaySeconds: 20
+            failureThreshold: 6
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: views
+          emptyDir: {}
+        - name: bootstrap-cache
+          emptyDir: {}

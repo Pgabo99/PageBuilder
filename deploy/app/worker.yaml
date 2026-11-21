@@ -1,0 +1,92 @@
+# Queue worker: az egyetlen szereplő, amely írja és törli a publikált webhelyek kötetét (Nginx csak olvassa).
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sites-data
+  namespace: pagebulder
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker
+  namespace: pagebulder
+spec:
+  replicas: 1
+  # Egyetlen író: frissítéskor előbb a régi worker áll le.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: worker
+  template:
+    metadata:
+      labels:
+        app: worker
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 82 # www-data
+        runAsGroup: 82
+        fsGroup: 82
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: worker
+          image: ghcr.io/pgabo99/pagebulder-backend:004f1bb5c20420c331aea432df06c8c00df5dae5
+          # A --timeout kisebb a Redis queue retry_after értékénél (90 s), így egy job nem fut kétszer párhuzamosan.
+          command: ["php", "artisan", "queue:work", "--tries=3", "--timeout=60"]
+          envFrom:
+            - configMapRef:
+                name: pagebulder-config
+          env:
+            - name: APP_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: pagebulder-secrets
+                  key: APP_KEY
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: pagebulder-secrets
+                  key: MYSQL_PASSWORD
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 96Mi
+            limits:
+              memory: 256Mi
+          livenessProbe:
+            exec:
+              command: ["sh", "-c", "pgrep -f 'queue:work' > /dev/null"]
+            initialDelaySeconds: 20
+            periodSeconds: 20
+            timeoutSeconds: 5
+          volumeMounts:
+            - name: sites
+              mountPath: /var/www/sites
+            - name: tmp
+              mountPath: /tmp
+            - name: views
+              mountPath: /var/www/backend/storage/framework/views
+            - name: bootstrap-cache
+              mountPath: /var/www/backend/bootstrap/cache
+      volumes:
+        - name: sites
+          persistentVolumeClaim:
+            claimName: sites-data
+        - name: tmp
+          emptyDir: {}
+        - name: views
+          emptyDir: {}
+        - name: bootstrap-cache
+          emptyDir: {}
