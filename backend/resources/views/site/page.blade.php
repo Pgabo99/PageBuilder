@@ -5,12 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $page->title }} – {{ $website->name }}</title>
     <style>
-        body { margin: 0; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #1f2328; }
-        nav { padding: .75rem 1rem; border-bottom: 1px solid #d1d9e0; display: flex; gap: 1rem; flex-wrap: wrap; }
-        nav a { color: #2f5bea; text-decoration: none; }
-        nav a[aria-current="page"] { font-weight: 700; color: #1f2328; }
+        :root { --bg: {{ $site->palette()['bg'] }}; --text: {{ $site->palette()['text'] }}; --border: {{ $site->palette()['border'] }}; --accent: {{ $site->accent() }}; --on-accent: {{ $site->onAccent() }}; }
+        body { margin: 0; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: var(--text); background: var(--bg); }
+        nav { padding: .75rem 1rem; border-bottom: 1px solid var(--border); display: flex; gap: 1rem; flex-wrap: wrap; }
+        nav a { color: var(--accent); text-decoration: none; }
+        nav a[aria-current="page"] { font-weight: 700; color: var(--text); }
         main { max-width: 42rem; margin: 2rem auto; padding: 0 1rem; }
-        .button { display: inline-block; padding: .5rem 1rem; color: #fff; background: #2f5bea; border-radius: .5rem; text-decoration: none; font-weight: 600; }
+        .button { display: inline-block; padding: .5rem 1rem; color: var(--on-accent); background: var(--accent); border-radius: .5rem; text-decoration: none; font-weight: 600; }
     </style>
 </head>
 <body>

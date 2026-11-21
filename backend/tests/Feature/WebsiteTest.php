@@ -114,3 +114,33 @@ describe('idegen webhely', function () {
         $this->assertModelExists($this->foreign);
     });
 });
+
+describe('színbeállítások', function () {
+    it('létrehozáskor elmenti a kiemelőszínt és az oldaltémát, és visszaadja', function () {
+        $this->actingAs($this->user)->postJson('/api/v1/websites', [
+            'name' => 'Színes', 'slug' => 'szines', 'accent_color' => '#E11D48', 'page_theme' => 'dark',
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.accent_color', '#E11D48')
+            ->assertJsonPath('data.page_theme', 'dark');
+    });
+
+    it('megadás nélkül üres (alapértelmezett) marad, módosításkor törölhető', function () {
+        $website = Website::factory()->for($this->user)->create(['accent_color' => '#112233', 'page_theme' => 'dark']);
+
+        $this->actingAs($this->user)->putJson("/api/v1/websites/{$website->id}", [
+            'name' => $website->name, 'slug' => $website->slug, 'accent_color' => null, 'page_theme' => null,
+        ])->assertOk()->assertJsonPath('data.accent_color', null)->assertJsonPath('data.page_theme', null);
+    });
+
+    it('hibás színt és témát elutasít', function (string $field, string $value) {
+        $this->actingAs($this->user)->postJson('/api/v1/websites', [
+            'name' => 'X', 'slug' => 'x', $field => $value,
+        ])->assertUnprocessable()->assertJsonValidationErrors($field);
+    })->with([
+        'rövid hex' => ['accent_color', '#fff'],
+        'színnév' => ['accent_color', 'red'],
+        'CSS-injekció' => ['accent_color', '#ffffff;}</style><script>alert(1)</script>'],
+        'ismeretlen téma' => ['page_theme', 'kek'],
+    ]);
+});
