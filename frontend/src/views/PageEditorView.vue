@@ -7,10 +7,12 @@ import { pagesApi } from '@/api/pages'
 import ComponentEditor from '@/components/ComponentEditor.vue'
 import FormField from '@/components/FormField.vue'
 import StatusBlock from '@/components/StatusBlock.vue'
+import { useToast } from '@/composables/useToast'
 import type { ComponentType, Page, PageComponent } from '@/types/content'
 import { componentTypes, createComponent, moveItem } from '@/utils/components'
 
 const route = useRoute()
+const toast = useToast()
 const pageId = computed(() => Number(route.params.id))
 
 const page = ref<Page | null>(null)
@@ -59,6 +61,7 @@ async function save(): Promise<void> {
     })
     page.value = updated
     saved.value = snapshot()
+    toast.success('Oldal mentve.')
   } catch (e) {
     if (e instanceof ValidationError) {
       errors.value = e.errors

@@ -5,11 +5,13 @@ import { useRoute, useRouter } from 'vue-router'
 import { pagesApi } from '@/api/pages'
 import FormField from '@/components/FormField.vue'
 import { useForm } from '@/composables/useForm'
+import { useToast } from '@/composables/useToast'
 import { slugify } from '@/utils/slug'
 
 const route = useRoute()
 const router = useRouter()
 const { submitting, errors, message, submit } = useForm()
+const toast = useToast()
 
 const websiteId = computed(() => Number(route.params.websiteId))
 const form = reactive({ title: '', slug: '' })
@@ -31,7 +33,10 @@ async function onSubmit(): Promise<void> {
   const ok = await submit(async () => {
     await pagesApi.create(websiteId.value, { ...form, content: [] })
   })
-  if (ok) await router.push({ name: 'website', params: { id: websiteId.value } })
+  if (ok) {
+    toast.success('Oldal létrehozva.')
+    await router.push({ name: 'website', params: { id: websiteId.value } })
+  }
 }
 </script>
 

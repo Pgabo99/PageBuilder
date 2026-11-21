@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { ApiError } from '@/api/client'
 import { websitesApi } from '@/api/websites'
+import { resetToasts, useToast } from '@/composables/useToast'
 import type { Website } from '@/types/content'
 import PublishPanel from '../PublishPanel.vue'
 
@@ -30,6 +31,7 @@ const publishButton = (wrapper: ReturnType<typeof mount>) => wrapper.find('butto
 describe('PublishPanel', () => {
   beforeEach(() => {
     vi.useFakeTimers()
+    resetToasts()
     vi.mocked(websitesApi.get).mockReset()
     vi.mocked(websitesApi.publish).mockReset()
   })
@@ -72,6 +74,24 @@ describe('PublishPanel', () => {
 
     await vi.advanceTimersByTimeAsync(10_000)
     expect(websitesApi.get).toHaveBeenCalledTimes(2)
+  })
+
+  it('a lefutott publikálásról értesítést küld, de betöltéskor a kész állapotról nem', async () => {
+    mount(PublishPanel, {
+      props: {
+        website: { ...base, publish_status: 'succeeded', published_at: '2026-11-19T20:00:00Z' },
+      },
+    })
+    expect(useToast().toasts.value).toHaveLength(0)
+
+    vi.mocked(websitesApi.publish).mockResolvedValue({ ...base, publish_status: 'queued' })
+    vi.mocked(websitesApi.get).mockResolvedValue({ ...base, publish_status: 'succeeded' })
+    const wrapper = mount(PublishPanel, { props: { website: base } })
+    await publishButton(wrapper).trigger('click')
+    await flushPromises()
+    await vi.advanceTimersByTimeAsync(2000)
+
+    expect(useToast().toasts.value.map((toast) => toast.message)).toEqual(['Webhely publikálva.'])
   })
 
   it('betöltéskor folyamatban lévő publikálásnál is lekérdez', async () => {

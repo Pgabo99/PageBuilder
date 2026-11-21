@@ -9,6 +9,7 @@ import ConfirmButton from '@/components/ConfirmButton.vue'
 import PublishPanel from '@/components/PublishPanel.vue'
 import StatusBlock from '@/components/StatusBlock.vue'
 import { useAsyncData } from '@/composables/useAsyncData'
+import { useToast } from '@/composables/useToast'
 
 const route = useRoute()
 const router = useRouter()
@@ -16,6 +17,7 @@ const websiteId = computed(() => Number(route.params.id))
 
 const website = useAsyncData(() => websitesApi.get(websiteId.value))
 const pages = useAsyncData(() => pagesApi.list(websiteId.value))
+const toast = useToast()
 const actionError = ref<string | null>(null)
 const busy = ref(false)
 
@@ -34,12 +36,14 @@ async function run(action: () => Promise<void>): Promise<void> {
 const removeWebsite = () =>
   run(async () => {
     await websitesApi.remove(websiteId.value)
+    toast.success('Webhely törölve.')
     await router.push({ name: 'home' })
   })
 
 const removePage = (id: number) =>
   run(async () => {
     await pagesApi.remove(id)
+    toast.success('Oldal törölve.')
     await pages.reload()
   })
 </script>

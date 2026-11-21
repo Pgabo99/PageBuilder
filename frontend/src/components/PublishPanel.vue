@@ -4,11 +4,13 @@ import { computed, ref, watch } from 'vue'
 import { errorMessage } from '@/api/client'
 import { websitesApi } from '@/api/websites'
 import { usePolling } from '@/composables/usePolling'
+import { useToast } from '@/composables/useToast'
 import type { Website } from '@/types/content'
 
 // Publikálás gomb és állapot; a folyamatban lévő állapotot a háttérben lekérdezi.
 const props = defineProps<{ website: Website }>()
 
+const toast = useToast()
 const current = ref<Website>(props.website)
 const busy = ref(false)
 const error = ref<string | null>(null)
@@ -27,7 +29,22 @@ const polling = usePolling(async () => {
   return !inProgress.value
 })
 
-watch(inProgress, (active) => (active ? polling.start() : polling.stop()), { immediate: true })
+watch(
+  inProgress,
+  (active, wasActive) => {
+    if (active) {
+      polling.start()
+      return
+    }
+    polling.stop()
+    // Csak akkor jelzünk, ha a publikálás ténylegesen lefutott (nem betöltéskor).
+    if (wasActive && current.value.publish_status === 'succeeded')
+      toast.success('Webhely publikálva.')
+    if (wasActive && current.value.publish_status === 'failed')
+      toast.error('A publikálás sikertelen.')
+  },
+  { immediate: true },
+)
 
 async function publish(): Promise<void> {
   busy.value = true
