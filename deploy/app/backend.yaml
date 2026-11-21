@@ -3,7 +3,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: backend
-  namespace: pagebulder
+  namespace: pagebuilder
 spec:
   selector:
     app: backend
@@ -15,7 +15,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: backend
-  namespace: pagebulder
+  namespace: pagebuilder
 spec:
   replicas: 1
   selector:
@@ -35,21 +35,21 @@ spec:
       initContainers:
         # A séma mindig a futtatott image-hez tartozik; ha a MySQL még nem kész, a konténer újraindul.
         - name: migrate
-          image: ghcr.io/pgabo99/pagebulder-backend:004f1bb5c20420c331aea432df06c8c00df5dae5
+          image: ghcr.io/pgabo99/pagebuilder-backend:004f1bb5c20420c331aea432df06c8c00df5dae5
           command: ["php", "artisan", "migrate", "--force"]
           envFrom:
             - configMapRef:
-                name: pagebulder-config
+                name: pagebuilder-config
           env: &secret-env
             - name: APP_KEY
               valueFrom:
                 secretKeyRef:
-                  name: pagebulder-secrets
+                  name: pagebuilder-secrets
                   key: APP_KEY
             - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: pagebulder-secrets
+                  name: pagebuilder-secrets
                   key: MYSQL_PASSWORD
           securityContext: &container-security
             allowPrivilegeEscalation: false
@@ -72,13 +72,13 @@ spec:
               memory: 256Mi
       containers:
         - name: backend
-          image: ghcr.io/pgabo99/pagebulder-backend:004f1bb5c20420c331aea432df06c8c00df5dae5
+          image: ghcr.io/pgabo99/pagebuilder-backend:004f1bb5c20420c331aea432df06c8c00df5dae5
           ports:
             - name: fastcgi
               containerPort: 9000
           envFrom:
             - configMapRef:
-                name: pagebulder-config
+                name: pagebuilder-config
           env: *secret-env
           securityContext: *container-security
           volumeMounts: *rw-mounts

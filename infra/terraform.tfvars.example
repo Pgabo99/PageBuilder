@@ -1,5 +1,5 @@
 # Másold terraform.tfvars néven (a fájl gitignore-olt), és töltsd ki.
-dns_label        = "pagebulder-pelda"
+dns_label        = "pagebuilder-pelda"
 ssh_allowed_cidr = "203.0.113.7/32"
 ssh_public_key   = "ssh-ed25519 AAAA... felhasznalo@gep"
 

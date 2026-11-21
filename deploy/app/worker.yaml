@@ -3,7 +3,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: sites-data
-  namespace: pagebulder
+  namespace: pagebuilder
 spec:
   accessModes: ["ReadWriteOnce"]
   resources:
@@ -14,7 +14,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: worker
-  namespace: pagebulder
+  namespace: pagebuilder
 spec:
   replicas: 1
   # Egyetlen író: frissítéskor előbb a régi worker áll le.
@@ -37,22 +37,22 @@ spec:
           type: RuntimeDefault
       containers:
         - name: worker
-          image: ghcr.io/pgabo99/pagebulder-backend:004f1bb5c20420c331aea432df06c8c00df5dae5
+          image: ghcr.io/pgabo99/pagebuilder-backend:004f1bb5c20420c331aea432df06c8c00df5dae5
           # A --timeout kisebb a Redis queue retry_after értékénél (90 s), így egy job nem fut kétszer párhuzamosan.
           command: ["php", "artisan", "queue:work", "--tries=3", "--timeout=60"]
           envFrom:
             - configMapRef:
-                name: pagebulder-config
+                name: pagebuilder-config
           env:
             - name: APP_KEY
               valueFrom:
                 secretKeyRef:
-                  name: pagebulder-secrets
+                  name: pagebuilder-secrets
                   key: APP_KEY
             - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: pagebulder-secrets
+                  name: pagebuilder-secrets
                   key: MYSQL_PASSWORD
           securityContext:
             allowPrivilegeEscalation: false

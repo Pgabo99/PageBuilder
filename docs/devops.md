@@ -36,7 +36,7 @@ Szolgáltatások: `nginx`, `backend` (PHP-FPM), `worker`, `scheduler`, `mysql`, 
 - `security` job, párhuzamosan: Trivy fs (`--scanners vuln,secret`, `aquasec/trivy` digest alapján), `composer audit --locked`, `npm audit`. Minden súlyosság megjelenik, csak a HIGH és CRITICAL blokkol; automatikus javítás nincs, sérülékenység figyelmen kívül hagyása csak külön jóváhagyással (`.trivyignore`, indoklással). A Trivy az npm fejlesztői függőségeket alapból nem vizsgálja, ezeket az `npm audit` lefedi.
 - `images` job: a production image-ek buildje és `trivy image` vizsgálata; teljes riport, de csak a javítható HIGH/CRITICAL blokkol (`--ignore-unfixed`, csak itt; AI-045).
 - Production image-ek: PHP (`docker/php/Dockerfile`, `prod` target: a Composer nélküli `runtime` stage-re épül, fejlesztői csomagok és tesztek nélkül, `www-data`), Nginx (`docker/nginx/Dockerfile`, a gyökér az allowlistes build context: Vite build + `backend/public`, `prod.conf`, `nginx` felhasználó, 8080). A backend és a worker ugyanazt a PHP image-et használja.
-- `publish` job (csak `main` push, minden ellenőrzés után): build, Trivy-kapu mindkét image-re, majd push: `ghcr.io/<owner>/pagebulder-backend:<commit SHA>` és `pagebulder-nginx:<commit SHA>`; `latest` tag nincs, a deploy és a rollback a SHA-ra épül. `GITHUB_TOKEN`, `packages: write` csak ebben a jobban. A push után digest alapján letölti és füstteszteli az image-eket; a tag és a digest a futás összefoglalójában. A csomagok nyilvánosak: a `source` label a nyilvános repóhoz köti őket, és annak láthatóságát öröklik; titkot nem tartalmaznak, így a k3s-nek nem kell pull secret (AI-046).
+- `publish` job (csak `main` push, minden ellenőrzés után): build, Trivy-kapu mindkét image-re, majd push: `ghcr.io/<owner>/pagebuilder-backend:<commit SHA>` és `pagebuilder-nginx:<commit SHA>`; `latest` tag nincs, a deploy és a rollback a SHA-ra épül. `GITHUB_TOKEN`, `packages: write` csak ebben a jobban. A push után digest alapján letölti és füstteszteli az image-eket; a tag és a digest a futás összefoglalójában. A csomagok nyilvánosak: a `source` label a nyilvános repóhoz köti őket, és annak láthatóságát öröklik; titkot nem tartalmaznak, így a k3s-nek nem kell pull secret (AI-046).
 - `main` branch protection (nyilvános repó, ingyenes csomag): kötelező PR, kötelező és naprakész `backend`, `frontend`, `security` és `images` ellenőrzés, 0 jóváhagyás, force push és törlés tiltva, adminra is.
 
 ## Image-ek
@@ -71,7 +71,7 @@ flowchart LR
 
 ## GitOps, deploy és rollback
 
-- Az Argo CD a `main` ág `deploy/app` könyvtárát szinkronizálja (`deploy/argocd/application.yaml`: automated sync, self-heal, prune). A kézzel létrehozott `pagebulder-secrets` nem része a gitnek, ezért a prune nem érinti.
+- Az Argo CD a `main` ág `deploy/app` könyvtárát szinkronizálja (`deploy/argocd/application.yaml`: automated sync, self-heal, prune). A kézzel létrehozott `pagebuilder-secrets` nem része a gitnek, ezért a prune nem érinti.
 - A tag-commit PR-ban érkezik (a branch protection érvényben marad); alkalmazás-rollback: a tag-commit `git revert`-je; az Argo CD visszaállítja az előző image-et. Minden deploy és rollback commitként visszakereshető.
 - A webhely-tartalom rollbackje alkalmazásszintű ([publishing.md](publishing.md)), ettől független.
 
@@ -121,23 +121,23 @@ docker run --rm -v "$PWD/infra:/work" -w /work hashicorp/terraform:1.17.1 init
 
 ## Alkalmazás-manifesztek (`deploy/app`)
 
-Sima manifestek, egy `pagebulder` namespace-ben; az Argo CD ezt a könyvtárat szinkronizálja (T6.2/2).
+Sima manifestek, egy `pagebuilder` namespace-ben; az Argo CD ezt a könyvtárat szinkronizálja (T6.2/2).
 
 | Fájl | Tartalom |
 |---|---|
-| `00-namespace-config.yaml` | namespace és `pagebulder-config` ConfigMap (titok nélkül) |
+| `00-namespace-config.yaml` | namespace és `pagebuilder-config` ConfigMap (titok nélkül) |
 | `mysql.yaml`, `redis.yaml` | StatefulSet + ClusterIP Service + PVC (5 Gi, 1 Gi); csak a clusteren belül érhetők el |
 | `backend.yaml` | PHP-FPM Deployment, `migrate` initContainer, Service (9000) |
 | `worker.yaml` | queue worker (`Recreate`), `sites-data` PVC: az egyetlen író |
 | `nginx.yaml` | Nginx Deployment (a `sites-data` csak olvasható), Service, Traefik Ingress |
 
-- **Titkok** a `pagebulder-secrets` Secretben vannak, nem a gitben. Egyszeri létrehozás (a klaszter létrejötte után, az Argo CD előtt):
+- **Titkok** a `pagebuilder-secrets` Secretben vannak, nem a gitben. Egyszeri létrehozás (a klaszter létrejötte után, az Argo CD előtt):
   ```
-  kubectl create namespace pagebulder
-  kubectl -n pagebulder create secret generic pagebulder-secrets     --from-literal=APP_KEY="base64:$(openssl rand -base64 32)"     --from-literal=MYSQL_PASSWORD="$(openssl rand -base64 24 | tr -d '/+=')"     --from-literal=MYSQL_ROOT_PASSWORD="$(openssl rand -base64 24 | tr -d '/+=')"
+  kubectl create namespace pagebuilder
+  kubectl -n pagebuilder create secret generic pagebuilder-secrets     --from-literal=APP_KEY="base64:$(openssl rand -base64 32)"     --from-literal=MYSQL_PASSWORD="$(openssl rand -base64 24 | tr -d '/+=')"     --from-literal=MYSQL_ROOT_PASSWORD="$(openssl rand -base64 24 | tr -d '/+=')"
   ```
   Az `APP_KEY` elvesztése a titkosított adatok (pl. sessionök) érvénytelenné válásával jár; a jelszavak a MySQL első indításakor kerülnek az adatbázisba.
-- **Image-ek**: `ghcr.io/pgabo99/pagebulder-{backend,nginx}:<teljes commit SHA>`; a tag a backend (3 helyen) és az nginx manifestben van, a CI (T6.4) cseréli. A `sites-data` RWO PVC-t a worker és az Nginx egy node-on osztja meg (egy VM).
+- **Image-ek**: `ghcr.io/pgabo99/pagebuilder-{backend,nginx}:<teljes commit SHA>`; a tag a backend (3 helyen) és az nginx manifestben van, a CI (T6.4) cseréli. A `sites-data` RWO PVC-t a worker és az Nginx egy node-on osztja meg (egy VM).
 - **Erőforrások** (a 4 GB-os VM-hez, [m6-terv](m6-terv.md)): requestek összesen ~0,7 GB, limitek ~1,5 GB az alkalmazás podjaira; a MySQL kis buffer poollal és kikapcsolt performance schemával fut.
 - **Biztonság**: minden pod nem root felhasználóval, `readOnlyRootFilesystem`, minden capability eldobva, `seccomp: RuntimeDefault`; írható csak az `emptyDir` (tmp, Blade-gyorsítótár, `bootstrap/cache`, MySQL socket) és a PVC. A MySQL, Redis, backend és Nginx nem root, read-only módját helyben `docker run`-nal kipróbáltuk; a k3s-en még nem futott.
 - Trivy `config` (2026-11-21), elfogadott találatok: CPU-limit hiánya (LOW, a throttling elkerülésére), UID/GID ≤ 10000 (LOW, az image-ek fix felhasználói), `ghcr.io` nem „megbízható registry” (MEDIUM, saját image-ek), a ConfigMap „érzékeny tartalma” (MEDIUM, téves: csak felhasználónevek és hosztok, a jelszavak Secretben).

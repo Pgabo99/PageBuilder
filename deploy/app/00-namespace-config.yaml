@@ -1,16 +1,16 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: pagebulder
+  name: pagebuilder
 ---
-# Nem titkos beállítások. A titkok a `pagebulder-secrets` Secretben vannak (nincs a gitben, lásd docs/devops.md).
+# Nem titkos beállítások. A titkok a `pagebuilder-secrets` Secretben vannak (nincs a gitben, lásd docs/devops.md).
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: pagebulder-config
-  namespace: pagebulder
+  name: pagebuilder-config
+  namespace: pagebuilder
 data:
-  APP_NAME: PageBulder
+  APP_NAME: PageBuilder
   APP_ENV: production
   APP_DEBUG: "false"
   # A T6.3 (HTTPS) a tényleges DNS-névre és https-re cseréli ezt a három értéket.
@@ -22,8 +22,8 @@ data:
   DB_CONNECTION: mysql
   DB_HOST: mysql
   DB_PORT: "3306"
-  DB_DATABASE: pagebulder
-  DB_USERNAME: pagebulder
+  DB_DATABASE: pagebuilder
+  DB_USERNAME: pagebuilder
   SESSION_DRIVER: redis
   QUEUE_CONNECTION: redis
   CACHE_STORE: redis
@@ -32,5 +32,5 @@ data:
   REDIS_PORT: "6379"
   PUBLISH_PATH: /var/www/sites
   # A MySQL image első indításkor ezekből hozza létre az adatbázist és a felhasználót.
-  MYSQL_DATABASE: pagebulder
-  MYSQL_USER: pagebulder
+  MYSQL_DATABASE: pagebuilder
+  MYSQL_USER: pagebuilder
