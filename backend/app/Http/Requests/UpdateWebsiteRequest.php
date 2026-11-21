@@ -21,6 +21,8 @@ class UpdateWebsiteRequest extends FormRequest
                 'regex:'.StoreWebsiteRequest::SLUG_PATTERN,
                 Rule::unique('websites', 'slug')->ignore($this->route('website')),
             ],
+            'accent_color' => ['nullable', 'string', 'regex:'.StoreWebsiteRequest::COLOR_PATTERN],
+            'page_theme' => ['nullable', 'string', Rule::in(StoreWebsiteRequest::PAGE_THEMES)],
         ];
     }
 }

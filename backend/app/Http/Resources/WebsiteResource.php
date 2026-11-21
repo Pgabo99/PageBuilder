@@ -16,6 +16,8 @@ class WebsiteResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'slug' => $this->slug,
+            'accent_color' => $this->accent_color,
+            'page_theme' => $this->page_theme,
             'publish_status' => $this->publish_status?->value,
             'published_at' => $this->published_at,
             'published_url' => $this->published_slug ? '/sites/'.$this->published_slug.'/' : null,

@@ -240,3 +240,51 @@ describe('állapot és takarítás', function () {
         rmdir($outside);
     });
 });
+
+describe('színek a publikált oldalon', function () {
+    it('a beállított kiemelőszínt és az oldaltémát használja', function () {
+        $this->website->update(['accent_color' => '#E11D48', 'page_theme' => 'dark']);
+
+        runJob($this->website);
+
+        expect(file_get_contents("{$this->dir}/proba/index.html"))
+            ->toContain('--accent: #e11d48')
+            ->toContain('--bg: #0f1115')
+            ->toContain('--text: #e6e8ec');
+    });
+
+    it('alapértelmezett megjelenés, ha nincs beállítás', function () {
+        runJob($this->website);
+
+        expect(file_get_contents("{$this->dir}/proba/index.html"))
+            ->toContain('--accent: #2f5bea')
+            ->toContain('--bg: #ffffff');
+    });
+
+    it('a gomb szövegszíne olvasható: világos kiemelőn fekete, sötétén fehér', function (string $accent, string $expected) {
+        $this->website->update(['accent_color' => $accent]);
+
+        runJob($this->website);
+
+        expect(file_get_contents("{$this->dir}/proba/index.html"))->toContain("--on-accent: {$expected}");
+    })->with([
+        'sárga' => ['#FFE600', '#000000'],
+        'sötétkék' => ['#112244', '#ffffff'],
+    ]);
+
+    it('a validációt megkerülő hibás tárolt érték nem kerül a CSS-be', function () {
+        Website::whereKey($this->website->id)->update([
+            // Az oszlop mérete is korlátoz (7 és 5 karakter), de a renderer ettől függetlenül is ellenőriz.
+            'accent_color' => 'x;}<b>',
+            'page_theme' => 'kek',
+        ]);
+
+        runJob($this->website->fresh());
+
+        $html = file_get_contents("{$this->dir}/proba/index.html");
+        expect($html)
+            ->not->toContain('x;}<b>')
+            ->toContain('--accent: #2f5bea')
+            ->toContain('--bg: #ffffff');
+    });
+});
