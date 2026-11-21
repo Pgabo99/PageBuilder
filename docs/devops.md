@@ -40,6 +40,7 @@ Szolgáltatások: `nginx`, `backend` (PHP-FPM), `worker`, `scheduler`, `mysql`, 
 
 - `.github/workflows/ci.yml` PR-ra és `main`-re: `backend` (Pint, Pest) és `frontend` (Oxlint/ESLint, Prettier, `type-check`, Vitest) job, ugyanazon a Compose-stacken, mint lokálisan; lockfile alapú telepítés, fájlmódosítás nélküli ellenőrzések; hitelesítő adatként csak a `.env.example` placeholderei (eldobható CI-adatbázis).
 - `install` job: a README első indítási lépései tiszta checkouton (`.env.example` placeholderekkel), majd `scripts/smoke.sh`: szolgáltatások, health, SPA és felhasználói út az API-n. A GitHub-runnerek nem futtatnak Linux-konténert Windowson és macOS-en, ezért ott a CI nem ellenőriz; a Windows-ellenőrzés kézi (a README rögzíti).
+- `secrets` job: `scripts/check-secrets.sh` és tesztje, teljes előzménnyel ([security.md](security.md#secret-ellenőrzés-megvalósítva)); nem kötelező ellenőrzés.
 - `e2e` job: Playwright, lásd „E2E (Playwright)”.
 - `security` job, párhuzamosan: Trivy fs (`--scanners vuln,secret`, `aquasec/trivy` digest alapján), `composer audit --locked`, `npm audit`. Minden súlyosság megjelenik, csak a HIGH és CRITICAL blokkol; automatikus javítás nincs, sérülékenység figyelmen kívül hagyása csak külön jóváhagyással (`.trivyignore`, indoklással). A Trivy az npm fejlesztői függőségeket alapból nem vizsgálja, ezeket az `npm audit` lefedi.
 - `images` job: a production image-ek buildje és `trivy image` vizsgálata; teljes riport, de csak a javítható HIGH/CRITICAL blokkol (`--ignore-unfixed`, csak itt; AI-045).
