@@ -115,6 +115,15 @@ describe('PageEditorView', () => {
     expect(titles(wrapper)).toEqual(['Szöveg', 'Gomb', 'Címsor'])
   })
 
+  it('másolja a komponenst az eredeti alá, mentetlen állapotot jelezve', async () => {
+    const wrapper = await mountEditor()
+
+    await wrapper.findAll('[aria-label="Komponens másolása"]')[1]!.trigger('click')
+
+    expect(titles(wrapper)).toEqual(['Címsor', 'Szöveg', 'Szöveg', 'Gomb'])
+    expect(wrapper.text()).toContain('Nem mentett módosítások')
+  })
+
   it('törli a komponenst', async () => {
     const wrapper = await mountEditor()
 

@@ -29,6 +29,11 @@ export function createComponent(type: ComponentType): PageComponent {
   }
 }
 
+/** Másolat új azonosítóval; a komponensek mezői egyszerű értékek, ezért a sekély másolat elég. */
+export function cloneComponent(component: PageComponent): PageComponent {
+  return { ...component, id: newId() }
+}
+
 /** Az elem áthelyezése; a bemenő tömböt nem módosítja. */
 export function moveItem<T>(list: readonly T[], from: number, to: number): T[] {
   if (from === to || from < 0 || to < 0 || from >= list.length || to >= list.length) {

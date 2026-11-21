@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { createComponent, moveItem } from '../components'
+import { cloneComponent, createComponent, moveItem } from '../components'
 
 describe('moveItem', () => {
   it('előre és hátra mozgat, az eredetit nem módosítja', () => {
@@ -28,5 +28,16 @@ describe('createComponent', () => {
     expect(text).toMatchObject({ type: 'text' })
     expect(button).toMatchObject({ type: 'button', url: '/' })
     expect(new Set([heading.id, text.id, button.id]).size).toBe(3)
+  })
+})
+
+describe('cloneComponent', () => {
+  it('azonos tartalommal, új azonosítóval másol, az eredetit nem érinti', () => {
+    const original = createComponent('button')
+    const copy = cloneComponent(original)
+
+    expect(copy).toEqual({ ...original, id: copy.id })
+    expect(copy.id).not.toBe(original.id)
+    expect(copy).not.toBe(original)
   })
 })

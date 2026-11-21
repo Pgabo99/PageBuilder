@@ -10,7 +10,7 @@ import StatusBlock from '@/components/StatusBlock.vue'
 import { useConfirm } from '@/composables/useConfirm'
 import { useToast } from '@/composables/useToast'
 import type { ComponentType, Page, PageComponent } from '@/types/content'
-import { componentTypes, createComponent, moveItem } from '@/utils/components'
+import { cloneComponent, componentTypes, createComponent, moveItem } from '@/utils/components'
 
 const route = useRoute()
 const toast = useToast()
@@ -78,6 +78,10 @@ async function save(): Promise<void> {
 
 function add(type: ComponentType): void {
   form.content.push(createComponent(type))
+}
+
+function duplicate(index: number): void {
+  form.content.splice(index + 1, 0, cloneComponent(form.content[index]!))
 }
 
 function remove(index: number): void {
@@ -209,6 +213,7 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', warnBeforeUnloa
             :last="index === form.content.length - 1"
             @up="move(index, index - 1)"
             @down="move(index, index + 1)"
+            @duplicate="duplicate(index)"
             @remove="remove(index)"
             @dragstart="onDragStart(index, $event)"
           />
