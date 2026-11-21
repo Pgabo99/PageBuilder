@@ -172,6 +172,21 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
+  # Secret-ellenőrzés a nyomon követett fájlokra és a teljes Git-előzményre; az értékek nem jelennek meg a naplóban.
+  secrets:
+    name: secrets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Szkripttesztek (mesterséges értékek)
+        run: bash scripts/test-check-secrets.sh
+
+      - name: Ellenőrzés
+        run: bash scripts/check-secrets.sh
+
   # A deploy-szkriptek tesztje (a manifestek másolatán fut).
   scripts:
     name: scripts

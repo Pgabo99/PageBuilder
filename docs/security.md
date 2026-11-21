@@ -23,6 +23,19 @@
 | Sérülékeny függőség vagy image | `composer audit`, `npm audit`, Trivy; HIGH/CRITICAL blokkolja az élesítést |
 | Ellátási lánc a CI-ban | SHA-ra rögzített actionök, rögzített eszközverziók, minimális `permissions` |
 
+## Secret-ellenőrzés (megvalósítva)
+
+A `scripts/check-secrets.sh` (CI `secrets` job, teljes előzménnyel) a Trivy fs `secret` szkennere mellett fut. A bővített terv táblázatának „Titokszivárgás” sora ennél tágabb (Gitleaks, Sealed Secrets), az MVP csak az alábbit valósítja meg.
+
+**Hatókör:**
+- nyomon követett tiltott fájlok (`.env`, `*.pem`, `*.key`, `*.p12`, `*.pfx`, `*.tfstate`, `*.tfvars`, `id_rsa`, `id_ed25519`; a `*.example` megengedett);
+- az `.env.example` és a `*.env` fájlok jelszó jellegű kulcsainak (`PASSWORD`, `SECRET`, `TOKEN`, `APP_KEY`, `API_KEY`, `PRIVATE`) értéke csak üres, `null` vagy ismert placeholder (`change-me…`, `e2e-placeholder…`) lehet;
+- a Git-előzmény minden ágon: valaha commitolt tiltott fájlnevek, és öt nagy megbízhatóságú tartalmi minta (privát kulcs fejléc, GitHub-token, AWS-hozzáférési kulcs, Azure-tárolókulcs, Slack-token).
+
+**Korlát:** ismert fájlnevekre és néhány jól felismerhető formátumra keres. Tetszőleges jelszót, egyedi formátumú tokent, tömörített vagy bináris fájl tartalmát nem ismer fel, ezért nem állítjuk, hogy minden lehetséges secretet megtalál. A fájlszintű értékvizsgálatot a Trivy végzi.
+
+**Kimenet:** csak típus és hely (fájl, sor, kulcsnév, commit), az érték soha; így a CI-napló sem tartalmazza. A szkript csak olvas: nem ír át előzményt, nem rotál secretet. Találatnál a rotálás és az esetleges history rewrite kézi döntés. Tesztje (`scripts/test-check-secrets.sh`) kizárólag mesterséges értékeket használ.
+
 ## Jogosultsági modell
 
 Egy tulajdonos webhelyenként (`websites.user_id`). Nincs admin és nincs megosztás. Legkisebb jogosultság: külön DB-felhasználó az alkalmazásnak, nem root konténerek, szűk Azure RBAC (backup: írás, restore: olvasás).
