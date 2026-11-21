@@ -140,7 +140,8 @@ services:
     init: true
     ipc: host
     working_dir: /e2e
-    command: ["sh", "-c", "npm ci --no-fund --no-audit && npx playwright test"]
+    # Az E2E_ARGS (pl. "tests/errors.spec.ts" vagy '-g "hibás belépés"') egyes tesztek futtatására szolgál.
+    command: ["sh", "-c", "npm ci --no-fund --no-audit && npx playwright test ${E2E_ARGS:-}"]
     volumes:
       - ./e2e:/e2e
       - e2e-node-modules:/e2e/node_modules
