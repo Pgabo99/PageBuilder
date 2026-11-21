@@ -5,6 +5,10 @@ on:
     branches: [main]
   push:
     branches: [main]
+    # A tag-bump merge-e (csak deploy/) nem indít újabb image-buildet; a PR-ellenőrzések nem szűrtek.
+    paths-ignore: ['deploy/**']
+  # A bump job ezzel indítja a CI-t a PR branchén: a GITHUB_TOKEN-nel nyitott PR nem indít pull_request futást.
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -148,6 +152,16 @@ jobs:
           docker compose logs --tail 50
           docker compose exec -T backend sh -c 'ls -lan storage storage/framework storage/logs; tail -n 20 storage/logs/laravel.log' || true
 
+  # A deploy-szkriptek tesztje (a manifestek másolatán fut).
+  scripts:
+    name: scripts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: set-image-tag.sh
+        run: bash scripts/test-set-image-tag.sh
+
   # Csak a main-en, minden ellenőrzés után; latest tag nincs, a deploy a commit SHA-ra épül.
   terraform:
     name: terraform
@@ -169,7 +183,7 @@ jobs:
   publish:
     name: publish
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [backend, frontend, security, images, install]
+    needs: [backend, frontend, security, images, install, scripts]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -239,3 +253,50 @@ jobs:
       - name: Kijelentkezés
         if: always()
         run: docker logout ghcr.io
+
+  # A publikált image-ek tagjét PR-ban írja át a deploy/app-ban. A magasabb jogok csak itt vannak.
+  # A PR nem kerüli meg a branch protectiont: a kötelező ellenőrzések a dispatch-futásból jönnek, a merge kézi.
+  bump:
+    name: bump
+    needs: [publish]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # Csak létező image-re nyílhat PR.
+      - name: Image-ek elérhetősége a GHCR-ben
+        run: |
+          owner="${GITHUB_REPOSITORY_OWNER,,}"
+          for name in pagebuilder-backend pagebuilder-nginx; do
+            docker manifest inspect "ghcr.io/$owner/$name:$GITHUB_SHA" >/dev/null
+            echo "$name:$GITHUB_SHA elérhető"
+          done
+
+      - name: Tag-csere
+        run: bash scripts/set-image-tag.sh "$GITHUB_SHA"
+
+      - name: Branch, PR és CI indítása
+        run: |
+          if git diff --quiet; then
+            echo "A manifestek már erre a SHA-ra mutatnak, nincs teendő."
+            exit 0
+          fi
+          branch="deploy/image-${GITHUB_SHA::7}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git commit -am "Image-tag frissítése: ${GITHUB_SHA::7}"
+          git push origin "$branch"
+          body="A deploy/app image-címkéi a(z) $GITHUB_SHA commit image-eire mutatnak.
+
+          Automatikus PR: az ellenőrzések workflow_dispatch-csel indultak a branchen. Rollback: a merge-commit git revert-je (PR-ban)."
+          gh pr create --base main --head "$branch" --assignee "$GITHUB_REPOSITORY_OWNER" \
+            --title "Image-tag frissítése: ${GITHUB_SHA::7}" --body "$body"
+          gh workflow run ci.yml --ref "$branch"
