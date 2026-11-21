@@ -75,7 +75,7 @@ Regisztráció és bejelentkezés (Sanctum); webhelyek és oldalak CRUD, Policy-
 
 | ID | Feladat |
 |---|---|
-| T6.1 | Terraform: VM k3s-sel, NSG, publikus IP DNS-címkével, backup storage account (költségbecslés és jóváhagyás után) |
+| T6.1 ✅ | Terraform: VM k3s-sel, NSG, publikus IP DNS-címkével, backup storage account (a konfiguráció kész; az `apply` külön jóváhagyásra vár) |
 | T6.2 | `deploy/` manifestek; Argo CD bootstrap; secretek |
 | T6.3 | Traefik HTTPS (Let's Encrypt) |
 | T6.4 | CI: image tag commit → Argo CD sync → smoke teszt; rollback `git revert`-tel, dokumentálva |

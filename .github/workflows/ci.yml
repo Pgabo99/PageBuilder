@@ -109,6 +109,23 @@ jobs:
           && npm run test:unit -- --run"
 
   # Csak a main-en, minden ellenőrzés után; latest tag nincs, a deploy a commit SHA-ra épül.
+  terraform:
+    name: terraform
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # Azure-hitelesítés és erőforrás nélkül: formátum, érvényesség, offline (mock provider) tesztek.
+      - name: fmt, validate, test
+        env:
+          TERRAFORM_IMAGE: hashicorp/terraform:1.17.1@sha256:a5d5a5a892c98f60fcbfa81eac2a40fc19e7b3fa7719bccae10ff6111d22524a
+        run: |
+          tf() { docker run --rm -v "$PWD/infra:/work" -w /work "$TERRAFORM_IMAGE" "$@"; }
+          tf fmt -check -recursive
+          tf init -backend=false -input=false
+          tf validate
+          tf test
+
   publish:
     name: publish
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
