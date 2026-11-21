@@ -99,6 +99,30 @@ docker run --rm -v "$PWD/infra:/work" -w /work hashicorp/terraform:1.17.1 init
 - Trivy `config` scan (2026-11-21): az NSG HTTP/HTTPS-szabálya (AZU-0047, CRITICAL) és a NIC publikus IP-je (AZU-0076) a publikus weboldal miatt szándékos; a tárolónaplózás, a CMK, az infrastruktúra-szintű titkosítás és a georedundancia (AZU-0057/0058/0060/0061) többletköltség vagy -komponens (Log Analytics, Key Vault, GRS), az MVP-ben nincs. A hálózati alapértelmezés (AZU-0012) javítva.
 - A VM leállítható (deallocate), amikor nincs használatban.
 
+## Alkalmazás-manifesztek (`deploy/app`)
+
+Sima manifestek, egy `pagebulder` namespace-ben; az Argo CD ezt a könyvtárat szinkronizálja (T6.2/2).
+
+| Fájl | Tartalom |
+|---|---|
+| `00-namespace-config.yaml` | namespace és `pagebulder-config` ConfigMap (titok nélkül) |
+| `mysql.yaml`, `redis.yaml` | StatefulSet + ClusterIP Service + PVC (5 Gi, 1 Gi); csak a clusteren belül érhetők el |
+| `backend.yaml` | PHP-FPM Deployment, `migrate` initContainer, Service (9000) |
+| `worker.yaml` | queue worker (`Recreate`), `sites-data` PVC: az egyetlen író |
+| `nginx.yaml` | Nginx Deployment (a `sites-data` csak olvasható), Service, Traefik Ingress |
+
+- **Titkok** a `pagebulder-secrets` Secretben vannak, nem a gitben. Egyszeri létrehozás (a klaszter létrejötte után, az Argo CD előtt):
+  ```
+  kubectl create namespace pagebulder
+  kubectl -n pagebulder create secret generic pagebulder-secrets     --from-literal=APP_KEY="base64:$(openssl rand -base64 32)"     --from-literal=MYSQL_PASSWORD="$(openssl rand -base64 24 | tr -d '/+=')"     --from-literal=MYSQL_ROOT_PASSWORD="$(openssl rand -base64 24 | tr -d '/+=')"
+  ```
+  Az `APP_KEY` elvesztése a titkosított adatok (pl. sessionök) érvénytelenné válásával jár; a jelszavak a MySQL első indításakor kerülnek az adatbázisba.
+- **Image-ek**: `ghcr.io/pgabo99/pagebulder-{backend,nginx}:<teljes commit SHA>`; a tag a backend (3 helyen) és az nginx manifestben van, a CI (T6.4) cseréli. A `sites-data` RWO PVC-t a worker és az Nginx egy node-on osztja meg (egy VM).
+- **Erőforrások** (a 4 GB-os VM-hez, [m6-terv](m6-terv.md)): requestek összesen ~0,7 GB, limitek ~1,5 GB az alkalmazás podjaira; a MySQL kis buffer poollal és kikapcsolt performance schemával fut.
+- **Biztonság**: minden pod nem root felhasználóval, `readOnlyRootFilesystem`, minden capability eldobva, `seccomp: RuntimeDefault`; írható csak az `emptyDir` (tmp, Blade-gyorsítótár, `bootstrap/cache`, MySQL socket) és a PVC. A MySQL, Redis, backend és Nginx nem root, read-only módját helyben `docker run`-nal kipróbáltuk; a k3s-en még nem futott.
+- Trivy `config` (2026-11-21), elfogadott találatok: CPU-limit hiánya (LOW, a throttling elkerülésére), UID/GID ≤ 10000 (LOW, az image-ek fix felhasználói), `ghcr.io` nem „megbízható registry” (MEDIUM, saját image-ek), a ConfigMap „érzékeny tartalma” (MEDIUM, téves: csak felhasználónevek és hosztok, a jelszavak Secretben).
+- A `APP_URL`, `SANCTUM_STATEFUL_DOMAINS` és `SESSION_SECURE_COOKIE` értékét a T6.3 (HTTPS, tényleges DNS-név) állítja át; addig a bejelentkezés `http://localhost`-ról (port-forward) használható.
+
 ## Platformkomponensek a clusterben
 
 Argo CD, Sealed Secrets, cert-manager (ClusterIssuer: Let's Encrypt staging, majd production), kube-prometheus-stack (Alertmanager nélkül), mysqld-exporter, redis-exporter, blackbox exporter. Mindegyik deklaratívan, rögzített chartverzióval, erőforráskorlátokkal.

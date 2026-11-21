@@ -1,0 +1,98 @@
+# A buildelt SPA, a /api a PHP-FPM felé és a publikált webhelyek (csak olvasható kötet).
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx
+  namespace: pagebulder
+spec:
+  selector:
+    app: nginx
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+  namespace: pagebulder
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 101 # nginx
+        runAsGroup: 101
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: nginx
+          image: ghcr.io/pgabo99/pagebulder-nginx:004f1bb5c20420c331aea432df06c8c00df5dae5
+          ports:
+            - name: http
+              containerPort: 8080
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 20m
+              memory: 16Mi
+            limits:
+              memory: 64Mi
+          readinessProbe:
+            httpGet:
+              path: /nginx-health
+              port: http
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /nginx-health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          volumeMounts:
+            - name: sites
+              mountPath: /var/www/sites
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+            - name: cache
+              mountPath: /var/cache/nginx
+      volumes:
+        - name: sites
+          persistentVolumeClaim:
+            claimName: sites-data
+        - name: tmp
+          emptyDir: {}
+        - name: cache
+          emptyDir: {}
+---
+# A k3s beépített Traefikje; host nélkül, minden kérést az Nginx kap. A HTTPS a T6.3 feladata.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: pagebulder
+  namespace: pagebulder
+spec:
+  ingressClassName: traefik
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: nginx
+                port:
+                  name: http
