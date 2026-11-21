@@ -76,6 +76,12 @@ A jelszavakat helyi használatra a placeholder is megteszi; máshol az első ind
 
 `bash scripts/smoke.sh` (a repó gyökeréből): minden szolgáltatás healthy, `/up`, SPA, majd egy felhasználói út az API-n: regisztráció, webhely, oldal, publikálás (queue és worker), a publikált oldal kiszolgálása. Hibánál nem nulla kilépési kóddal áll le. Ugyanezt futtatja a CI `install` jobja tiszta checkouton.
 
+### Backup és restore (MySQL)
+
+- `bash scripts/backup.sh`: mentés a futó stackről a `backups/` mappába (`<db>-<UTC>.sql.gz` és `.sha256`; a mappa nincs verziókezelésben, mert valódi adatot tartalmazhat). Csak olvas, az app-felhasználóval fut. Ütemezéshez a `cron` (Linux, macOS) vagy a Windows Feladatütemező hívhatja a szkriptet; beépített ütemezés nincs.
+- `bash scripts/restore.sh backups/<mentés>.sql.gz`: ellenőrzi a checksumot, majd külön `<db>_restore` adatbázisba tölt, és táblánként (sorszám, `CHECKSUM TABLE`) összeveti az élő adatbázissal. Az élő adatbázis felülírása csak `--live` és `CONFIRM_RESTORE_LIVE=yes` mellett lehetséges (destruktív; előtte `docker compose stop backend worker`).
+- Hatókör: csak a MySQL; a publikált oldalak újragenerálhatók, a Redis nincs mentve. A teljes gyakorlat (katasztrófa és visszaállítás, mért RPO/RTO): T7.3.
+
 ### E2E tesztek (Playwright)
 
 `bash scripts/e2e.sh`: elkülönített Compose-projektben (`pagebuilder-e2e`, saját adatbázis, volume-ok és a 18081-es port; a fejlesztői stack és adatai érintetlenek) indítja a stacket, lefuttatja a Chromium-teszteket, majd csak ezt a projektet takarítja, hiba esetén is. Az első futás letölti a pinnelt Playwright image-et. A riport: `e2e/playwright-report/` (`npx playwright show-report` vagy a `index.html` megnyitása). Folyamatok (`e2e/tests/`, Chromium, 1 worker, mind saját felhasználóval és adattal, ezért külön is futtathatók): szerkesztés és mentés (oldalfrissítés után is ellenőrizve), publikálás és a publikált oldal tartalma, hibaút (hibás belépés; oldal nélküli webhely publikálása). Egyes tesztek: `E2E_ARGS="tests/errors.spec.ts" bash scripts/e2e.sh`. Az `e2e/e2e.env` csak placeholder értékeket tartalmaz; a regisztráció és belépés percenkénti korlátja itt 100 (`AUTH_THROTTLE_PER_MINUTE`), máshol 5.
