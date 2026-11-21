@@ -78,7 +78,7 @@ Regisztráció és bejelentkezés (Sanctum); webhelyek és oldalak CRUD, Policy-
 | T6.1 ✅ | Terraform: VM k3s-sel, NSG, publikus IP, backup storage account (megtartva; `apply` nem lesz) |
 | T6.2/1 ✅ | `deploy/app` manifestek (MySQL, Redis, backend, worker, Nginx, Ingress), titok nélkül |
 | T6.2/2 ✅ | Argo CD `Application` és bootstrap-leírás |
-| T6.3 | Telepítési és futtatási útmutató (előfeltételek, `.env`, parancsok Windows, Linux, macOS); tiszta gépen reprodukálható indítás, secret nélküli `.env.example`, `.gitattributes` |
+| T6.3 ✅ | Telepítési és futtatási útmutató (előfeltételek, `.env`, parancsok Windows, Linux, macOS); tiszta gépen reprodukálható indítás, secret nélküli `.env.example`, `.gitattributes` |
 | T6.4/1 | CI: image tag PR-ban a `deploy/`-ban (branch protection megkerülése nélkül) |
 | T6.4/2 | Külön indítható CI-job: kind, Argo CD, valódi sync, deploy és rollback (`git revert`) smoke teszttel |
 
