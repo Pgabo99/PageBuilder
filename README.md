@@ -2,7 +2,7 @@
 
 Vizuális weboldalszerkesztő egyetemi Cloud és DevOps beadandóhoz: webhelyek és oldalak előre definiált komponensekből, aszinkron statikus publikálás, előzmények és rollback.
 
-**Stack:** Vue 3, TypeScript, Laravel, MySQL, Redis, Nginx, Docker, k3s, Argo CD, Terraform (Azure), GitHub Actions, Prometheus, Grafana.
+**Stack:** Vue 3, TypeScript, Laravel, MySQL, Redis, Nginx, Docker, k3s, Argo CD, Terraform (Azure, nincs kitelepítve), GitHub Actions, Prometheus, Grafana.
 
 ## Dokumentáció
 
