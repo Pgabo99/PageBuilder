@@ -190,6 +190,20 @@ textarea {
   color: var(--color-text);
 }
 
+@media (max-width: 40rem) {
+  .container {
+    margin: var(--space-4) auto;
+  }
+
+  .page-head .actions {
+    width: 100%;
+  }
+
+  .page-head .actions .btn {
+    flex: 1;
+  }
+}
+
 .btn--danger {
   background: var(--color-danger);
 }
