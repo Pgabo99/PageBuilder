@@ -10,7 +10,7 @@ frontend/   Vue SPA (build az Nginx image-be)
 e2e/        Playwright
 load/       k6 szkriptek
 docker/     Dockerfile-ok, Nginx-konfiguráció (lokális és éles közös alap)
-deploy/     Kustomize: base/, overlays/prod/, platform komponensek (Argo CD Application-ök)
+deploy/     sima manifestek: app/ (az alkalmazás), argocd/ (Application)
 infra/      Terraform (bootstrap/, main/), Grafana dashboardok
 docs/
 ```
@@ -57,7 +57,7 @@ flowchart LR
   main[Merge main-re] --> build[Image build]
   build --> scan2[Trivy image scan<br/>HIGH/CRITICAL = stop]
   scan2 --> push[Push GHCR]
-  push --> bump[Commit: image tag a deploy/overlays/prod-ban]
+  push --> bump[Commit: image tag a deploy/app-ban]
   bump --> argo[Argo CD sync]
   argo --> smoke[Smoke teszt: /up, /sites/demo/]
 ```
@@ -69,9 +69,27 @@ flowchart LR
 
 ## GitOps, deploy és rollback
 
-- Az Argo CD a `deploy/overlays/prod` könyvtárat szinkronizálja (automated sync, self-heal, prune).
+- Az Argo CD a `main` ág `deploy/app` könyvtárát szinkronizálja (`deploy/argocd/application.yaml`: automated sync, self-heal, prune). A kézzel létrehozott `pagebulder-secrets` nem része a gitnek, ezért a prune nem érinti.
 - Alkalmazás-rollback: a tag-commit `git revert`-je; az Argo CD visszaállítja az előző image-et. Minden deploy és rollback commitként visszakereshető.
 - A webhely-tartalom rollbackje alkalmazásszintű ([publishing.md](publishing.md)), ettől független.
+
+### Argo CD bootstrap (a VM és a k3s létrejötte után, egyszer)
+
+A VM-en (SSH, `sudo k3s kubectl`; a k3s API kívülről zárt):
+
+```
+V=v3.6.1   # rögzített, 2 hétnél régebbi kiadás
+sudo k3s kubectl create namespace argocd
+sudo k3s kubectl apply -n argocd --server-side -f https://raw.githubusercontent.com/argoproj/argo-cd/$V/manifests/install.yaml
+# Memória: a nem használt komponensek leállítása
+sudo k3s kubectl -n argocd scale deploy argocd-dex-server argocd-notifications-controller argocd-applicationset-controller --replicas=0
+# A titkok létrehozása: lásd "Alkalmazás-manifesztek", majd az Application:
+sudo k3s kubectl apply -f https://raw.githubusercontent.com/Pgabo99/PageBuilder/main/deploy/argocd/application.yaml
+```
+
+- A telepítő a hivatalos kiadási címkéről jön; futtatás előtt érdemes átnézni.
+- Az Argo CD UI-nak nincs nyilvános portja (NSG, nincs Ingress): `sudo k3s kubectl -n argocd port-forward svc/argocd-server 8081:443` és SSH-tunnel (`ssh -L 8081:localhost:8081 …`). A kezdeti admin jelszó: `sudo k3s kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d`.
+- Az Argo CD saját erőforrás-limitjei a T7 (megfigyelés) idején mérhetők; a `kubectl top` mutatja a valós használatot.
 
 ## Infrastruktúra (Terraform, Azure)
 
