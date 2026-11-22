@@ -121,15 +121,170 @@ describe('PageEditorView', () => {
     expect(titles(wrapper)).toEqual(['Szöveg', 'Címsor', 'Gomb'])
   })
 
-  it('húzással átrendez', async () => {
-    const wrapper = await mountEditor()
-    const items = () => wrapper.findAll('.list > li')
+  describe('húzással átrendezés', () => {
+    // A jsdom nem számol elrendezést: a lista 0–300 px, komponensenként 100 px magas sorral (közepek: 50, 150, 250).
+    let rects: ReturnType<typeof vi.spyOn>
 
-    await items()[0]!.find('.component__handle').trigger('dragstart')
-    await items()[2]!.trigger('dragover')
-    await items()[2]!.trigger('drop')
+    beforeEach(() => {
+      rects = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (
+        this: HTMLElement,
+      ) {
+        if (this.classList.contains('list')) {
+          return { left: 0, right: 500, top: 0, bottom: 300, width: 500, height: 300 } as DOMRect
+        }
+        const row = Array.from(this.parentElement?.children ?? []).filter(
+          (el) => (el as HTMLElement).dataset.componentId !== undefined,
+        )
+        const top = Math.max(0, row.indexOf(this)) * 100
+        return { left: 0, right: 500, top, bottom: top + 100, width: 500, height: 100 } as DOMRect
+      })
+    })
 
-    expect(titles(wrapper)).toEqual(['Szöveg', 'Gomb', 'Címsor'])
+    afterEach(() => rects.mockRestore())
+
+    const items = (wrapper: Awaited<ReturnType<typeof mountEditor>>) =>
+      wrapper.findAll('.list > li[data-component-id]')
+    const handle = (wrapper: Awaited<ReturnType<typeof mountEditor>>, index: number) =>
+      items(wrapper)[index]!.find('.component__handle')
+    const over = (wrapper: Awaited<ReturnType<typeof mountEditor>>, y: number) =>
+      wrapper.find('ul.list').trigger('dragover', { clientY: y })
+    // A helykitöltő és a komponensek sorrendje a listában.
+    const layout = (wrapper: Awaited<ReturnType<typeof mountEditor>>) =>
+      wrapper
+        .findAll('.list > li')
+        .map((li) => (li.classes().includes('drop-placeholder') ? '▭' : li.find('strong').text()))
+
+    it('húzás közben a helykitöltő a beszúrás helyén jelenik meg, és követi az egeret', async () => {
+      const wrapper = await mountEditor()
+      await handle(wrapper, 0).trigger('dragstart')
+
+      await over(wrapper, 240)
+      expect(layout(wrapper)).toEqual(['Címsor', 'Szöveg', '▭', 'Gomb'])
+      expect(wrapper.find('.drop-placeholder').text()).toBe('Ide kerül: Címsor')
+
+      await over(wrapper, 290)
+      expect(layout(wrapper)).toEqual(['Címsor', 'Szöveg', 'Gomb', '▭'])
+
+      await over(wrapper, 160)
+      expect(layout(wrapper)).toEqual(['Címsor', 'Szöveg', '▭', 'Gomb'])
+    })
+
+    it('a sorrend húzás közben nem változik, csak elengedéskor', async () => {
+      const wrapper = await mountEditor()
+      await handle(wrapper, 0).trigger('dragstart')
+      await over(wrapper, 290)
+
+      expect(titles(wrapper)).toEqual(['Címsor', 'Szöveg', 'Gomb'])
+
+      await wrapper.find('ul.list').trigger('drop')
+
+      expect(titles(wrapper)).toEqual(['Szöveg', 'Gomb', 'Címsor'])
+      expect(wrapper.find('.drop-placeholder').exists()).toBe(false)
+      expect(wrapper.find('.is-dragging').exists()).toBe(false)
+    })
+
+    it('a lista közepére engedve a megfelelő pozícióba kerül', async () => {
+      const wrapper = await mountEditor()
+      await handle(wrapper, 0).trigger('dragstart')
+      await over(wrapper, 160)
+      await wrapper.find('ul.list').trigger('drop')
+
+      expect(titles(wrapper)).toEqual(['Szöveg', 'Címsor', 'Gomb'])
+    })
+
+    it('felfelé húzva a lista elejére kerül', async () => {
+      const wrapper = await mountEditor()
+      await handle(wrapper, 2).trigger('dragstart')
+      await over(wrapper, 10)
+
+      expect(layout(wrapper)).toEqual(['▭', 'Címsor', 'Szöveg', 'Gomb'])
+
+      await wrapper.find('ul.list').trigger('drop')
+
+      expect(titles(wrapper)).toEqual(['Gomb', 'Címsor', 'Szöveg'])
+    })
+
+    it('a húzott elem megkülönböztetett, és a saját helyén nincs helykitöltő', async () => {
+      const wrapper = await mountEditor()
+      await handle(wrapper, 1).trigger('dragstart')
+      await over(wrapper, 140)
+
+      expect(items(wrapper)[1]!.classes()).toContain('is-dragging')
+      expect(items(wrapper).filter((li) => li.classes().includes('is-dragging'))).toHaveLength(1)
+      expect(wrapper.find('.drop-placeholder').exists()).toBe(false)
+
+      await wrapper.find('ul.list').trigger('drop')
+      expect(titles(wrapper)).toEqual(['Címsor', 'Szöveg', 'Gomb'])
+      expect(wrapper.text()).toContain('Mentve')
+    })
+
+    it('megszakított húzásnál (drop nélküli dragend) az eredeti sorrend marad', async () => {
+      const wrapper = await mountEditor()
+      await handle(wrapper, 0).trigger('dragstart')
+      await over(wrapper, 290)
+      expect(wrapper.find('.drop-placeholder').exists()).toBe(true)
+
+      await handle(wrapper, 0).trigger('dragend')
+
+      expect(titles(wrapper)).toEqual(['Címsor', 'Szöveg', 'Gomb'])
+      expect(wrapper.find('.drop-placeholder').exists()).toBe(false)
+      expect(wrapper.find('.is-dragging').exists()).toBe(false)
+      expect(wrapper.text()).toContain('Mentve')
+    })
+
+    it('a listán kívülre húzva a helykitöltő eltűnik, és az elengedés nem mozgat', async () => {
+      const wrapper = await mountEditor()
+      await handle(wrapper, 0).trigger('dragstart')
+      await over(wrapper, 290)
+
+      await wrapper.find('ul.list').trigger('dragleave', { clientX: 250, clientY: 450 })
+      expect(wrapper.find('.drop-placeholder').exists()).toBe(false)
+
+      await wrapper.find('ul.list').trigger('drop')
+      expect(titles(wrapper)).toEqual(['Címsor', 'Szöveg', 'Gomb'])
+    })
+
+    it('a lista belsejében a dragleave nem törli a helykitöltőt', async () => {
+      const wrapper = await mountEditor()
+      await handle(wrapper, 0).trigger('dragstart')
+      await over(wrapper, 290)
+
+      await wrapper.find('ul.list').trigger('dragleave', { clientX: 250, clientY: 120 })
+
+      expect(wrapper.find('.drop-placeholder').exists()).toBe(true)
+    })
+
+    it('az aktív elem átrendezés után is aktív marad', async () => {
+      const wrapper = await mountEditor()
+      await wrapper.findAll('.component__toggle')[0]!.trigger('click')
+
+      await handle(wrapper, 0).trigger('dragstart')
+      await over(wrapper, 290)
+      await wrapper.find('ul.list').trigger('drop')
+
+      expect(titles(wrapper)).toEqual(['Szöveg', 'Gomb', 'Címsor'])
+      expect(items(wrapper)[2]!.find('.component').classes()).toContain('component--active')
+      expect(wrapper.findAll('.component--active')).toHaveLength(1)
+    })
+
+    it('idegen húzást (nem komponens) nem fogad el', async () => {
+      const wrapper = await mountEditor()
+      const event = new Event('dragover', { bubbles: true, cancelable: true })
+
+      wrapper.find('ul.list').element.dispatchEvent(event)
+      await flushPromises()
+
+      expect(event.defaultPrevented).toBe(false)
+      expect(wrapper.find('.drop-placeholder').exists()).toBe(false)
+    })
+
+    it('a fel/le gomb húzás mellett is működik', async () => {
+      const wrapper = await mountEditor()
+
+      await items(wrapper)[0]!.find('[aria-label="Lejjebb"]').trigger('click')
+
+      expect(titles(wrapper)).toEqual(['Szöveg', 'Címsor', 'Gomb'])
+    })
   })
 
   it('betöltés után minden komponens összecsukott, rövid összefoglalóval', async () => {
