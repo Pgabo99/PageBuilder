@@ -99,6 +99,15 @@ A `publish` után a `bump` job (csak `main` push; `contents` és `pull-requests:
 - Előfeltétel: Settings → Actions → General → „Allow GitHub Actions to create and approve pull requests” (a workflow alapjogosultsága `read` marad).
 - Ha a bump nem használható, kézzel: `scripts/set-image-tag.sh <sha>`, saját PR.
 
+### GitOps-ellenőrzés kind-en (T6.4/2a)
+
+`bash scripts/gitops-check.sh` (Linux vagy Git Bash; CI: `GitOps` workflow, csak kézi indítás, `contents: read`): eldobható `pagebuilder-gitops` kind-klaszter, Argo CD, a `deploy/app` szinkronja a GitHubon lévő `main` ágról, majd smoke teszt a `nginx` Service-en át (`port-forward`). Távoli ágat nem hoz létre. A takarítás hiba esetén is lefut, de csak az ebben a futásban létrehozott klasztert törli; meglévő azonos nevű klaszterhez nem nyúl (`GITOPS_KEEP=1`: hibakereséshez megtartja).
+
+- **Pinnelt:** kind v0.33.0 (ellenőrző összeg a szkriptben), `kindest/node` v1.37.0 digesttel, Argo CD v3.6.1 (a manifeszt összege és a három image digestje a szkriptben). A titkok a futásban generált, eldobható értékek.
+- **Igazolt (helyi futás, Windows 11, Docker Desktop, 2026-11-22):** az `Application` `Synced/Healthy`; a futó image-címke megegyezik a szinkronizált revízió manifesztjeivel; a smoke teszt (`/up`, SPA, regisztráció, publikálás a workeren és a `sites-data` PVC-n át, kiszolgálás) sikeres. Idő: 3 perc 18 s (klaszter 32 s, Argo CD 48 s, szinkron 109 s); a node-konténer 1,9 GiB memóriát használt. A CI-futás eredménye a merge után kerül ide.
+- **Leletek:** (1) a kind-ben nincs ingress-vezérlő, ezért az Ingress nem kap címet, és az Argo `Progressing`-ben tartaná az alkalmazást; a szkript csak az Ingress egészségellenőrzését írja felül (a k3s-ben a Traefik ad címet, ezt nem igazoltuk). (2) A telepítő által kezelt `argocd-cm` ugyanazzal a field managerrel újraalkalmazva elveszti a címkéit, és az Argo `Unknown` állapotban marad; ezért külön field manager kell. (3) A worker az első indításkor a MySQL készenléte előtt újraindul, majd magától helyreáll.
+- **Nem igazolt:** a deploy és a rollback (T6.4/2b), a Traefik Ingress, az Azure/k3s.
+
 ### Argo CD bootstrap (a VM és a k3s létrejötte után, egyszer)
 
 A VM-en (SSH, `sudo k3s kubectl`; a k3s API kívülről zárt):
