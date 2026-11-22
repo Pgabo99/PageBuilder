@@ -95,7 +95,7 @@ flowchart LR
 |---|---|
 | Lokális | Docker Compose |
 | CI | GitHub Actions, ideiglenes Compose-stack |
-| Production (terv) | Azure VM, k3s, Argo CD: a konfiguráció kész, de nincs kitelepítve; clusteres deploy és rollback nem bizonyított (T6.4/2 nyitott) |
+| Production (terv) | Azure VM, k3s, Argo CD: a konfiguráció kész, de nincs kitelepítve; a kind + Argo CD szinkron igazolt, a clusteres rollback nem |
 
 ## Döntésnapló
 
@@ -133,4 +133,4 @@ Az indoklás és az elvetett alternatívák az [AI auditban](ai-audit.md). A Q1�
 | Q28 | Törölt céloldal kezelése | [database-design](database-design.md) | AI-031 |
 | Q29 | Redis-perzisztencia (AOF), MySQL 9.7 LTS | [architecture](architecture.md), `compose.yaml` | AI-041 |
 | Q30 | MVP-egyszerűsítés: JSON-komponensek, 3 típus, egyszerűsített publikálás, Traefik ACME, sima manifestek | [roadmap](roadmap.md), [backlog](backlog.md) | AI-044 |
-| Q31 | Nincs Azure-kitelepítés: Terraform és `deploy/` megtartva; bizonyíték: Compose, CI, helyi backup és restore; a kind + Argo CD még nem bizonyított (T6.4/2) | [roadmap](roadmap.md) | AI-050 |
+| Q31 | Nincs Azure-kitelepítés: Terraform és `deploy/` megtartva; bizonyíték: Compose, CI, helyi backup és restore; kind + Argo CD szinkron helyben és a kézi `GitOps` workflowban; a rollback nem bizonyított | [roadmap](roadmap.md) | AI-050 |
