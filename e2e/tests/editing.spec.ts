@@ -17,7 +17,11 @@ test('szerkesztés és mentés: a tartalom oldalfrissítés után is megmarad', 
   await addComponent(page, 'Címsor')
   await page.getByLabel('Szöveg', { exact: true }).fill(heading)
   await addComponent(page, 'Szöveg')
-  await page.getByLabel('Szöveg', { exact: true }).fill(text)
+  const textArea = page.getByLabel('Szöveg', { exact: true })
+  await textArea.fill(text)
+  // A többsoros mező csak függőlegesen méretezhető (oldalra az oszlop szabja meg a szélességet).
+  await expect(textArea).toHaveCSS('resize', 'vertical')
+  await expect(textArea).toHaveCSS('max-width', '100%')
   await addComponent(page, 'Gomb')
   await page.getByLabel('Felirat').fill(buttonLabel)
   await page.getByLabel(/^Cél/).fill(buttonUrl)

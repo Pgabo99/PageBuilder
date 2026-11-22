@@ -70,6 +70,14 @@ textarea {
   background: var(--color-bg);
 }
 
+/* A többsoros mező csak függőlegesen méretezhető: oldalra az oszlop szélessége szabja meg, így nem csúszik ki. */
+textarea {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  resize: vertical;
+}
+
 :focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
