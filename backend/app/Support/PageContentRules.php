@@ -15,7 +15,9 @@ class PageContentRules
     /** Csak http(s), webhelyen belüli útvonal (nem //host) vagy horgony: javascript: és data: tiltott. */
     public const URL_PATTERN = '~^(?:https?://\S+|/(?!/)\S*|#\S*)$~i';
 
-    private const TYPES = ['heading', 'text', 'button'];
+    public const MAX_CARDS = 6;
+
+    private const TYPES = ['heading', 'text', 'button', 'cards'];
 
     /**
      * @return array<string, mixed>
@@ -35,7 +37,7 @@ class PageContentRules
         foreach ($content as $index => $component) {
             $type = is_array($component) ? ($component['type'] ?? null) : null;
 
-            foreach (self::fields($type) as $field => $fieldRules) {
+            foreach (self::fields($type, $index) as $field => $fieldRules) {
                 $rules["content.$index.$field"] = $fieldRules;
             }
         }
@@ -46,8 +48,10 @@ class PageContentRules
     /**
      * @return array<string, array<int, mixed>>
      */
-    private static function fields(mixed $type): array
+    private static function fields(mixed $type, int|string $index): array
     {
+        $card = "content.$index.cards.*";
+
         return match ($type) {
             'heading' => [
                 'text' => ['required', 'string', 'max:255'],
@@ -60,6 +64,16 @@ class PageContentRules
             'button' => [
                 'label' => ['required', 'string', 'max:100'],
                 'url' => ['required', 'string', 'max:2048', 'regex:'.self::URL_PATTERN],
+            ],
+            // A gomb felirata és célja együtt kötelező, vagy mindkettő üres; a leírás és az ikon opcionális.
+            'cards' => [
+                'cards' => ['required', 'array', 'min:1', 'max:'.self::MAX_CARDS],
+                'cards.*.id' => ['required', 'string', 'max:64'],
+                'cards.*.title' => ['required', 'string', 'max:100'],
+                'cards.*.text' => ['nullable', 'string', 'max:500'],
+                'cards.*.icon' => ['nullable', 'string', Rule::in(Icons::names())],
+                'cards.*.label' => ['nullable', 'string', 'max:100', "required_with:$card.url"],
+                'cards.*.url' => ['nullable', 'string', 'max:2048', 'regex:'.self::URL_PATTERN, "required_with:$card.label"],
             ],
             default => [],
         };
