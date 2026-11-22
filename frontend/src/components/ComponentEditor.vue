@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useId } from 'vue'
 
+import AccordionEditor from '@/components/AccordionEditor.vue'
 import CardsEditor from '@/components/CardsEditor.vue'
 import IconPicker from '@/components/IconPicker.vue'
 import type { PageComponent } from '@/types/content'
@@ -161,6 +162,12 @@ const uid = useId()
         v-model="model.cards"
         :errors="errors"
         :targets="targets"
+      />
+
+      <AccordionEditor
+        v-else-if="model.type === 'accordion'"
+        v-model="model.items"
+        :errors="errors"
       />
     </div>
   </div>

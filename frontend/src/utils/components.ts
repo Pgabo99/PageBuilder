@@ -1,14 +1,19 @@
-import type { CardItem, ComponentType, PageComponent } from '@/types/content'
+import type { AccordionItem, CardItem, ComponentType, PageComponent } from '@/types/content'
 
 /** A kártyák megengedett száma egy csoportban (a backend `PageContentRules::MAX_CARDS`-jával azonos). */
 export const MIN_CARDS = 1
 export const MAX_CARDS = 6
+
+/** A becsukható részek megengedett száma (a backend `PageContentRules::MAX_ACCORDION_ITEMS`-ével azonos). */
+export const MIN_ACCORDION_ITEMS = 1
+export const MAX_ACCORDION_ITEMS = 20
 
 export const componentTypes: { type: ComponentType; label: string }[] = [
   { type: 'heading', label: 'Címsor' },
   { type: 'text', label: 'Szöveg' },
   { type: 'button', label: 'Gomb' },
   { type: 'cards', label: 'Kártyák' },
+  { type: 'accordion', label: 'Becsukható részek' },
 ]
 
 export function componentLabel(type: ComponentType): string {
@@ -26,6 +31,11 @@ export function createCard(): CardItem {
   return { id: newId(), icon: null, title: 'Új kártya', text: '', label: '', url: '' }
 }
 
+/** Új rész: a szerver üres címet és szöveget nem fogad el. */
+export function createAccordionItem(): AccordionItem {
+  return { id: newId(), title: 'Új rész', text: 'Új tartalom' }
+}
+
 /** Új komponens értelmes alapértékekkel (a szerver üres szöveget nem fogad el). */
 export function createComponent(type: ComponentType): PageComponent {
   const id = newId()
@@ -38,6 +48,8 @@ export function createComponent(type: ComponentType): PageComponent {
       return { id, type, label: 'Gomb', url: '/' }
     case 'cards':
       return { id, type, cards: [createCard()] }
+    case 'accordion':
+      return { id, type, items: [createAccordionItem()] }
   }
 }
 
@@ -58,6 +70,10 @@ function summarySource(component: PageComponent): string {
     case 'cards': {
       const first = component.cards[0]?.title ?? ''
       return `${component.cards.length} kártya${first ? `: ${first}` : ''}`
+    }
+    case 'accordion': {
+      const first = component.items[0]?.title ?? ''
+      return `${component.items.length} rész${first ? `: ${first}` : ''}`
     }
     default:
       return component.text
@@ -95,6 +111,13 @@ export function cloneComponent(component: PageComponent): PageComponent {
       ...component,
       id: newId(),
       cards: component.cards.map((card) => ({ ...card, id: newId() })),
+    }
+  }
+  if (component.type === 'accordion') {
+    return {
+      ...component,
+      id: newId(),
+      items: component.items.map((item) => ({ ...item, id: newId() })),
     }
   }
   return { ...component, id: newId() }

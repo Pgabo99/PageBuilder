@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 
 import AppIcon from '@/components/AppIcon.vue'
-import { MAX_CARDS } from '@/utils/components'
+import { MAX_ACCORDION_ITEMS, MAX_CARDS } from '@/utils/components'
 import { findIcon } from '@/utils/icons'
 import type { PageComponent } from '@/types/content'
 import { pageStyle, type PageTheme } from '@/utils/themes'
@@ -74,6 +74,20 @@ const level = (value: number): 1 | 2 | 3 =>
             <span class="preview__button">{{ card.label }}</span>
           </p>
         </article>
+      </div>
+      <!-- A részek natív details elemek: a kattintás nyit/csuk, és közben a komponenst is kijelöli. A
+           summary nem fókuszálható (tabindex -1), mert az előnézet a képernyőolvasók elől rejtett. -->
+      <div
+        v-else-if="component.type === 'accordion'"
+        class="preview__item preview__accordion"
+        :class="{ 'preview__item--active': component.id === activeId }"
+        :data-component-id="component.id"
+        @click="$emit('select', component.id)"
+      >
+        <details v-for="item in component.items.slice(0, MAX_ACCORDION_ITEMS)" :key="item.id">
+          <summary tabindex="-1">{{ item.title }}</summary>
+          <p>{{ item.text }}</p>
+        </details>
       </div>
       <p
         v-else-if="component.type === 'button' && SAFE_URL.test(component.url)"
@@ -152,6 +166,33 @@ const level = (value: number): 1 | 2 | 3 =>
 
 .preview__card p {
   margin: 0.5rem 0;
+}
+
+/* Mint a publikált oldal accordionja. */
+.preview__accordion {
+  margin: 1rem 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+}
+
+.preview__accordion details + details {
+  border-top: 1px solid var(--border);
+}
+
+.preview__accordion summary {
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.preview__accordion details[open] summary {
+  color: var(--accent);
+}
+
+.preview__accordion details p {
+  margin: 0;
+  padding: 0 1rem 1rem;
 }
 
 .preview__empty {

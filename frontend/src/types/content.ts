@@ -61,7 +61,21 @@ export interface CardsComponent {
   cards: CardItem[]
 }
 
-export type PageComponent = HeadingComponent | TextComponent | ButtonComponent | CardsComponent
+/** Egy becsukható rész: a cím és a szöveg is kötelező. */
+export interface AccordionItem {
+  id: string
+  title: string
+  text: string
+}
+
+export interface AccordionComponent {
+  id: string
+  type: 'accordion'
+  items: AccordionItem[]
+}
+
+export type PageComponent =
+  HeadingComponent | TextComponent | ButtonComponent | CardsComponent | AccordionComponent
 export type ComponentType = PageComponent['type']
 
 export interface Page {
