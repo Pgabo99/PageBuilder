@@ -17,7 +17,9 @@ class PageContentRules
 
     public const MAX_CARDS = 6;
 
-    private const TYPES = ['heading', 'text', 'button', 'cards'];
+    public const MAX_ACCORDION_ITEMS = 20;
+
+    private const TYPES = ['heading', 'text', 'button', 'cards', 'accordion'];
 
     /**
      * @return array<string, mixed>
@@ -74,6 +76,13 @@ class PageContentRules
                 'cards.*.icon' => ['nullable', 'string', Rule::in(Icons::names())],
                 'cards.*.label' => ['nullable', 'string', 'max:100', "required_with:$card.url"],
                 'cards.*.url' => ['nullable', 'string', 'max:2048', 'regex:'.self::URL_PATTERN, "required_with:$card.label"],
+            ],
+            // Minden rész címe és szövege kötelező; a részek a publikált oldalon alapból zártak.
+            'accordion' => [
+                'items' => ['required', 'array', 'min:1', 'max:'.self::MAX_ACCORDION_ITEMS],
+                'items.*.id' => ['required', 'string', 'max:64'],
+                'items.*.title' => ['required', 'string', 'max:150'],
+                'items.*.text' => ['required', 'string', 'max:2000'],
             ],
             default => [],
         };

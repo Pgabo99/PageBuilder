@@ -238,6 +238,49 @@ describe('job', function () {
             ->and(substr_count($html, '<div class="cards">'))->toBe(4);
     });
 
+    it('a becsukható részek natív details/summary elemek, alapból zártak, JavaScript nélkül', function () {
+        $this->index->update(['content' => [
+            ['id' => 'a', 'type' => 'accordion', 'items' => [
+                ['id' => 'i1', 'title' => '<b>Kérdés</b>', 'text' => '"><img src=x onerror=1>'],
+                ['id' => 'i2', 'title' => 'Másik', 'text' => 'Válasz'],
+            ]],
+        ]]);
+
+        runJob($this->website);
+
+        $html = file_get_contents("{$this->dir}/proba/index.html");
+        expect($html)
+            ->toContain('<div class="accordion">')
+            ->toContain('<summary>&lt;b&gt;Kérdés&lt;/b&gt;</summary>')
+            ->toContain('<p>&quot;&gt;&lt;img src=x onerror=1&gt;</p>')
+            ->toContain('<summary>Másik</summary>')
+            ->not->toContain('<details open')
+            ->not->toContain('<script')
+            ->not->toContain('<img')
+            ->not->toContain('onclick');
+        expect(substr_count($html, '<details>'))->toBe(2)
+            ->and(substr_count($html, '</details>'))->toBe(2);
+    });
+
+    it('legfeljebb húsz részt renderel, és a hibás részadat nem töri meg a publikálást', function () {
+        $many = array_map(fn ($i) => ['id' => "i$i", 'title' => "Rész $i", 'text' => 'Szöveg'], range(1, 25));
+        $this->index->update(['content' => [
+            ['id' => 'a', 'type' => 'accordion', 'items' => $many],
+            ['id' => 'b', 'type' => 'accordion', 'items' => 'nem tömb'],
+            ['id' => 'c', 'type' => 'accordion', 'items' => ['szöveg', 7, ['id' => 'x', 'title' => 'Jó', 'text' => 'Rész']]],
+            ['id' => 'd', 'type' => 'accordion'],
+        ]]);
+
+        runJob($this->website);
+
+        $html = file_get_contents("{$this->dir}/proba/index.html");
+        expect($this->website->fresh()->publish_status)->toBe(PublishStatus::Succeeded)
+            ->and(substr_count($html, '<summary>Rész '))->toBe(20)
+            ->and($html)->not->toContain('Rész 21')
+            ->and($html)->toContain('<summary>Jó</summary>')
+            ->and(substr_count($html, '<div class="accordion">'))->toBe(4);
+    });
+
     it('idempotens: ismételt futtatás ugyanazt adja, és nem hagy ideiglenes könyvtárat', function () {
         runJob($this->website);
         $first = file_get_contents("{$this->dir}/proba/index.html");

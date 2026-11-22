@@ -66,6 +66,19 @@ class SiteRenderContext
         return array_slice(array_values(array_filter($cards, 'is_array')), 0, PageContentRules::MAX_CARDS);
     }
 
+    /**
+     * A becsukható részek futáskor is korlátozva: csak tömb elemek, legfeljebb a megengedett darabszám.
+     *
+     * @param  array<string, mixed>  $component
+     * @return list<array<string, mixed>>
+     */
+    public function accordionItems(array $component): array
+    {
+        $items = is_array($component['items'] ?? null) ? $component['items'] : [];
+
+        return array_slice(array_values(array_filter($items, 'is_array')), 0, PageContentRules::MAX_ACCORDION_ITEMS);
+    }
+
     /** Futáskor is ellenőrizzük a komponens URL-jét (a validációval azonos szabály). */
     public function isSafeUrl(mixed $url): bool
     {
