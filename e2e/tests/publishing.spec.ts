@@ -15,6 +15,7 @@ test('publikálás: a publikált oldal tényleges tartalma elérhető, az állap
   await createPage(page, `Oldal ${id}`, `oldal-${id}`)
   await addComponent(page, 'Címsor')
   await page.getByLabel('Szöveg', { exact: true }).fill(heading)
+  await page.getByRole('radio', { name: 'Csillag' }).check()
   await savePage(page)
 
   await page.goto(websiteUrl)
@@ -26,6 +27,8 @@ test('publikálás: a publikált oldal tényleges tartalma elérhető, az állap
 
   await page.goto(`/sites/${slug}/`)
   await expect(page.getByRole('heading', { name: heading })).toBeVisible()
+  // Az ikon a publikált oldalon is inline SVG-ként látszik (a CSP nem tiltja).
+  await expect(page.getByRole('heading', { name: heading }).locator('svg.icon')).toBeVisible()
 
   await page.goto(websiteUrl)
   await expect(page.getByRole('status').filter({ hasText: 'Publikálva:' })).toBeVisible()

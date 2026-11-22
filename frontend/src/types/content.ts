@@ -28,6 +28,8 @@ export interface HeadingComponent {
   type: 'heading'
   text: string
   level: 1 | 2 | 3
+  /** Az engedélyezett ikonkészlet egy neve (`utils/icons.ts`); üres: nincs ikon. */
+  icon?: string | null
 }
 
 export interface TextComponent {

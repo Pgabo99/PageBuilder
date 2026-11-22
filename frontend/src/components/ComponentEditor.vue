@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useId } from 'vue'
 
+import IconPicker from '@/components/IconPicker.vue'
 import type { PageComponent } from '@/types/content'
 import { componentLabel, componentSummary, type PageTarget } from '@/utils/components'
 
@@ -111,6 +112,7 @@ const uid = useId()
           </select>
           <p v-if="errors.level" class="field__error">{{ errors.level.join(' ') }}</p>
         </div>
+        <IconPicker v-model="model.icon" :error="errors.icon" />
       </template>
 
       <div v-else-if="model.type === 'text'" class="field">
