@@ -1,8 +1,8 @@
 # PageBuilder
 
-Vizuális weboldalszerkesztő egyetemi Cloud és DevOps beadandóhoz: webhelyek és oldalak előre definiált komponensekből, aszinkron statikus publikálás, előzmények és rollback.
+Vizuális weboldalszerkesztő egyetemi Cloud és DevOps beadandóhoz: webhelyek és oldalak előre definiált komponensekből, aszinkron statikus publikálás.
 
-**Stack:** Vue 3, TypeScript, Laravel, MySQL, Redis, Nginx, Docker, k3s, Argo CD, Terraform (Azure, nincs kitelepítve), GitHub Actions, Prometheus, Grafana.
+**Stack:** Vue 3, TypeScript, Laravel, MySQL, Redis, Nginx, Docker Compose, GitHub Actions, Terraform és k3s/Argo CD manifesztek (Azure, nincs kitelepítve, clusteren nem futtatva), Prometheus, Grafana.
 
 ## Dokumentáció
 

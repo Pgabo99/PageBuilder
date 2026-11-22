@@ -1,6 +1,6 @@
 # M6 terv és Azure-költségbecslés
 
-> **Hatókörváltozás (2026-11-21):** a rendszert nem telepítjük Azure-ba; az `infra/` és a `deploy/` megmarad, az `apply` elmarad. A T6.3 (Traefik HTTPS) kikerült, a T6.4 helyi (kind) bizonyítékra változott: [roadmap](roadmap.md). Az alábbi terv és költségbecslés tájékoztató.
+> **Hatókörváltozás (2026-11-21):** a rendszert nem telepítjük Azure-ba; az `infra/` és a `deploy/` megmarad, az `apply` elmarad. A T6.3 (Traefik HTTPS) kikerült, a T6.4/1 (tag-bump PR) kész, a T6.4/2 (kind + Argo CD) még nyitott: [roadmap](roadmap.md). Az alábbi terv és költségbecslés tájékoztató.
 
 Állapot: a sorrendet és a 4 GB-os kiindulást a felhasználó elfogadta; a T6.1 konfiguráció elkészült (`infra/`). Azure-erőforrás **nem** jött létre; a `terraform apply` előtt külön jóváhagyás kell a `plan` és a költség ismeretében.
 
