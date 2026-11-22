@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { onBeforeRouteLeave, useRoute } from 'vue-router'
 
 import { errorMessage, ValidationError } from '@/api/client'
@@ -96,6 +96,14 @@ async function save(): Promise<void> {
     if (e instanceof ValidationError) {
       errors.value = e.errors
       message.value = 'Javítsd a jelölt mezőket, majd mentsd újra.'
+      // A hibás mező ne maradjon összecsukva: az első hibás komponens nyílik ki.
+      const firstInvalid = Object.keys(e.errors)
+        .map((key) => /^content\.(\d+)\./.exec(key)?.[1])
+        .filter((index): index is string => index !== undefined)
+        .map(Number)
+        .sort((a, b) => a - b)[0]
+      const invalid = firstInvalid === undefined ? undefined : form.content[firstInvalid]
+      if (invalid) void activate(invalid.id)
     } else {
       message.value = errorMessage(e)
     }
@@ -104,15 +112,37 @@ async function save(): Promise<void> {
   }
 }
 
+// Az aktív komponens csak szerkesztői állapot: nem része a mentett tartalomnak és a pillanatképnek.
+const activeId = ref<string | null>(null)
+const listEl = ref<HTMLElement | null>(null)
+
+function toggleActive(id: string): void {
+  activeId.value = activeId.value === id ? null : id
+}
+
+// Az új vagy az előnézetből kijelölt elem a nézetben marad; az új elem első mezője fókuszt kap.
+async function activate(id: string, focusField = false): Promise<void> {
+  activeId.value = id
+  await nextTick()
+  const item = listEl.value?.querySelector<HTMLElement>(`[data-component-id="${CSS.escape(id)}"]`)
+  item?.scrollIntoView?.({ block: 'nearest' })
+  if (focusField) item?.querySelector<HTMLElement>('input, textarea, select')?.focus()
+}
+
 function add(type: ComponentType): void {
-  form.content.push(createComponent(type))
+  const component = createComponent(type)
+  form.content.push(component)
+  void activate(component.id, true)
 }
 
 function duplicate(index: number): void {
-  form.content.splice(index + 1, 0, cloneComponent(form.content[index]!))
+  const copy = cloneComponent(form.content[index]!)
+  form.content.splice(index + 1, 0, copy)
+  void activate(copy.id, true)
 }
 
 function remove(index: number): void {
+  if (form.content[index]?.id === activeId.value) activeId.value = null
   form.content.splice(index, 1)
 }
 
@@ -227,10 +257,11 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', warnBeforeUnloa
           <p v-if="form.content.length === 0" class="muted">
             Az oldal még üres. Adj hozzá egy komponenst!
           </p>
-          <ul class="list">
+          <ul ref="listEl" class="list">
             <li
               v-for="(component, index) in form.content"
               :key="component.id"
+              :data-component-id="component.id"
               :class="{ 'drop-target': overIndex === index && dragIndex !== index }"
               @dragover="onDragOver(index, $event)"
               @drop.prevent="onDrop(index)"
@@ -241,7 +272,9 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', warnBeforeUnloa
                 :errors="componentErrors(index)"
                 :first="index === 0"
                 :last="index === form.content.length - 1"
+                :active="component.id === activeId"
                 :targets="targets"
+                @toggle="toggleActive(component.id)"
                 @up="move(index, index - 1)"
                 @down="move(index, index + 1)"
                 @duplicate="duplicate(index)"
@@ -271,6 +304,8 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', warnBeforeUnloa
             :components="form.content"
             :theme="website?.page_theme"
             :accent="website?.accent_color"
+            :active-id="activeId"
+            @select="activate($event)"
           />
           <p class="muted preview-pane__hint">A mentetlen módosításokat is mutatja.</p>
         </aside>

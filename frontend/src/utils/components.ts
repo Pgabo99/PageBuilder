@@ -29,6 +29,17 @@ export function createComponent(type: ComponentType): PageComponent {
   }
 }
 
+/** Rövid tartalmi összefoglaló az összecsukott komponenshez. */
+export function componentSummary(component: PageComponent, max = 60): string {
+  const raw =
+    component.type === 'button'
+      ? [component.label, component.url].filter(Boolean).join(' → ')
+      : component.text
+  const text = raw.replace(/\s+/g, ' ').trim()
+  if (text === '') return '(üres)'
+  return text.length > max ? `${text.slice(0, max - 1)}…` : text
+}
+
 export interface PageTarget {
   label: string
   url: string

@@ -2,25 +2,33 @@
 import { useId } from 'vue'
 
 import type { PageComponent } from '@/types/content'
-import { componentLabel, type PageTarget } from '@/utils/components'
+import { componentLabel, componentSummary, type PageTarget } from '@/utils/components'
 
 // Egy komponens szerkesztője: a mezők típusonként változnak, a hibák mezőnként jelennek meg.
 defineProps<{
   errors: Record<string, string[]>
   first: boolean
   last: boolean
+  active: boolean
   targets?: PageTarget[]
 }>()
 
 const model = defineModel<PageComponent>({ required: true })
 
-defineEmits<{ remove: []; duplicate: []; up: []; down: []; dragstart: [event: DragEvent] }>()
+defineEmits<{
+  remove: []
+  duplicate: []
+  up: []
+  down: []
+  toggle: []
+  dragstart: [event: DragEvent]
+}>()
 
 const uid = useId()
 </script>
 
 <template>
-  <div class="component">
+  <div class="component" :class="{ 'component--active': active }">
     <div class="component__head">
       <span
         class="component__handle"
@@ -31,7 +39,19 @@ const uid = useId()
         @dragstart="$emit('dragstart', $event)"
         >⠿</span
       >
-      <strong>{{ componentLabel(model.type) }}</strong>
+      <button
+        class="component__toggle"
+        type="button"
+        :aria-expanded="active"
+        :aria-controls="`${uid}-fields`"
+        @click="$emit('toggle')"
+      >
+        <strong>{{ componentLabel(model.type) }}</strong>
+        <span v-if="!active" class="component__summary muted">{{ componentSummary(model) }}</span>
+        <span v-if="!active && Object.keys(errors).length" class="component__invalid">
+          Hibás mező
+        </span>
+      </button>
       <span class="actions">
         <button
           class="btn btn--secondary btn--small"
@@ -70,7 +90,7 @@ const uid = useId()
       </span>
     </div>
 
-    <div class="component__fields">
+    <div v-if="active" :id="`${uid}-fields`" class="component__fields">
       <template v-if="model.type === 'heading'">
         <div class="field">
           <label :for="`${uid}-text`">Szöveg</label>
@@ -144,12 +164,48 @@ const uid = useId()
   border-radius: var(--radius);
 }
 
+.component--active {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 1px var(--color-primary);
+}
+
 .component__head {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-3);
+}
+
+.component--active .component__head {
   margin-bottom: var(--space-3);
+}
+
+/* Az összefoglaló egész sora kattintható és billentyűzettel is használható (Enter, szóköz). */
+.component__toggle {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.component__summary {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.component__invalid {
+  font-size: 0.875rem;
+  color: var(--color-danger);
 }
 
 .component__head .actions {
