@@ -4,6 +4,7 @@
 # Távoli ágat nem hoz létre és nem módosít. A takarítás hiba esetén is lefut, és csak a saját klasztert törli;
 # ha már van ilyen nevű klaszter, nem nyúl hozzá, hanem leáll.
 # GITOPS_KEEP=1: a klaszter megmarad hibakereséshez (kézzel törlendő: kind delete cluster --name pagebuilder-gitops).
+# A kubeconfig-védelem miatt a kind/kubectl a `KUBECONFIG` változót a szkript elejétől saját ideiglenes fájlra állítja.
 # Követelmény: bash, curl, docker, kubectl, sha256sum, base64. Windows: Git Bash.
 set -euo pipefail
 
@@ -29,6 +30,20 @@ ARGO_IMAGES=(
 )
 
 WORK="$(mktemp -d)"
+
+# A felhasználó kubeconfigja (KUBECONFIG vagy ~/.kube/config) védett: a szkript csak saját, ideiglenes
+# fájlt használ (kind és kubectl is), és a futás végén ellenőrzi, hogy a felhasználóé bájtra azonos maradt.
+user_kubeconfig_hash() {
+  local f
+  IFS=':' read -ra files <<<"${USER_KUBECONFIG:-$HOME/.kube/config}"
+  for f in "${files[@]}"; do
+    if [ -f "$f" ]; then sha256sum "$f" | cut -d' ' -f1; else echo "nincs:$f"; fi
+  done
+}
+USER_KUBECONFIG="${KUBECONFIG:-}"
+KUBECONFIG_BEFORE="$(user_kubeconfig_hash)"
+if command -v cygpath >/dev/null; then KUBECONFIG="$(cygpath -m "$WORK")/kubeconfig"; else KUBECONFIG="$WORK/kubeconfig"; fi
+export KUBECONFIG
 CREATED=0
 PF_PID=""
 START=$SECONDS
@@ -57,9 +72,13 @@ cleanup() {
   [ "$status" -eq 0 ] || diagnostics
   # Csak az ebben a futásban létrehozott klaszter törlődik.
   if [ "$CREATED" = 1 ] && [ "${GITOPS_KEEP:-}" != "1" ]; then
-    "$KIND" delete cluster --name "$CLUSTER" >/dev/null 2>&1 || true
+    "$KIND" delete cluster --name "$CLUSTER" --kubeconfig "$KUBECONFIG" >/dev/null 2>&1 || true
   fi
   rm -rf "$WORK"
+  if [ "$(user_kubeconfig_hash)" != "$KUBECONFIG_BEFORE" ]; then
+    echo "HIBA: a felhasználó kubeconfigja megváltozott a futás alatt!" >&2
+    status=1
+  fi
   exit "$status"
 }
 trap cleanup EXIT
@@ -90,7 +109,7 @@ fi
 phase "előfeltételek és kind $KIND_VERSION (ellenőrző összeg rendben)"
 
 # --- Klaszter ---
-"$KIND" create cluster --name "$CLUSTER" --image "$NODE_IMAGE" --wait 180s >/dev/null
+"$KIND" create cluster --name "$CLUSTER" --kubeconfig "$KUBECONFIG" --image "$NODE_IMAGE" --wait 180s >/dev/null
 CREATED=1
 k cluster-info >/dev/null
 phase "kind-klaszter ($NODE_IMAGE)"
