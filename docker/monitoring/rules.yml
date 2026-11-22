@@ -1,0 +1,20 @@
+# SLO-k (szintetikus réteg, 15 perces ablak). A 30 napos cél hosszú távú; a 15 perces ablakra csak akkor
+# állítunk megfelelést, ha az ablak legalább 95%-ban mért (lefedettség). Az 5 s-os próbaintervallum a
+# prometheus.yml-ből jön: 15 perc = 180 minta.
+groups:
+  - name: slo-synthetic
+    interval: 15s
+    rules:
+      # SLI: rendelkezésre állás és p95 válaszidő próbánként.
+      - record: slo:synthetic_availability:ratio_15m
+        expr: avg_over_time(probe_success{layer="synthetic"}[15m])
+      - record: slo:synthetic_latency_p95:seconds_15m
+        expr: quantile_over_time(0.95, probe_duration_seconds{layer="synthetic"}[15m])
+      # Az ablak mért hányada (1 = teljes).
+      - record: slo:synthetic_window_coverage:ratio_15m
+        expr: count_over_time(probe_success{layer="synthetic"}[15m]) / 180
+      # SLO-megfelelés (1 = teljesül, 0 = nem): csak fedett ablaknál van értéke, egyébként nincs adat.
+      - record: slo:synthetic_availability_slo_met:bool_15m
+        expr: (slo:synthetic_availability:ratio_15m >= bool 0.99) and on(probe) (slo:synthetic_window_coverage:ratio_15m >= 0.95)
+      - record: slo:synthetic_latency_slo_met:bool_15m
+        expr: (slo:synthetic_latency_p95:seconds_15m < bool 0.5) and on(probe) (slo:synthetic_window_coverage:ratio_15m >= 0.95)

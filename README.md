@@ -76,6 +76,10 @@ A jelszavakat helyi használatra a placeholder is megteszi; máshol az első ind
 
 `bash scripts/smoke.sh` (a repó gyökeréből): minden szolgáltatás healthy, `/up`, SPA, majd egy felhasználói út az API-n: regisztráció, webhely, oldal, publikálás (queue és worker), a publikált oldal kiszolgálása. Hibánál nem nulla kilépési kóddal áll le. Ugyanezt futtatja a CI `install` jobja tiszta checkouton.
 
+### Monitoring (opcionális profil)
+
+`docker compose --profile monitoring up -d --wait` a futó stack mellé indítja a Prometheust, a blackbox exportert és a Grafanát (az alap `docker compose up` nem indítja őket). Csak `127.0.0.1`-en érhetők el: Grafana http://localhost:3000 (`admin`, jelszó: `GRAFANA_ADMIN_PASSWORD`, placeholder az `.env.example`-ben), Prometheus http://localhost:9090. A dashboard: „PageBuilder – SLO (szintetikus)". Leírás és SLO-k: [DevOps](docs/devops.md#monitoring-helyi-megvalósítva). Ellenőrzés: `bash scripts/monitoring-check.sh` (elkülönített projekten).
+
 ### Backup és restore (MySQL)
 
 - `bash scripts/backup.sh`: mentés a futó stackről a `backups/` mappába (`<db>-<UTC>.sql.gz` és `.sha256`; a mappa nincs verziókezelésben, mert valódi adatot tartalmazhat). Csak olvas, az app-felhasználóval fut. Ütemezéshez a `cron` (Linux, macOS) vagy a Windows Feladatütemező hívhatja a szkriptet; beépített ütemezés nincs.

@@ -1,0 +1,12 @@
+# HTTP-próba: sikeres, ha 2xx a válasz (a próbák az Nginxen át az alkalmazás útját mérik).
+modules:
+  http_2xx:
+    prober: http
+    timeout: 5s
+    http:
+      preferred_ip_protocol: ip4
+      method: GET
+      # A Vite dev szerver csak az ismert hosztneveket szolgálja ki (az Nginx tovább is adja a Host fejlécet),
+      # ezért a próba a böngészőkkel azonos localhost néven fordul az Nginxhez.
+      headers:
+        Host: localhost
