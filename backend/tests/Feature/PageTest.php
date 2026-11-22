@@ -101,6 +101,62 @@ describe('tartalom validálása', function () {
         'tömb ikonként' => [['id' => 'a', 'type' => 'heading', 'text' => 'X', 'level' => 1, 'icon' => ['star']], 'content.0.icon'],
     ]);
 
+    it('elfogadja a kártyacsoportot, és csak a megengedett mezőket tárolja', function () {
+        $cards = [
+            'id' => 'k', 'type' => 'cards', 'cards' => [
+                ['id' => 'k1', 'icon' => 'star', 'title' => 'Első', 'text' => 'Leírás', 'label' => 'Tovább', 'url' => '/kapcsolat', 'html' => '<script>', 'onclick' => 'x()'],
+                ['id' => 'k2', 'title' => 'Csak cím'],
+                ['id' => 'k3', 'icon' => null, 'title' => 'Üres opcionálisok', 'text' => null, 'label' => null, 'url' => null],
+            ],
+        ];
+
+        $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [
+            'title' => 'X', 'slug' => 'x', 'content' => [$cards],
+        ])->assertCreated()->assertJsonCount(3, 'data.content.0.cards');
+
+        $stored = Page::first()->content[0]['cards'];
+        expect($stored[0])->toEqual(['id' => 'k1', 'icon' => 'star', 'title' => 'Első', 'text' => 'Leírás', 'label' => 'Tovább', 'url' => '/kapcsolat'])
+            ->and($stored[1])->toEqual(['id' => 'k2', 'title' => 'Csak cím']);
+    });
+
+    it('a hat kártya még elfogadott, a hét nem', function () {
+        $make = fn (int $n) => ['id' => 'k', 'type' => 'cards', 'cards' => array_map(
+            fn ($i) => ['id' => "k$i", 'title' => "Kártya $i"], range(1, $n),
+        )];
+
+        $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [
+            'title' => 'X', 'slug' => 'x', 'content' => [$make(6)],
+        ])->assertCreated();
+
+        $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [
+            'title' => 'Y', 'slug' => 'y', 'content' => [$make(7)],
+        ])->assertUnprocessable()->assertJsonValidationErrors('content.0.cards');
+    });
+
+    it('hibás kártyákat elutasít, a hibakulcs a kártya mezőjére mutat', function (array $cards, string $errorKey) {
+        $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [
+            'title' => 'X', 'slug' => 'x', 'content' => [['id' => 'k', 'type' => 'cards', 'cards' => $cards]],
+        ])->assertUnprocessable()->assertJsonValidationErrors($errorKey);
+    })->with([
+        'üres lista' => [[], 'content.0.cards'],
+        'cím nélkül' => [[['id' => 'k1']], 'content.0.cards.0.title'],
+        'túl hosszú cím' => [[['id' => 'k1', 'title' => str_repeat('a', 101)]], 'content.0.cards.0.title'],
+        'túl hosszú leírás' => [[['id' => 'k1', 'title' => 'X', 'text' => str_repeat('a', 501)]], 'content.0.cards.0.text'],
+        'ismeretlen ikon' => [[['id' => 'k1', 'title' => 'X', 'icon' => 'nincs-ilyen']], 'content.0.cards.0.icon'],
+        'SVG-kód ikonként' => [[['id' => 'k1', 'title' => 'X', 'icon' => '<svg onload=x>']], 'content.0.cards.0.icon'],
+        'felirat cél nélkül' => [[['id' => 'k1', 'title' => 'X', 'label' => 'Tovább']], 'content.0.cards.0.url'],
+        'cél felirat nélkül' => [[['id' => 'k1', 'title' => 'X', 'url' => '/x']], 'content.0.cards.0.label'],
+        'javascript: cél' => [[['id' => 'k1', 'title' => 'X', 'label' => 'Y', 'url' => 'javascript:alert(1)']], 'content.0.cards.0.url'],
+        'második kártya hibás' => [[['id' => 'k1', 'title' => 'X'], ['id' => 'k2']], 'content.0.cards.1.title'],
+        'azonosító nélkül' => [[['title' => 'X']], 'content.0.cards.0.id'],
+    ]);
+
+    it('a kártyacsoport kártyák nélkül (hiányzó mező) hibás', function () {
+        $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [
+            'title' => 'X', 'slug' => 'x', 'content' => [['id' => 'k', 'type' => 'cards']],
+        ])->assertUnprocessable()->assertJsonValidationErrors('content.0.cards');
+    });
+
     it('elfogadja az engedélyezett ikont és az ikon nélküli címsort', function (mixed $icon) {
         $heading = ['id' => 'a', 'type' => 'heading', 'text' => 'X', 'level' => 2];
         $heading['icon'] = $icon;

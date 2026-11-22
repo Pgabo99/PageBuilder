@@ -169,6 +169,75 @@ describe('job', function () {
             ->toContain('<h2>Három</h2>');
     });
 
+    it('a kártyacsoport reszponzív rácsban, ikonnal, escape-elt szöveggel és biztonságos gombbal jelenik meg', function () {
+        $this->index->update(['content' => [
+            ['id' => 'k', 'type' => 'cards', 'cards' => [
+                ['id' => 'a', 'icon' => 'star', 'title' => '<b>Első</b>', 'text' => '"><img src=x onerror=1>', 'label' => 'Tovább', 'url' => 'https://example.com/?a=1&b=2'],
+                ['id' => 'b', 'title' => 'Csak cím'],
+            ]],
+        ]]);
+
+        runJob($this->website);
+
+        $html = file_get_contents("{$this->dir}/proba/index.html");
+        expect($html)
+            ->toContain('grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr))')
+            ->toContain('<div class="cards">')
+            ->toContain('<article class="card">')
+            ->toContain('<div class="card__icon"><svg class="icon"')
+            ->toContain('<h3>&lt;b&gt;Első&lt;/b&gt;</h3>')
+            ->toContain('<p>&quot;&gt;&lt;img src=x onerror=1&gt;</p>')
+            ->toContain('<a class="button" href="https://example.com/?a=1&amp;b=2">Tovább</a>')
+            ->toContain('<h3>Csak cím</h3>')
+            ->not->toContain('<img')
+            ->not->toContain('<script');
+        expect(substr_count($html, '<article class="card">'))->toBe(2)
+            // Csak az első kártyának van ikonja és gombja.
+            ->and(substr_count($html, 'class="card__icon"'))->toBe(1)
+            ->and(substr_count($html, 'class="button"'))->toBe(1);
+    });
+
+    it('a kártya gombja csak biztonságos céllal és felirattal jelenik meg (a validációt megkerülve is)', function () {
+        $this->index->update(['content' => [
+            ['id' => 'k', 'type' => 'cards', 'cards' => [
+                ['id' => 'a', 'title' => 'Rossz cél', 'label' => 'Rossz', 'url' => 'javascript:alert(1)'],
+                ['id' => 'b', 'title' => 'Felirat nélkül', 'url' => '/x'],
+                ['id' => 'c', 'title' => 'Cél nélkül', 'label' => 'Üres'],
+                ['id' => 'd', 'icon' => 'nincs-ilyen', 'title' => 'Ismeretlen ikon'],
+            ]],
+        ]]);
+
+        runJob($this->website);
+
+        $html = file_get_contents("{$this->dir}/proba/index.html");
+        expect($html)
+            ->not->toContain('javascript:')
+            ->not->toContain('class="button"')
+            ->not->toContain('<svg')
+            ->not->toContain('card__icon"')
+            ->toContain('<h3>Rossz cél</h3>')
+            ->toContain('<h3>Ismeretlen ikon</h3>');
+    });
+
+    it('legfeljebb hat kártyát renderel, és a hibás kártyaadat nem töri meg a publikálást', function () {
+        $many = array_map(fn ($i) => ['id' => "k$i", 'title' => "Kártya $i"], range(1, 9));
+        $this->index->update(['content' => [
+            ['id' => 'a', 'type' => 'cards', 'cards' => $many],
+            ['id' => 'b', 'type' => 'cards', 'cards' => 'nem tömb'],
+            ['id' => 'c', 'type' => 'cards', 'cards' => ['szöveg', 7, ['id' => 'x', 'title' => 'Jó']]],
+            ['id' => 'd', 'type' => 'cards'],
+        ]]);
+
+        runJob($this->website);
+
+        $html = file_get_contents("{$this->dir}/proba/index.html");
+        expect($this->website->fresh()->publish_status)->toBe(PublishStatus::Succeeded)
+            ->and(substr_count($html, '<h3>Kártya '))->toBe(6)
+            ->and($html)->not->toContain('Kártya 7')
+            ->and($html)->toContain('<h3>Jó</h3>')
+            ->and(substr_count($html, '<div class="cards">'))->toBe(4);
+    });
+
     it('idempotens: ismételt futtatás ugyanazt adja, és nem hagy ideiglenes könyvtárat', function () {
         runJob($this->website);
         $first = file_get_contents("{$this->dir}/proba/index.html");

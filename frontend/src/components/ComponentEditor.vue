@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useId } from 'vue'
 
+import CardsEditor from '@/components/CardsEditor.vue'
 import IconPicker from '@/components/IconPicker.vue'
 import type { PageComponent } from '@/types/content'
 import { componentLabel, componentSummary, type PageTarget } from '@/utils/components'
@@ -154,6 +155,13 @@ const uid = useId()
           <p v-if="errors.url" class="field__error">{{ errors.url.join(' ') }}</p>
         </div>
       </template>
+
+      <CardsEditor
+        v-else-if="model.type === 'cards'"
+        v-model="model.cards"
+        :errors="errors"
+        :targets="targets"
+      />
     </div>
   </div>
 </template>

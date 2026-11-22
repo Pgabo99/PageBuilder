@@ -53,6 +53,19 @@ class SiteRenderContext
         return Icons::svg($name);
     }
 
+    /**
+     * A kártyacsoport kártyái futáskor is korlátozva: csak tömb elemek, legfeljebb a megengedett darabszám.
+     *
+     * @param  array<string, mixed>  $component
+     * @return list<array<string, mixed>>
+     */
+    public function cards(array $component): array
+    {
+        $cards = is_array($component['cards'] ?? null) ? $component['cards'] : [];
+
+        return array_slice(array_values(array_filter($cards, 'is_array')), 0, PageContentRules::MAX_CARDS);
+    }
+
     /** Futáskor is ellenőrizzük a komponens URL-jét (a validációval azonos szabály). */
     public function isSafeUrl(mixed $url): bool
     {
