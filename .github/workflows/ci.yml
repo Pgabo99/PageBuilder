@@ -87,11 +87,13 @@ jobs:
         run: |
           docker build --target prod -t pagebuilder-backend:prod -f docker/php/Dockerfile backend
           docker build -t pagebuilder-nginx:prod -f docker/nginx/Dockerfile .
+          # A monitoring profil exportere (saját Dockerfile, friss Go): ugyanaz a Trivy-kapu.
+          docker build -t pagebuilder-nginxlog-exporter:dev docker/nginxlog-exporter
 
       - name: Trivy image
         run: |
           trivy() { docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v trivy-cache:/root/.cache "$TRIVY" image --scanners vuln,secret "$@"; }
-          for img in pagebuilder-backend:prod pagebuilder-nginx:prod; do
+          for img in pagebuilder-backend:prod pagebuilder-nginx:prod pagebuilder-nginxlog-exporter:dev; do
             trivy --exit-code 0 "$img"
             trivy --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 "$img"
           done

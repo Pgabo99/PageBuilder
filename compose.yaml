@@ -166,11 +166,14 @@ services:
       retries: 5
       start_period: 5s
 
-  # Valódi forgalmi réteg: az Nginx időzített naplóját olvassa. A port nincs a hostra kiadva (csak a Prometheus éri el);
-  # az image (v1.11.0, 2023) régi Go-val épült (lásd docs/devops.md), ezért szűkített jogokkal fut.
+  # Valódi forgalmi réteg: az Nginx időzített naplóját olvassa. A port nincs a hostra kiadva (csak a Prometheus éri el).
+  # A hivatalos image 2023-as (Go 1.18, 45 HIGH/CRITICAL), ezért a docker/nginxlog-exporter/Dockerfile friss Go-val fordítja
+  # ugyanazt a forrást (lásd docs/devops.md); szűkített jogokkal fut.
   nginxlog-exporter:
     profiles: [monitoring]
-    image: quay.io/martinhelmich/prometheus-nginxlog-exporter:v1.11.0@sha256:b36976cb58584529381a92404a7ba9868b03e1a321c9dc7228cc9ecd93a80440
+    build:
+      context: ./docker/nginxlog-exporter
+    image: pagebuilder-nginxlog-exporter:dev
     command: ["-config-file", "/etc/nginxlog/nginxlog.yml"]
     user: "65534:65534"
     read_only: true
@@ -243,6 +246,14 @@ volumes:
   frontend-node-modules:
   sites-data:
   e2e-node-modules:
+  # Az Nginx időzített naplója memóriában (tmpfs), legfeljebb 16 MiB: a napló mérete így korlátos, és a stack
+  # leállításakor (az Nginx és az exporter is leáll) törlődik. Betelés esetén az Nginx tovább szolgál ki, de a
+  # valódi forgalmi számlálók nem nőnek tovább (a sorok ~16 bájtosak, tehát kb. 1 millió kérés fér bele).
   nginx-timed-logs:
+    driver: local
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
+      o: size=16m
   prometheus-data:
   grafana-data:

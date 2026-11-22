@@ -129,6 +129,11 @@ wait_for "2 db 404-es kérés megjelent (pontosan)" 60 delta_is 404 "$base404" 2
 sleep 20
 delta_is 200 "$base200" 7 || die "a 200-as számláló tovább nőtt: a blackbox próbák is belekerültek a valódi forgalomba"
 ok "a szintetikus próbák nem számítanak a valódi forgalomba (a számláló 20 s múlva is pontosan 7)"
+bad_lines="$($DC exec -T nginx sh -c 'grep -cvE "^[A-Z]+ [0-9]{3} [0-9.]+$" /var/log/nginx-timed/timed.log || true' | tr -d '\r')"
+[ "$bad_lines" = 0 ] || die "a valódi forgalmi napló $bad_lines sora nem csak metódus, státusz és válaszidő (érzékeny adat kerülhet bele)"
+ok "a napló minden sora csak metódus, státusz és válaszidő (nincs IP, útvonal vagy query string)"
+mount_line="$($DC exec -T nginx sh -c 'grep " /var/log/nginx-timed " /proc/mounts' | tr -d '\r')"
+case "$mount_line" in *tmpfs*size=16384k*) ok "a napló-kötet méretkorlátos (tmpfs, 16 MiB)" ;; *) die "a napló-kötet nem 16 MiB-os tmpfs: $mount_line" ;; esac
 val_is 'sum(pagebuilder_nginx_parse_errors_total)' 0 || die "az exporter parse-hibát jelzett: a naplóformátum nem illeszkedik"
 ok "nincs parse-hiba (a naplóformátum illeszkedik)"
 empty 'pagebuilder_nginx_http_response_count_total{layer!="real"}' || die "a valódi forgalmi metrika nem layer=real"

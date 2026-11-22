@@ -1,14 +1,18 @@
 # Az Nginx időzített naplójából (docker/nginx/default.conf, log_format timed) számol forgalmi metrikákat.
 # A `format` azonos a log_format sorával; a monitoring-check.sh ezt ellenőrzi. Címkék: csak method és status
-# (az útvonal nem címke, hogy ne legyen magas a kardinalitás). A method címkét az exporter a `$request` mezőből képzi.
+# (útvonal nincs a naplóban, így kardinalitási gond sem lehet). A method címkét a relabel_configs adja a
+# `$request_method` mezőből (az exporter alapból csak a `$request` mezőből képezné).
 listen:
   port: 4040
   address: "0.0.0.0"
 
 namespaces:
   - name: pagebuilder_nginx
-    format: '$remote_addr - [$time_local] "$request" $status $body_bytes_sent $request_time'
+    format: '$request_method $status $request_time'
     source:
       files:
         - /var/log/nginx-timed/timed.log
+    relabel_configs:
+      - target_label: method
+        from: request_method
     histogram_buckets: [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10]
