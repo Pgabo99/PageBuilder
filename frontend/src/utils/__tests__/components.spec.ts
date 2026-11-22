@@ -2,13 +2,74 @@ import { describe, expect, it } from 'vitest'
 
 import {
   cloneComponent,
+  componentLabel,
   componentSummary,
+  componentTypes,
+  createCard,
   createComponent,
+  MAX_CARDS,
+  MIN_CARDS,
   dropSlot,
   moveItem,
   pageTargets,
   slotTarget,
 } from '../components'
+
+describe('kártyakomponens', () => {
+  it('az új kártyacsoport egy kártyát tartalmaz, kötelező címmel és üres opcionális mezőkkel', () => {
+    const component = createComponent('cards')
+
+    expect(component).toMatchObject({ type: 'cards' })
+    if (component.type !== 'cards') throw new Error('nem kártyacsoport')
+    expect(component.cards).toHaveLength(MIN_CARDS)
+    expect(component.cards[0]).toMatchObject({
+      title: 'Új kártya',
+      icon: null,
+      text: '',
+      label: '',
+      url: '',
+    })
+    expect(createCard().id).not.toBe(createCard().id)
+    expect(MAX_CARDS).toBe(6)
+  })
+
+  it('a típuslistában szerepel', () => {
+    expect(componentTypes.map((t) => t.type)).toContain('cards')
+    expect(componentLabel('cards')).toBe('Kártyák')
+  })
+
+  it('a másolat új azonosítókat kap, és nem osztozik a kártyákon az eredetivel', () => {
+    const original = createComponent('cards')
+    if (original.type !== 'cards') throw new Error('nem kártyacsoport')
+    original.cards.push(createCard())
+
+    const copy = cloneComponent(original)
+    if (copy.type !== 'cards') throw new Error('nem kártyacsoport')
+    copy.cards[0]!.title = 'Módosított'
+    copy.cards.pop()
+
+    expect(copy.id).not.toBe(original.id)
+    expect(copy.cards[0]!.id).not.toBe(original.cards[0]!.id)
+    expect(original.cards).toHaveLength(2)
+    expect(original.cards[0]!.title).toBe('Új kártya')
+  })
+
+  it('az összefoglaló a kártyák számát és az első címet mutatja', () => {
+    expect(
+      componentSummary({
+        id: 'k',
+        type: 'cards',
+        cards: [
+          { id: 'a', title: 'Első' },
+          { id: 'b', title: 'Második' },
+        ],
+      }),
+    ).toBe('2 kártya: Első')
+    expect(componentSummary({ id: 'k', type: 'cards', cards: [{ id: 'a', title: '' }] })).toBe(
+      '1 kártya',
+    )
+  })
+})
 
 describe('dropSlot', () => {
   it('a kurzor feletti közepű elemek számát adja', () => {

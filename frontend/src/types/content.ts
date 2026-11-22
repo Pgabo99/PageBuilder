@@ -45,7 +45,23 @@ export interface ButtonComponent {
   url: string
 }
 
-export type PageComponent = HeadingComponent | TextComponent | ButtonComponent
+/** A kártya gombja: a felirat és a cél együtt kötelező, vagy mindkettő üres. */
+export interface CardItem {
+  id: string
+  icon?: string | null
+  title: string
+  text?: string | null
+  label?: string | null
+  url?: string | null
+}
+
+export interface CardsComponent {
+  id: string
+  type: 'cards'
+  cards: CardItem[]
+}
+
+export type PageComponent = HeadingComponent | TextComponent | ButtonComponent | CardsComponent
 export type ComponentType = PageComponent['type']
 
 export interface Page {

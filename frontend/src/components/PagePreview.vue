@@ -2,6 +2,8 @@
 import { computed } from 'vue'
 
 import AppIcon from '@/components/AppIcon.vue'
+import { MAX_CARDS } from '@/utils/components'
+import { findIcon } from '@/utils/icons'
 import type { PageComponent } from '@/types/content'
 import { pageStyle, type PageTheme } from '@/utils/themes'
 
@@ -51,6 +53,28 @@ const level = (value: number): 1 | 2 | 3 =>
       >
         {{ component.text }}
       </p>
+      <div
+        v-else-if="component.type === 'cards'"
+        class="preview__item preview__cards"
+        :class="{ 'preview__item--active': component.id === activeId }"
+        :data-component-id="component.id"
+        @click="$emit('select', component.id)"
+      >
+        <article
+          v-for="card in component.cards.slice(0, MAX_CARDS)"
+          :key="card.id"
+          class="preview__card"
+        >
+          <div v-if="findIcon(card.icon)" class="preview__card-icon">
+            <AppIcon :name="card.icon" />
+          </div>
+          <h3>{{ card.title }}</h3>
+          <p v-if="card.text">{{ card.text }}</p>
+          <p v-if="card.label && card.url && SAFE_URL.test(card.url)">
+            <span class="preview__button">{{ card.label }}</span>
+          </p>
+        </article>
+      </div>
       <p
         v-else-if="component.type === 'button' && SAFE_URL.test(component.url)"
         class="preview__item"
@@ -98,6 +122,36 @@ const level = (value: number): 1 | 2 | 3 =>
   margin-right: 0.4em;
   color: var(--accent);
   vertical-align: -0.15em;
+}
+
+/* Mint a publikált oldal kártyái: reszponzív rács media query nélkül. */
+.preview__cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.preview__card {
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+}
+
+.preview__card-icon .icon {
+  width: 1.75rem;
+  height: 1.75rem;
+  margin-bottom: 0.25rem;
+  color: var(--accent);
+}
+
+.preview__card h3 {
+  margin: 0.25rem 0 0.5rem;
+  font-size: 1.1rem;
+}
+
+.preview__card p {
+  margin: 0.5rem 0;
 }
 
 .preview__empty {

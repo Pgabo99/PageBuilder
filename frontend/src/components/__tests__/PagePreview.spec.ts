@@ -55,6 +55,82 @@ describe('PagePreview', () => {
     expect(wrapper.attributes('style')).toContain('--accent: #6d3fd0')
   })
 
+  describe('kártyák', () => {
+    const cards: PageComponent = {
+      id: 'k',
+      type: 'cards',
+      cards: [
+        {
+          id: 'a',
+          icon: 'star',
+          title: 'Első',
+          text: 'Leírás',
+          label: 'Tovább',
+          url: '/kapcsolat',
+        },
+        { id: 'b', title: 'Csak cím' },
+        {
+          id: 'c',
+          icon: 'nincs-ilyen',
+          title: 'Rossz',
+          label: 'Rossz',
+          url: 'javascript:alert(1)',
+        },
+      ],
+    }
+
+    it('rácsban jeleníti meg a kártyákat, ikonnal, címmel, leírással és gombbal', () => {
+      const wrapper = mount(PagePreview, { props: { components: [cards] } })
+      const items = wrapper.findAll('.preview__card')
+
+      expect(wrapper.find('.preview__cards').exists()).toBe(true)
+      expect(items).toHaveLength(3)
+      expect(items[0]!.find('.preview__card-icon svg.icon').exists()).toBe(true)
+      expect(items[0]!.find('h3').text()).toBe('Első')
+      expect(items[0]!.find('p').text()).toBe('Leírás')
+      expect(items[0]!.find('.preview__button').text()).toBe('Tovább')
+      expect(items[1]!.find('.preview__card-icon').exists()).toBe(false)
+      expect(items[1]!.find('p').exists()).toBe(false)
+    })
+
+    it('az ismeretlen ikont és a nem biztonságos gombot elhagyja, mint a publikált oldal', () => {
+      const wrapper = mount(PagePreview, { props: { components: [cards] } })
+      const bad = wrapper.findAll('.preview__card')[2]!
+
+      expect(bad.find('.preview__card-icon').exists()).toBe(false)
+      expect(bad.find('.preview__button').exists()).toBe(false)
+      expect(bad.find('h3').text()).toBe('Rossz')
+    })
+
+    it('a kártya gombja nem navigál, és nem kattintható elem', () => {
+      const wrapper = mount(PagePreview, { props: { components: [cards] } })
+
+      expect(wrapper.find('a').exists()).toBe(false)
+      expect(wrapper.find('button').exists()).toBe(false)
+    })
+
+    it('legfeljebb hat kártyát mutat, a szöveget escape-elve', () => {
+      const many: PageComponent = {
+        id: 'm',
+        type: 'cards',
+        cards: Array.from({ length: 9 }, (_, i) => ({ id: `k${i}`, title: `<b>Kártya ${i}</b>` })),
+      }
+      const wrapper = mount(PagePreview, { props: { components: [many] } })
+
+      expect(wrapper.findAll('.preview__card')).toHaveLength(6)
+      expect(wrapper.find('b').exists()).toBe(false)
+      expect(wrapper.find('h3').text()).toBe('<b>Kártya 0</b>')
+    })
+
+    it('a kártyacsoportra kattintva kijelölést kér, és kiemelhető', async () => {
+      const wrapper = mount(PagePreview, { props: { components: [cards], activeId: 'k' } })
+
+      expect(wrapper.find('.preview__cards').classes()).toContain('preview__item--active')
+      await wrapper.find('.preview__card h3').trigger('click')
+      expect(wrapper.emitted('select')).toEqual([['k']])
+    })
+  })
+
   it('a gomb nem navigál: nincs link és nincs kattintható elem', () => {
     const wrapper = mount(PagePreview, { props: { components } })
 
