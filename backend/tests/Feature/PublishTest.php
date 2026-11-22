@@ -253,6 +253,27 @@ describe('színek a publikált oldalon', function () {
             ->toContain('--text: #e6e8ec');
     });
 
+    it('a kék és a lila téma saját palettát és alapértelmezett kiemelőszínt kap', function (string $theme, array $expected) {
+        $this->website->update(['page_theme' => $theme]);
+
+        runJob($this->website);
+
+        expect(file_get_contents("{$this->dir}/proba/index.html"))->toContain(...$expected);
+    })->with([
+        'kék' => ['blue', ['--bg: #eef4ff', '--text: #10264a', '--accent: #1d5fd1', '--on-accent: #ffffff']],
+        'lila' => ['purple', ['--bg: #f5f0ff', '--text: #261448', '--accent: #6d3fd0', '--on-accent: #ffffff']],
+    ]);
+
+    it('a megadott kiemelőszín a téma alapértelmezettjét is felülírja', function () {
+        $this->website->update(['page_theme' => 'purple', 'accent_color' => '#E11D48']);
+
+        runJob($this->website);
+
+        expect(file_get_contents("{$this->dir}/proba/index.html"))
+            ->toContain('--accent: #e11d48')
+            ->toContain('--bg: #f5f0ff');
+    });
+
     it('alapértelmezett megjelenés, ha nincs beállítás', function () {
         runJob($this->website);
 
@@ -274,7 +295,7 @@ describe('színek a publikált oldalon', function () {
 
     it('a validációt megkerülő hibás tárolt érték nem kerül a CSS-be', function () {
         Website::whereKey($this->website->id)->update([
-            // Az oszlop mérete is korlátoz (7 és 5 karakter), de a renderer ettől függetlenül is ellenőriz.
+            // Az oszlop mérete is korlátoz (7 és 16 karakter), de a renderer ettől függetlenül is ellenőriz.
             'accent_color' => 'x;}<b>',
             'page_theme' => 'kek',
         ]);

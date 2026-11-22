@@ -125,6 +125,12 @@ describe('színbeállítások', function () {
             ->assertJsonPath('data.page_theme', 'dark');
     });
 
+    it('elfogadja a kék és a lila témát', function (string $theme) {
+        $this->actingAs($this->user)->postJson('/api/v1/websites', [
+            'name' => 'Téma', 'slug' => "tema-{$theme}", 'page_theme' => $theme,
+        ])->assertCreated()->assertJsonPath('data.page_theme', $theme);
+    })->with(['blue', 'purple']);
+
     it('megadás nélkül üres (alapértelmezett) marad, módosításkor törölhető', function () {
         $website = Website::factory()->for($this->user)->create(['accent_color' => '#112233', 'page_theme' => 'dark']);
 
