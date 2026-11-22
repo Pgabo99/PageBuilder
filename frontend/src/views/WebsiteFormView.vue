@@ -9,6 +9,7 @@ import { errorMessage } from '@/api/client'
 import { useToast } from '@/composables/useToast'
 import type { WebsitePayload } from '@/types/content'
 import { slugify } from '@/utils/slug'
+import { isPageTheme, pageThemes, themeAccent, type PageTheme } from '@/utils/themes'
 
 const route = useRoute()
 const router = useRouter()
@@ -18,9 +19,11 @@ const toast = useToast()
 const websiteId = computed(() => (route.params.id ? Number(route.params.id) : null))
 const editing = computed(() => websiteId.value !== null)
 
-// Üres érték = a publikált oldal alapértelmezett megjelenése.
-const DEFAULT_ACCENT = '#2f5bea'
-const form = reactive({ name: '', slug: '', accent_color: '', page_theme: '' as '' | 'dark' })
+// Üres érték = a publikált oldal alapértelmezett megjelenése (világos téma).
+const form = reactive({ name: '', slug: '', accent_color: '', page_theme: '' as '' | PageTheme })
+
+// A színválasztó a téma alapértelmezett kiemelőszínét mutatja, amíg nincs saját szín.
+const defaultAccent = computed(() => themeAccent(form.page_theme || null))
 const slugTouched = ref(false)
 const loadError = ref<string | null>(null)
 
@@ -44,7 +47,8 @@ onMounted(async () => {
     form.name = website.name
     form.slug = website.slug
     form.accent_color = website.accent_color ?? ''
-    form.page_theme = website.page_theme === 'dark' ? 'dark' : ''
+    form.page_theme =
+      isPageTheme(website.page_theme) && website.page_theme !== 'light' ? website.page_theme : ''
   } catch (e) {
     loadError.value = errorMessage(e)
   }
@@ -97,7 +101,7 @@ async function onSubmit(): Promise<void> {
             <input
               id="accent-color"
               type="color"
-              :value="form.accent_color || DEFAULT_ACCENT"
+              :value="form.accent_color || defaultAccent"
               @input="form.accent_color = ($event.target as HTMLInputElement).value"
             />
             <button
@@ -115,7 +119,9 @@ async function onSubmit(): Promise<void> {
           <label for="page-theme">Oldaltéma</label>
           <select id="page-theme" v-model="form.page_theme">
             <option value="">Világos</option>
-            <option value="dark">Sötét</option>
+            <option v-for="theme in pageThemes.slice(1)" :key="theme.value" :value="theme.value">
+              {{ theme.label }}
+            </option>
           </select>
           <p v-if="errors.page_theme" class="field__error">{{ errors.page_theme.join(' ') }}</p>
         </div>

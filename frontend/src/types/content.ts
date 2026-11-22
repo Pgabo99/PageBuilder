@@ -1,3 +1,5 @@
+import type { PageTheme } from '@/utils/themes'
+
 export type PublishStatus = 'queued' | 'running' | 'succeeded' | 'failed'
 
 export interface Website {
@@ -9,7 +11,7 @@ export interface Website {
   published_url: string | null
   publish_error: string | null
   accent_color: string | null
-  page_theme: 'light' | 'dark' | null
+  page_theme: PageTheme | null
   created_at: string
   updated_at: string
 }
@@ -18,7 +20,7 @@ export interface WebsitePayload {
   name: string
   slug: string
   accent_color: string | null
-  page_theme: 'light' | 'dark' | null
+  page_theme: PageTheme | null
 }
 
 export interface HeadingComponent {
