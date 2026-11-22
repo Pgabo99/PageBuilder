@@ -40,6 +40,7 @@ Szolgáltatások: `nginx`, `backend` (PHP-FPM), `worker`, `scheduler`, `mysql`, 
 
 - `.github/workflows/ci.yml` PR-ra és `main`-re: `backend` (Pint, Pest) és `frontend` (Oxlint/ESLint, Prettier, `type-check`, Vitest) job, ugyanazon a Compose-stacken, mint lokálisan; lockfile alapú telepítés, fájlmódosítás nélküli ellenőrzések; hitelesítő adatként csak a `.env.example` placeholderei (eldobható CI-adatbázis).
 - `install` job: a README első indítási lépései tiszta checkouton (`.env.example` placeholderekkel), majd `scripts/smoke.sh`: szolgáltatások, health, SPA és felhasználói út az API-n. A GitHub-runnerek nem futtatnak Linux-konténert Windowson és macOS-en, ezért ott a CI nem ellenőriz; a Windows-ellenőrzés kézi (a README rögzíti).
+- `monitoring` job: `scripts/monitoring-check.sh`, lásd „Monitoring (helyi, megvalósítva)”; nem kötelező ellenőrzés.
 - `recovery` job: `scripts/recovery-drill.sh`, lásd „Backup és restore (helyi, megvalósítva)”; nem kötelező ellenőrzés.
 - `secrets` job: `scripts/check-secrets.sh` és tesztje, teljes előzménnyel ([security.md](security.md#secret-ellenőrzés-megvalósítva)); nem kötelező ellenőrzés.
 - `e2e` job: Playwright, lásd „E2E (Playwright)”.
@@ -175,7 +176,31 @@ Argo CD, Sealed Secrets, cert-manager (ClusterIssuer: Let's Encrypt staging, maj
 - Ismert kockázat: a közös `azure.com` limit miatt az első igénylés elbukhat (AI-024). Ilyenkor újrapróbálás, végső esetben DuckDNS.
 - A Laravel `TrustProxies` csak a cluster belső hálózatát fogadja el.
 
-## Megfigyelhetőség
+## Monitoring (helyi, megvalósítva)
+
+Opcionális Compose-profil: `docker compose --profile monitoring up -d --wait` (a futó stack mellé; az alap `up` nem indítja). Prometheus (megőrzés 2 nap), blackbox exporter, Grafana: verzió- és digest-pinnelt image-ek; a portok csak `127.0.0.1`-en (`PROMETHEUS_PORT`, `GRAFANA_PORT`). A konfiguráció: `docker/monitoring/`, a Grafana provisioning és a dashboard: `infra/grafana/`. A Grafana admin-jelszava placeholder (`GRAFANA_ADMIN_PASSWORD`, az `.env.example`-ben); helyi használatra szolgál, máshol az első indítás előtt cserélendő.
+
+**Két réteg, külön jelölve** (minden sorozaton `layer` címke):
+
+| Réteg | Forrás | Mit mér | Állít-e SLO-t |
+|---|---|---|---|
+| `synthetic` | blackbox exporter, 5 s-os próbák az Nginxen át: `/up` (`api_health`), `/` (`spa`) | rendelkezésre állás és válaszidő, forgalomtól függetlenül | igen (alább) |
+| valódi forgalom | az Nginx hozzáférési naplója (T7.1/2) | a ténylegesen kiszolgált kérések sikeressége és válaszideje | nem, csak mért forgalom |
+
+**SLO-k** (szintetikus, 15 perces ablak; a 30 napos cél hosszú távú, azt elegendő mérési adat nélkül nem állítjuk):
+
+| SLO | SLI (recording rule) | Cél |
+|---|---|---|
+| Rendelkezésre állás | `slo:synthetic_availability:ratio_15m` = `avg_over_time(probe_success[15m])` | ≥ 99% |
+| Válaszidő | `slo:synthetic_latency_p95:seconds_15m` = `quantile_over_time(0.95, probe_duration_seconds[15m])` | < 500 ms |
+
+- **Megfelelés csak fedett ablaknál:** a `slo:synthetic_window_coverage:ratio_15m` az ablak mért hányada (180 minta = 100%). A `slo:synthetic_*_slo_met:bool_15m` sorozatoknak csak ≥ 95%-os lefedettségnél van értékük; előtte nincs adat (a dashboardon „Nincs elég mérési adat"), tehát nincs megfelelési állítás.
+- **Mérhetőség igazolva** (`scripts/monitoring-check.sh`, CI `monitoring` job, elkülönített `pagebuilder-monitoring` projekt, placeholder env, saját portok): a célpontok futnak; a Grafana adatforrása és dashboardja működik; a backend leállítására a `probe_success{probe="api_health"}` 0-ra esik, miközben az SPA-próba 1 marad (a metrika a hibás útvonalat jelzi); a rendelkezésre állás SLI a kiindulási érték alá csökken, és az újraindítás utáni helyreállás után is tükrözi a kiesést az ablakban.
+- **Mért érték, környezetfüggő:** a p95 válaszidő a helyi Windows 11 + Docker Desktop környezetben **2,05 s** volt (30 s-os ablak), tehát a 0,5 s-os SLO itt nem teljesül: minden `/up` kérés a bind mountról tölti be a Laravelt (lásd a backlog „fejlesztői környezet válaszideje" elemét). A válaszidő környezetfüggő, ezért az ellenőrzés a mérhetőséget igazolja, az értéket kiírja a küszöb mellett, de nem kényszeríti rá.
+- **Leletek a megvalósítás közben:** (1) a Vite dev szerver `403`-mal elutasítja az ismeretlen `Host: nginx` fejlécet, ezért a próbák `Host: localhost` fejléccel mennek; (2) hideg indulásnál az első kérések lassúak és a próba időtúllépésébe futnak, ezért a monitoring a bemelegített stack mellé indul (a Prometheus az Nginx egészségére vár); (3) az újraindított backend után az Nginxet újra kell indítani (lásd a helyreállítást).
+- Nem része: Alertmanager, Loki, node-exporter, Laravel `/metrics`, Kubernetes-monitoring.
+
+## Megfigyelhetőség (bővített terv)
 
 **Metrikaforrások:** Traefik (HTTP), Laravel `/metrics` (`promphp/prometheus_client_php`, Redis tároló, csak clusteren belül), node-exporter, kube-state-metrics, mysqld- és redis-exporter, backup- és restore-metrikák.
 

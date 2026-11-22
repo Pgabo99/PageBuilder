@@ -198,6 +198,17 @@ jobs:
       - name: Katasztrófa-gyakorlat
         run: bash scripts/recovery-drill.sh
 
+  # Monitoring-ellenőrzés az elkülönített pagebuilder-monitoring projekten (scripts/monitoring-check.sh):
+  # célpontok, szintetikus SLI-k, Grafana, a backend leállítására reagáló rendelkezésre állási metrika. Nem kötelező check.
+  monitoring:
+    name: monitoring
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Monitoring-ellenőrzés
+        run: bash scripts/monitoring-check.sh
+
   # A deploy-szkriptek tesztje (a manifestek másolatán fut).
   scripts:
     name: scripts
