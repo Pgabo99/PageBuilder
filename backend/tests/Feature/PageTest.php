@@ -96,7 +96,127 @@ describe('tartalom validálása', function () {
         'javascript: URL' => [['id' => 'a', 'type' => 'button', 'label' => 'X', 'url' => 'javascript:alert(1)'], 'content.0.url'],
         'data: URL' => [['id' => 'a', 'type' => 'button', 'label' => 'X', 'url' => 'data:text/html,x'], 'content.0.url'],
         'azonosító nélkül' => [['type' => 'text', 'text' => 'X'], 'content.0.id'],
+        'ismeretlen ikon' => [['id' => 'a', 'type' => 'heading', 'text' => 'X', 'level' => 1, 'icon' => 'nincs-ilyen'], 'content.0.icon'],
+        'SVG-kód ikonként' => [['id' => 'a', 'type' => 'heading', 'text' => 'X', 'level' => 1, 'icon' => '<svg onload=alert(1)></svg>'], 'content.0.icon'],
+        'tömb ikonként' => [['id' => 'a', 'type' => 'heading', 'text' => 'X', 'level' => 1, 'icon' => ['star']], 'content.0.icon'],
     ]);
+
+    it('elfogadja a kártyacsoportot, és csak a megengedett mezőket tárolja', function () {
+        $cards = [
+            'id' => 'k', 'type' => 'cards', 'cards' => [
+                ['id' => 'k1', 'icon' => 'star', 'title' => 'Első', 'text' => 'Leírás', 'label' => 'Tovább', 'url' => '/kapcsolat', 'html' => '<script>', 'onclick' => 'x()'],
+                ['id' => 'k2', 'title' => 'Csak cím'],
+                ['id' => 'k3', 'icon' => null, 'title' => 'Üres opcionálisok', 'text' => null, 'label' => null, 'url' => null],
+            ],
+        ];
+
+        $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [
+            'title' => 'X', 'slug' => 'x', 'content' => [$cards],
+        ])->assertCreated()->assertJsonCount(3, 'data.content.0.cards');
+
+        $stored = Page::first()->content[0]['cards'];
+        expect($stored[0])->toEqual(['id' => 'k1', 'icon' => 'star', 'title' => 'Első', 'text' => 'Leírás', 'label' => 'Tovább', 'url' => '/kapcsolat'])
+            ->and($stored[1])->toEqual(['id' => 'k2', 'title' => 'Csak cím']);
+    });
+
+    it('a hat kártya még elfogadott, a hét nem', function () {
+        $make = fn (int $n) => ['id' => 'k', 'type' => 'cards', 'cards' => array_map(
+            fn ($i) => ['id' => "k$i", 'title' => "Kártya $i"], range(1, $n),
+        )];
+
+        $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [
+            'title' => 'X', 'slug' => 'x', 'content' => [$make(6)],
+        ])->assertCreated();
+
+        $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [
+            'title' => 'Y', 'slug' => 'y', 'content' => [$make(7)],
+        ])->assertUnprocessable()->assertJsonValidationErrors('content.0.cards');
+    });
+
+    it('hibás kártyákat elutasít, a hibakulcs a kártya mezőjére mutat', function (array $cards, string $errorKey) {
+        $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [
+            'title' => 'X', 'slug' => 'x', 'content' => [['id' => 'k', 'type' => 'cards', 'cards' => $cards]],
+        ])->assertUnprocessable()->assertJsonValidationErrors($errorKey);
+    })->with([
+        'üres lista' => [[], 'content.0.cards'],
+        'cím nélkül' => [[['id' => 'k1']], 'content.0.cards.0.title'],
+        'túl hosszú cím' => [[['id' => 'k1', 'title' => str_repeat('a', 101)]], 'content.0.cards.0.title'],
+        'túl hosszú leírás' => [[['id' => 'k1', 'title' => 'X', 'text' => str_repeat('a', 501)]], 'content.0.cards.0.text'],
+        'ismeretlen ikon' => [[['id' => 'k1', 'title' => 'X', 'icon' => 'nincs-ilyen']], 'content.0.cards.0.icon'],
+        'SVG-kód ikonként' => [[['id' => 'k1', 'title' => 'X', 'icon' => '<svg onload=x>']], 'content.0.cards.0.icon'],
+        'felirat cél nélkül' => [[['id' => 'k1', 'title' => 'X', 'label' => 'Tovább']], 'content.0.cards.0.url'],
+        'cél felirat nélkül' => [[['id' => 'k1', 'title' => 'X', 'url' => '/x']], 'content.0.cards.0.label'],
+        'javascript: cél' => [[['id' => 'k1', 'title' => 'X', 'label' => 'Y', 'url' => 'javascript:alert(1)']], 'content.0.cards.0.url'],
+        'második kártya hibás' => [[['id' => 'k1', 'title' => 'X'], ['id' => 'k2']], 'content.0.cards.1.title'],
+        'azonosító nélkül' => [[['title' => 'X']], 'content.0.cards.0.id'],
+    ]);
+
+    it('a kártyacsoport kártyák nélkül (hiányzó mező) hibás', function () {
+        $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [
+            'title' => 'X', 'slug' => 'x', 'content' => [['id' => 'k', 'type' => 'cards']],
+        ])->assertUnprocessable()->assertJsonValidationErrors('content.0.cards');
+    });
+
+    it('elfogadja a becsukható részeket, és csak a megengedett mezőket tárolja', function () {
+        $accordion = ['id' => 'a', 'type' => 'accordion', 'items' => [
+            ['id' => 'i1', 'title' => 'Kérdés', 'text' => 'Válasz', 'open' => true, 'html' => '<script>'],
+            ['id' => 'i2', 'title' => 'Másik', 'text' => 'Szöveg'],
+        ]];
+
+        $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [
+            'title' => 'X', 'slug' => 'x', 'content' => [$accordion],
+        ])->assertCreated()->assertJsonCount(2, 'data.content.0.items');
+
+        expect(Page::first()->content[0]['items'][0])->toEqual(['id' => 'i1', 'title' => 'Kérdés', 'text' => 'Válasz']);
+    });
+
+    it('a húsz rész még elfogadott, a huszonegy nem', function () {
+        $make = fn (int $n) => ['id' => 'a', 'type' => 'accordion', 'items' => array_map(
+            fn ($i) => ['id' => "i$i", 'title' => "Rész $i", 'text' => 'Szöveg'], range(1, $n),
+        )];
+
+        $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [
+            'title' => 'X', 'slug' => 'x', 'content' => [$make(20)],
+        ])->assertCreated();
+
+        $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [
+            'title' => 'Y', 'slug' => 'y', 'content' => [$make(21)],
+        ])->assertUnprocessable()->assertJsonValidationErrors('content.0.items');
+    });
+
+    it('hibás részeket elutasít, a hibakulcs a rész mezőjére mutat', function (array $component, string $errorKey) {
+        $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [
+            'title' => 'X', 'slug' => 'x', 'content' => [['id' => 'a', 'type' => 'accordion', ...$component]],
+        ])->assertUnprocessable()->assertJsonValidationErrors($errorKey);
+    })->with([
+        'rész nélkül' => [[], 'content.0.items'],
+        'üres lista' => [['items' => []], 'content.0.items'],
+        'nem tömb' => [['items' => 'szöveg'], 'content.0.items'],
+        'cím nélkül' => [['items' => [['id' => 'i', 'text' => 'X']]], 'content.0.items.0.title'],
+        'szöveg nélkül' => [['items' => [['id' => 'i', 'title' => 'X']]], 'content.0.items.0.text'],
+        'túl hosszú cím' => [['items' => [['id' => 'i', 'title' => str_repeat('a', 151), 'text' => 'X']]], 'content.0.items.0.title'],
+        'túl hosszú szöveg' => [['items' => [['id' => 'i', 'title' => 'X', 'text' => str_repeat('a', 2001)]]], 'content.0.items.0.text'],
+        'azonosító nélkül' => [['items' => [['title' => 'X', 'text' => 'Y']]], 'content.0.items.0.id'],
+        'második rész hibás' => [['items' => [['id' => 'i', 'title' => 'X', 'text' => 'Y'], ['id' => 'j', 'title' => 'Z']]], 'content.0.items.1.text'],
+    ]);
+
+    it('elfogadja az engedélyezett ikont és az ikon nélküli címsort', function (mixed $icon) {
+        $heading = ['id' => 'a', 'type' => 'heading', 'text' => 'X', 'level' => 2];
+        $heading['icon'] = $icon;
+
+        $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [
+            'title' => 'X', 'slug' => 'x', 'content' => [$heading],
+        ])->assertCreated()->assertJsonPath('data.content.0.icon', $icon);
+    })->with(['star', 'check-circle', 'gift', null]);
+
+    it('az ikon nélküli, régi címsor továbbra is érvényes és nem kap ikon mezőt', function () {
+        $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [
+            'title' => 'X', 'slug' => 'x',
+            'content' => [['id' => 'a', 'type' => 'heading', 'text' => 'X', 'level' => 1]],
+        ])->assertCreated();
+
+        expect(Page::first()->content[0])->toEqual(['id' => 'a', 'type' => 'heading', 'text' => 'X', 'level' => 1]);
+    });
 
     it('elfogadja a biztonságos URL-eket', function (string $url) {
         $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [

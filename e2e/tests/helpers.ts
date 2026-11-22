@@ -41,7 +41,7 @@ export async function createPage(page: Page, title: string, slug: string): Promi
 }
 
 /** A szerkesztőben a "Hozzáadás" sávból új komponenst vesz fel. */
-export async function addComponent(page: Page, label: 'Címsor' | 'Szöveg' | 'Gomb'): Promise<void> {
+export async function addComponent(page: Page, label: 'Címsor' | 'Szöveg' | 'Gomb' | 'Kártyák' | 'Becsukható részek'): Promise<void> {
   await page
     .getByRole('group', { name: 'Komponens hozzáadása' })
     .getByRole('button', { name: `+ ${label}` })

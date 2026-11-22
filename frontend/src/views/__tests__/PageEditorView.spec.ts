@@ -412,6 +412,264 @@ describe('PageEditorView', () => {
     expect(toggle.attributes('aria-controls')).toBeDefined()
   })
 
+  it('a címsor ikonja kiválasztható, azonnal látszik az előnézetben, és mentéskor elmegy', async () => {
+    const wrapper = await mountEditor()
+    vi.mocked(pagesApi.update).mockImplementation(async (_id, payload) => ({ ...page, ...payload }))
+    await wrapper.findAll('.component__toggle')[0]!.trigger('click')
+    expect(wrapper.find('.preview h1 svg').exists()).toBe(false)
+
+    await wrapper.find('input[aria-label="Csillag"]').setValue(true)
+
+    expect(wrapper.find('.preview h1 svg').exists()).toBe(true)
+    expect(wrapper.text()).toContain('Nem mentett módosítások')
+    await wrapper.find('button.btn:not(.btn--secondary)').trigger('click')
+    await flushPromises()
+
+    expect(vi.mocked(pagesApi.update).mock.calls[0]![1].content[0]).toMatchObject({
+      type: 'heading',
+      icon: 'star',
+    })
+  })
+
+  it('az ikon törölhető ("Nincs"), ilyenkor az előnézetben sincs ikon', async () => {
+    vi.mocked(pagesApi.get).mockResolvedValue(
+      structuredClone({
+        ...page,
+        content: [{ id: 'a', type: 'heading', text: 'Első', level: 1, icon: 'gift' }],
+      } as Page),
+    )
+    const wrapper = await mountEditor()
+    expect(wrapper.find('.preview h1 svg').exists()).toBe(true)
+
+    await wrapper.find('.component__toggle').trigger('click')
+    await wrapper.find('input[value=""]').setValue(true)
+
+    expect(wrapper.find('.preview h1 svg').exists()).toBe(false)
+  })
+
+  it('az ikonválasztó hibáját a címsornál jeleníti meg', async () => {
+    const wrapper = await mountEditor()
+    vi.mocked(pagesApi.update).mockRejectedValue(
+      new ValidationError('Hibás', { 'content.0.icon': ['Ismeretlen ikon.'] }),
+    )
+    await wrapper.findAll('.component__toggle')[0]!.trigger('click')
+    await wrapper.find('input[aria-label="Szív"]').setValue(true)
+    await wrapper.find('button.btn:not(.btn--secondary)').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.findAll('.component')[0]!.text()).toContain('Ismeretlen ikon.')
+  })
+
+  describe('kártyák', () => {
+    const addCards = async (wrapper: Awaited<ReturnType<typeof mountEditor>>) => {
+      await wrapper
+        .findAll('.add-bar button')
+        .find((b) => b.text().includes('Kártyák'))!
+        .trigger('click')
+      await flushPromises()
+    }
+
+    it('a kártyacsoport hozzáadva azonnal aktív, és mentés előtt megjelenik az előnézetben', async () => {
+      const wrapper = await mountEditor()
+
+      await addCards(wrapper)
+
+      expect(titles(wrapper)).toEqual(['Címsor', 'Szöveg', 'Gomb', 'Kártyák'])
+      expect(activeTitles(wrapper)).toEqual(['Kártyák'])
+      expect(wrapper.find('.preview .preview__card h3').text()).toBe('Új kártya')
+      expect(pagesApi.update).not.toHaveBeenCalled()
+    })
+
+    it('a kártya szövege mentés előtt frissíti az előnézetet, és a mentés a teljes csoportot elküldi', async () => {
+      const wrapper = await mountEditor()
+      vi.mocked(pagesApi.update).mockImplementation(async (_id, payload) => ({
+        ...page,
+        ...payload,
+      }))
+      await addCards(wrapper)
+
+      await wrapper.find('.card-editor input[type="text"]').setValue('Első kártya')
+      await wrapper.find('.card-editor input[aria-label="Csillag"]').setValue(true)
+      expect(wrapper.find('.preview .preview__card h3').text()).toBe('Első kártya')
+      expect(wrapper.find('.preview .preview__card-icon svg').exists()).toBe(true)
+
+      await wrapper
+        .findAll('button')
+        .find((b) => b.text().includes('Kártya hozzáadása'))!
+        .trigger('click')
+      expect(wrapper.findAll('.preview .preview__card')).toHaveLength(2)
+
+      await wrapper.find('button.btn:not(.btn--secondary)').trigger('click')
+      await flushPromises()
+
+      const saved = vi.mocked(pagesApi.update).mock.calls[0]![1].content[3]
+      expect(saved).toMatchObject({ type: 'cards' })
+      if (saved?.type !== 'cards') throw new Error('nem kártyacsoport')
+      expect(saved.cards).toHaveLength(2)
+      expect(saved.cards[0]).toMatchObject({ title: 'Első kártya', icon: 'star' })
+    })
+
+    it('az összecsukott kártyacsoport összefoglalót mutat', async () => {
+      const wrapper = await mountEditor()
+      await addCards(wrapper)
+
+      await wrapper.findAll('.component__toggle')[0]!.trigger('click')
+
+      const summaries = wrapper.findAll('.component__summary')
+      expect(summaries[summaries.length - 1]!.text()).toBe('1 kártya: Új kártya')
+    })
+
+    it('a másolt kártyacsoport külön példány: a másolat szerkesztése az eredetit nem módosítja', async () => {
+      const wrapper = await mountEditor()
+      await addCards(wrapper)
+
+      await wrapper.findAll('[aria-label="Komponens másolása"]')[3]!.trigger('click')
+      await flushPromises()
+      await wrapper.find('.card-editor input[type="text"]').setValue('Másolat címe')
+
+      const headings = wrapper.findAll('.preview .preview__card h3').map((h) => h.text())
+      expect(headings).toEqual(['Új kártya', 'Másolat címe'])
+    })
+
+    it('a szerver kártyahibáját a kártya mezője mellett jeleníti meg, és kinyitja a csoportot', async () => {
+      const wrapper = await mountEditor()
+      await addCards(wrapper)
+      vi.mocked(pagesApi.update).mockRejectedValue(
+        new ValidationError('Hibás', { 'content.3.cards.0.title': ['A cím kötelező.'] }),
+      )
+      await wrapper.find('.card-editor input[type="text"]').setValue('X')
+      await wrapper.findAll('.component__toggle')[0]!.trigger('click')
+      expect(activeTitles(wrapper)).toEqual(['Címsor'])
+
+      await wrapper.find('button.btn:not(.btn--secondary)').trigger('click')
+      await flushPromises()
+
+      expect(activeTitles(wrapper)).toEqual(['Kártyák'])
+      expect(wrapper.find('.card-editor').text()).toContain('A cím kötelező.')
+    })
+
+    it('az előnézeti kártyára kattintva a kártyacsoport aktív lesz', async () => {
+      const wrapper = await mountEditor()
+      await addCards(wrapper)
+      await wrapper.findAll('.component__toggle')[1]!.trigger('click')
+      expect(activeTitles(wrapper)).toEqual(['Szöveg'])
+
+      await wrapper.find('.preview .preview__card').trigger('click')
+      await flushPromises()
+
+      expect(activeTitles(wrapper)).toEqual(['Kártyák'])
+    })
+  })
+
+  describe('becsukható részek', () => {
+    const addAccordion = async (wrapper: Awaited<ReturnType<typeof mountEditor>>) => {
+      await wrapper
+        .findAll('.add-bar button')
+        .find((b) => b.text().includes('Becsukható részek'))!
+        .trigger('click')
+      await flushPromises()
+    }
+
+    it('hozzáadva azonnal aktív, és mentés előtt zárt részekkel megjelenik az előnézetben', async () => {
+      const wrapper = await mountEditor()
+
+      await addAccordion(wrapper)
+
+      expect(titles(wrapper)).toEqual(['Címsor', 'Szöveg', 'Gomb', 'Becsukható részek'])
+      expect(activeTitles(wrapper)).toEqual(['Becsukható részek'])
+      const details = wrapper.findAll('.preview details')
+      expect(details).toHaveLength(1)
+      expect((details[0]!.element as HTMLDetailsElement).open).toBe(false)
+      expect(details[0]!.find('summary').text()).toBe('Új rész')
+      expect(pagesApi.update).not.toHaveBeenCalled()
+    })
+
+    it('a szerkesztett cím és szöveg azonnal az előnézetben van, a mentés a teljes listát elküldi', async () => {
+      const wrapper = await mountEditor()
+      vi.mocked(pagesApi.update).mockImplementation(async (_id, payload) => ({
+        ...page,
+        ...payload,
+      }))
+      await addAccordion(wrapper)
+
+      await wrapper.find('.item-editor input[type="text"]').setValue('Gyakori kérdés')
+      await wrapper.find('.item-editor textarea').setValue('Ez a válasz.')
+      expect(wrapper.find('.preview details summary').text()).toBe('Gyakori kérdés')
+      expect(wrapper.find('.preview details p').text()).toBe('Ez a válasz.')
+
+      await wrapper
+        .findAll('button')
+        .find((b) => b.text().includes('Rész hozzáadása'))!
+        .trigger('click')
+      expect(wrapper.findAll('.preview details')).toHaveLength(2)
+
+      await wrapper.find('button.btn:not(.btn--secondary)').trigger('click')
+      await flushPromises()
+
+      const saved = vi.mocked(pagesApi.update).mock.calls[0]![1].content[3]
+      if (saved?.type !== 'accordion') throw new Error('nem accordion')
+      expect(saved.items).toHaveLength(2)
+      expect(saved.items[0]).toMatchObject({ title: 'Gyakori kérdés', text: 'Ez a válasz.' })
+    })
+
+    it('az előnézetben nyitott rész a szerkesztés közben is nyitva marad', async () => {
+      const wrapper = await mountEditor()
+      await addAccordion(wrapper)
+      ;(wrapper.find('.preview details').element as HTMLDetailsElement).open = true
+
+      await wrapper.find('.item-editor input[type="text"]').setValue('Átírt cím')
+
+      expect((wrapper.find('.preview details').element as HTMLDetailsElement).open).toBe(true)
+    })
+
+    it('az előnézeti részre kattintva a komponens aktív lesz', async () => {
+      const wrapper = await mountEditor()
+      await addAccordion(wrapper)
+      await wrapper.findAll('.component__toggle')[1]!.trigger('click')
+      expect(activeTitles(wrapper)).toEqual(['Szöveg'])
+
+      await wrapper.find('.preview details summary').trigger('click')
+      await flushPromises()
+
+      expect(activeTitles(wrapper)).toEqual(['Becsukható részek'])
+    })
+
+    it('az összecsukott accordion összefoglalót mutat, a másolat külön példány', async () => {
+      const wrapper = await mountEditor()
+      await addAccordion(wrapper)
+
+      await wrapper.findAll('.component__toggle')[0]!.trigger('click')
+      const summaries = wrapper.findAll('.component__summary')
+      expect(summaries[summaries.length - 1]!.text()).toBe('1 rész: Új rész')
+
+      await wrapper.findAll('[aria-label="Komponens másolása"]')[3]!.trigger('click')
+      await flushPromises()
+      await wrapper.find('.item-editor input[type="text"]').setValue('Másolat')
+
+      expect(wrapper.findAll('.preview details summary').map((s) => s.text())).toEqual([
+        'Új rész',
+        'Másolat',
+      ])
+    })
+
+    it('a szerver részhibáját a rész mezője mellett jeleníti meg, és kinyitja a komponenst', async () => {
+      const wrapper = await mountEditor()
+      await addAccordion(wrapper)
+      vi.mocked(pagesApi.update).mockRejectedValue(
+        new ValidationError('Hibás', { 'content.3.items.0.text': ['A szöveg kötelező.'] }),
+      )
+      await wrapper.find('.item-editor input[type="text"]').setValue('X')
+      await wrapper.findAll('.component__toggle')[0]!.trigger('click')
+      expect(activeTitles(wrapper)).toEqual(['Címsor'])
+
+      await wrapper.find('button.btn:not(.btn--secondary)').trigger('click')
+      await flushPromises()
+
+      expect(activeTitles(wrapper)).toEqual(['Becsukható részek'])
+      expect(wrapper.find('.item-editor').text()).toContain('A szöveg kötelező.')
+    })
+  })
+
   it('az előnézet a betöltött tartalmat mutatja', async () => {
     const wrapper = await mountEditor()
     const preview = wrapper.find('.preview')

@@ -1,9 +1,19 @@
-import type { ComponentType, PageComponent } from '@/types/content'
+import type { AccordionItem, CardItem, ComponentType, PageComponent } from '@/types/content'
+
+/** A kártyák megengedett száma egy csoportban (a backend `PageContentRules::MAX_CARDS`-jával azonos). */
+export const MIN_CARDS = 1
+export const MAX_CARDS = 6
+
+/** A becsukható részek megengedett száma (a backend `PageContentRules::MAX_ACCORDION_ITEMS`-ével azonos). */
+export const MIN_ACCORDION_ITEMS = 1
+export const MAX_ACCORDION_ITEMS = 20
 
 export const componentTypes: { type: ComponentType; label: string }[] = [
   { type: 'heading', label: 'Címsor' },
   { type: 'text', label: 'Szöveg' },
   { type: 'button', label: 'Gomb' },
+  { type: 'cards', label: 'Kártyák' },
+  { type: 'accordion', label: 'Becsukható részek' },
 ]
 
 export function componentLabel(type: ComponentType): string {
@@ -16,6 +26,16 @@ function newId(): string {
   )
 }
 
+/** Új kártya: a cím kötelező, a többi mező opcionális. */
+export function createCard(): CardItem {
+  return { id: newId(), icon: null, title: 'Új kártya', text: '', label: '', url: '' }
+}
+
+/** Új rész: a szerver üres címet és szöveget nem fogad el. */
+export function createAccordionItem(): AccordionItem {
+  return { id: newId(), title: 'Új rész', text: 'Új tartalom' }
+}
+
 /** Új komponens értelmes alapértékekkel (a szerver üres szöveget nem fogad el). */
 export function createComponent(type: ComponentType): PageComponent {
   const id = newId()
@@ -26,6 +46,10 @@ export function createComponent(type: ComponentType): PageComponent {
       return { id, type, text: 'Új bekezdés' }
     case 'button':
       return { id, type, label: 'Gomb', url: '/' }
+    case 'cards':
+      return { id, type, cards: [createCard()] }
+    case 'accordion':
+      return { id, type, items: [createAccordionItem()] }
   }
 }
 
@@ -39,12 +63,26 @@ export function slotTarget(from: number, slot: number): number {
   return slot > from ? slot - 1 : slot
 }
 
+function summarySource(component: PageComponent): string {
+  switch (component.type) {
+    case 'button':
+      return [component.label, component.url].filter(Boolean).join(' → ')
+    case 'cards': {
+      const first = component.cards[0]?.title ?? ''
+      return `${component.cards.length} kártya${first ? `: ${first}` : ''}`
+    }
+    case 'accordion': {
+      const first = component.items[0]?.title ?? ''
+      return `${component.items.length} rész${first ? `: ${first}` : ''}`
+    }
+    default:
+      return component.text
+  }
+}
+
 /** Rövid tartalmi összefoglaló az összecsukott komponenshez. */
 export function componentSummary(component: PageComponent, max = 60): string {
-  const raw =
-    component.type === 'button'
-      ? [component.label, component.url].filter(Boolean).join(' → ')
-      : component.text
+  const raw = summarySource(component)
   const text = raw.replace(/\s+/g, ' ').trim()
   if (text === '') return '(üres)'
   return text.length > max ? `${text.slice(0, max - 1)}…` : text
@@ -66,8 +104,22 @@ export function pageTargets(
     .map((page, index) => ({ label: page.title, url: index === 0 ? base : `${base}${page.slug}/` }))
 }
 
-/** Másolat új azonosítóval; a komponensek mezői egyszerű értékek, ezért a sekély másolat elég. */
+/** Másolat új azonosítóval; a kártyacsoport kártyái is új azonosítót kapnak, és nem osztoznak az eredetivel. */
 export function cloneComponent(component: PageComponent): PageComponent {
+  if (component.type === 'cards') {
+    return {
+      ...component,
+      id: newId(),
+      cards: component.cards.map((card) => ({ ...card, id: newId() })),
+    }
+  }
+  if (component.type === 'accordion') {
+    return {
+      ...component,
+      id: newId(),
+      items: component.items.map((item) => ({ ...item, id: newId() })),
+    }
+  }
   return { ...component, id: newId() }
 }
 

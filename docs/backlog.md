@@ -4,7 +4,7 @@ A beadandó után, igény szerint. A részletes, bővített terv a `docs/` több
 
 ## Alkalmazás
 
-- Médiafeltöltés és képkomponens; további komponenstípusok; WYSIWYG
+- Médiafeltöltés és képkomponens; további komponenstípusok (a kártyák és a becsukható részek elkészültek); WYSIWYG
 - Komponenstáblák (morph map) a JSON oszlop helyett
 - Optimista zárolás (409), autosave, elhagyási figyelmeztetés
 - Billentyűzetes sorrendezés

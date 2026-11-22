@@ -28,6 +28,8 @@ export interface HeadingComponent {
   type: 'heading'
   text: string
   level: 1 | 2 | 3
+  /** Az engedélyezett ikonkészlet egy neve (`utils/icons.ts`); üres: nincs ikon. */
+  icon?: string | null
 }
 
 export interface TextComponent {
@@ -43,7 +45,37 @@ export interface ButtonComponent {
   url: string
 }
 
-export type PageComponent = HeadingComponent | TextComponent | ButtonComponent
+/** A kártya gombja: a felirat és a cél együtt kötelező, vagy mindkettő üres. */
+export interface CardItem {
+  id: string
+  icon?: string | null
+  title: string
+  text?: string | null
+  label?: string | null
+  url?: string | null
+}
+
+export interface CardsComponent {
+  id: string
+  type: 'cards'
+  cards: CardItem[]
+}
+
+/** Egy becsukható rész: a cím és a szöveg is kötelező. */
+export interface AccordionItem {
+  id: string
+  title: string
+  text: string
+}
+
+export interface AccordionComponent {
+  id: string
+  type: 'accordion'
+  items: AccordionItem[]
+}
+
+export type PageComponent =
+  HeadingComponent | TextComponent | ButtonComponent | CardsComponent | AccordionComponent
 export type ComponentType = PageComponent['type']
 
 export interface Page {
