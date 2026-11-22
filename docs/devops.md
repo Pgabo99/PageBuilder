@@ -1,6 +1,6 @@
 # DevOps
 
-> **Hatókör:** nincs Azure-kitelepítés; a Terraform és a `deploy/` kész és tesztelt, de nem telepített, a bizonyíték helyben (Compose) vagy CI-ban fut; a kind + Argo CD sync és rollback még nem futott le (T6.4/2, [roadmap](roadmap.md)). Az Azure-specifikus szakaszok (TLS, Blob backup, Application Insights) a kitelepítéshez szólnak.
+> **Hatókör:** nincs Azure-kitelepítés; a Terraform és a `deploy/` kész és tesztelt, de nem telepített, a bizonyíték helyben (Compose) vagy CI-ban fut; a kind + Argo CD szinkron igazolt (helyben és CI-ban), a rollback nem futott le ([roadmap](roadmap.md)). Az Azure-specifikus szakaszok (TLS, Blob backup, Application Insights) a kitelepítéshez szólnak.
 >
 > A „Lokális környezet” és a „CI (MVP)” szakasz aktuális; a többi **bővített terv** a beadandó utáni továbbfejlesztéshez, nem karbantartott. Az MVP-hatókör: [roadmap](roadmap.md), a halasztott elemek: [backlog](backlog.md).
 
@@ -73,7 +73,7 @@ flowchart LR
   push --> bump[Tag-bump PR a deploy/app-ban]
 ```
 
-Az Argo CD sync és a clusteres smoke teszt **nem része a CI-nak** és nem bizonyított (T6.4/2). A PR-ágon továbbá futnak az `install`, `e2e`, `recovery`, `monitoring`, `scripts` és `terraform` jobok.
+Az Argo CD sync és a clusteres smoke teszt nem a PR-ágon fut, hanem a kézzel indítható `GitOps` workflowban (lásd „GitOps-ellenőrzés kind-en”). A PR-ágon továbbá futnak az `install`, `e2e`, `recovery`, `monitoring`, `scripts` és `terraform` jobok.
 
 - Az actionök commit SHA-ra rögzítettek, a `permissions` minimális (alapból `contents: read`; a tag-commit job `contents: write`, a push `packages: write`).
 - A tag-commit nem indít újabb buildet (a `deploy/**` útvonal kizárva).
@@ -82,7 +82,7 @@ Az Argo CD sync és a clusteres smoke teszt **nem része a CI-nak** és nem bizo
 
 ## GitOps, deploy és rollback
 
-> **Bizonyítottság:** igazolt a tag-bump PR (#85). Az Argo CD szinkron és a rollback (`git revert`) clusteren **nem futott le**; a leírás a tervezett működés (T6.4/2).
+> **Bizonyítottság:** igazolt a tag-bump PR (#85). Az Argo CD szinkron kind-en igazolt (T6.4/2a); a rollback (`git revert`) clusteren **nem futott le**, a leírás ott a tervezett működés.
 
 - Az Argo CD a `main` ág `deploy/app` könyvtárát szinkronizálja (`deploy/argocd/application.yaml`: automated sync, self-heal, prune). A kézzel létrehozott `pagebuilder-secrets` nem része a gitnek, ezért a prune nem érinti.
 - A tag-commit PR-ban érkezik (a branch protection érvényben marad, lásd „Tag-bump PR”); alkalmazás-rollback: a tag-commit `git revert`-je; az Argo CD visszaállítja az előző image-et. Minden deploy és rollback commitként visszakereshető.
@@ -104,9 +104,10 @@ A `publish` után a `bump` job (csak `main` push; `contents` és `pull-requests:
 `bash scripts/gitops-check.sh` (Linux vagy Git Bash; CI: `GitOps` workflow, csak kézi indítás, `contents: read`): eldobható `pagebuilder-gitops` kind-klaszter, Argo CD, a `deploy/app` szinkronja a GitHubon lévő `main` ágról, majd smoke teszt a `nginx` Service-en át (`port-forward`). Távoli ágat nem hoz létre. A takarítás hiba esetén is lefut, de csak az ebben a futásban létrehozott klasztert törli; meglévő azonos nevű klaszterhez nem nyúl (`GITOPS_KEEP=1`: hibakereséshez megtartja).
 
 - **Pinnelt:** kind v0.33.0 (ellenőrző összeg a szkriptben), `kindest/node` v1.37.0 digesttel, Argo CD v3.6.1 (a manifeszt összege és a három image digestje a szkriptben). A titkok a futásban generált, eldobható értékek.
-- **Igazolt (helyi futás, Windows 11, Docker Desktop, 2026-11-22):** az `Application` `Synced/Healthy`; a futó image-címke megegyezik a szinkronizált revízió manifesztjeivel; a smoke teszt (`/up`, SPA, regisztráció, publikálás a workeren és a `sites-data` PVC-n át, kiszolgálás) sikeres. Idő: 3 perc 18 s (klaszter 32 s, Argo CD 48 s, szinkron 109 s); a node-konténer 1,9 GiB memóriát használt. A CI-futás eredménye a merge után kerül ide.
+- **Igazolt (helyi futás, Windows 11, Docker Desktop, 2026-11-22):** az `Application` `Synced/Healthy`; a futó image-címke megegyezik a szinkronizált revízió manifesztjeivel; a smoke teszt (`/up`, SPA, regisztráció, publikálás a workeren és a `sites-data` PVC-n át, kiszolgálás) sikeres. Idő: 3 perc 18 s (klaszter 32 s, Argo CD 48 s, szinkron 109 s); a node-konténer 1,9 GiB memóriát használt. 
+- **Igazolt (CI, `GitOps` workflow, `main` 808ff1c, `ubuntu-latest`):** a 45032500870-es futás sikeres: `Synced/Healthy`, a futó image-ek egyeznek a revízióval, a smoke teszt sikeres; a futás 2 perc 44 s (klaszter 40 s, Argo CD 55 s, szinkron 51 s), a node-konténer 1,58 GiB memóriát használt. **Az első futás (45031524938, ugyanaz a kód) sikertelen volt:** az `argocd-redis` pod `ImagePullBackOff` állapotban maradt (a `public.ecr.aws` image-et nem sikerült letölteni), az Argo CD telepítése lejárt, az `Application` nem jött létre. A pull-hiba pontos oka nem rögzült (a diagnosztika az `argocd` névtér eseményeit nem írja ki); gyanú a névtelen letöltési korlát vagy átmeneti hálózati hiba, ez nincs bizonyítva. Kódmódosítás nélküli újrafuttatás sikeres volt, tehát a CI-futás nem determinisztikusan stabil.
 - **Leletek:** (1) a kind-ben nincs ingress-vezérlő, ezért az Ingress nem kap címet, és az Argo `Progressing`-ben tartaná az alkalmazást; a szkript csak az Ingress egészségellenőrzését írja felül (a k3s-ben a Traefik ad címet, ezt nem igazoltuk). (2) A telepítő által kezelt `argocd-cm` ugyanazzal a field managerrel újraalkalmazva elveszti a címkéit, és az Argo `Unknown` állapotban marad; ezért külön field manager kell. (3) A worker az első indításkor a MySQL készenléte előtt újraindul, majd magától helyreáll.
-- **Nem igazolt:** a deploy és a rollback (T6.4/2b), a Traefik Ingress, az Azure/k3s.
+- **Nem igazolt:** a deploy és a rollback (a T6.4/2b nem készül el), a Traefik Ingress, az Azure/k3s.
 
 ### Argo CD bootstrap (a VM és a k3s létrejötte után, egyszer)
 
