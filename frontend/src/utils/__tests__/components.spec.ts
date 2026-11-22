@@ -1,6 +1,32 @@
 import { describe, expect, it } from 'vitest'
 
-import { cloneComponent, createComponent, moveItem, pageTargets } from '../components'
+import {
+  cloneComponent,
+  componentSummary,
+  createComponent,
+  moveItem,
+  pageTargets,
+} from '../components'
+
+describe('componentSummary', () => {
+  it('típusonként a szöveget vagy a feliratot és a célt mutatja', () => {
+    expect(componentSummary({ id: '1', type: 'heading', text: 'Cím', level: 1 })).toBe('Cím')
+    expect(componentSummary({ id: '2', type: 'text', text: 'Bekezdés' })).toBe('Bekezdés')
+    expect(componentSummary({ id: '3', type: 'button', label: 'Gomb', url: '/x' })).toBe(
+      'Gomb → /x',
+    )
+  })
+
+  it('a sortöréseket és a többszörös szóközt egyetlen szóközzé vonja', () => {
+    expect(componentSummary({ id: '1', type: 'text', text: ' egy\n\n  két ' })).toBe('egy két')
+  })
+
+  it('a hosszú szöveget többponttal rövidíti, az üreset jelzi', () => {
+    const long = componentSummary({ id: '1', type: 'text', text: 'a'.repeat(100) }, 10)
+    expect(long).toBe(`${'a'.repeat(9)}…`)
+    expect(componentSummary({ id: '2', type: 'text', text: '   ' })).toBe('(üres)')
+  })
+})
 
 describe('moveItem', () => {
   it('előre és hátra mozgat, az eredetit nem módosítja', () => {
