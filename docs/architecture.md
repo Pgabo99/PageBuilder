@@ -4,36 +4,71 @@
 
 A PageBuilder vizuális weboldalszerkesztő: a felhasználó webhelyeket és oldalakat hoz létre három komponenstípusból (címsor, szöveg, gomb/link), majd queue jobbal statikus HTML-ként publikálja őket. Egyetemi Cloud és DevOps beadandó, MVP-hatókörrel ([roadmap](roadmap.md)); a halasztott elemek a [backlogban](backlog.md).
 
-A rendszeren belül: SPA, Laravel API, queue worker, MySQL, Redis, publikált statikus fájlok, monitoring és backup. Kívül: felhasználók, GitHub (repó, Actions, GHCR). A mentés helyi; az Azure-elemek (VM, Blob, Let's Encrypt) a nem kitelepített terv részei.
+A rendszeren belül: SPA, Laravel API, queue worker, MySQL, Redis, publikált statikus fájlok, opcionális monitoring és kézi backup. Kívül: felhasználók, GitHub (repó, Actions, GHCR). Ténylegesen futó környezet a Docker Compose (lokális és CI); az Azure + k3s a **tervezett, nem telepített** célarchitektúra.
+
+### Futó rendszer (Docker Compose)
 
 ```mermaid
 flowchart LR
-  user([Felhasználó]) -->|HTTPS| traefik
-  visitor([Látogató]) -->|HTTPS /sites/slug/| traefik
+  user([Felhasználó / látogató]) -->|HTTP 127.0.0.1:8080| nginx
   gh[GitHub Actions] -->|image push| ghcr[(GHCR)]
-  gh -->|image tag commit| repo[(Git repó)]
+  gh -->|image tag PR| repo[(Git repó)]
 
-  subgraph vm[Azure VM – k3s]
-    traefik[Traefik<br/>TLS: Let's Encrypt]
+  subgraph compose[Docker Compose]
     nginx[Nginx<br/>SPA, /sites, FastCGI]
+    vite[Vite dev szerver]
     php[PHP-FPM<br/>Laravel API]
     worker[Queue worker]
     mysql[(MySQL)]
     redis[(Redis)]
-    sites[(Publikált oldalak)]
+    sites[(sites-data kötet)]
+    subgraph mon["profil: monitoring"]
+      prom[Prometheus]
+      bb[blackbox exporter]
+      nl[nginxlog exporter]
+      graf[Grafana]
+    end
+  end
+
+  nginx --> vite
+  nginx --> php
+  php --> mysql & redis
+  worker --> mysql & redis
+  worker -->|ír| sites
+  nginx -->|olvas| sites
+  prom --> bb & nl
+  bb -->|próba| nginx
+  nl -->|napló| nginx
+  graf --> prom
+  backup["scripts/backup.sh<br/>kézi"] -->|mysqldump| files[(backups/)]
+  mysql -.-> backup
+```
+
+### Tervezett célarchitektúra (nem telepített)
+
+A `infra/` (Terraform) és a `deploy/` (manifestek, Argo CD `Application`) kész, de Azure-erőforrás nem jött létre, és a manifesteket k3s/kind clusteren nem futtattuk. A Traefik/Let's Encrypt, a clusterben futó monitoring, a backup CronJob és az Azure Blob nincs megvalósítva.
+
+```mermaid
+flowchart LR
+  user([Felhasználó]) -->|HTTPS| traefik
+  gh[GitHub Actions] -->|image push| ghcr[(GHCR)]
+  gh -->|image tag PR| repo[(Git repó)]
+
+  subgraph vm["Azure VM – k3s (tervezett)"]
+    traefik[Traefik]
+    nginx[Nginx]
+    php[PHP-FPM]
+    worker[Queue worker]
+    mysql[(MySQL)]
+    redis[(Redis)]
     argocd[Argo CD]
-    mon[Prometheus + Grafana]
-    backup[Backup CronJob]
   end
 
   traefik --> nginx --> php
   php --> mysql & redis
   worker --> mysql & redis
-  worker -->|ír| sites
-  nginx -->|olvas| sites
   argocd -->|pull| repo
   argocd -->|pull| ghcr
-  backup -->|mysqldump| blob[(Azure Blob)]
 ```
 
 ## Belépési pontok
@@ -44,13 +79,13 @@ flowchart LR
 | REST API | `/api/v1/*` | Sanctum SPA cookie (CSRF: `/sanctum/csrf-cookie`); auth: `register`, `login`, `logout`, `user`; `websites` és `pages` (CRUD, csak a saját webhelyek; az oldal komponensei a `content` JSON-ban); `POST websites/{id}/publish` (202, queue job) |
 | Publikált webhelyek | `/sites/{slug}/` | nyilvános, statikus |
 | Health | `/up` | nyilvános |
-| Grafana, Argo CD, Prometheus | — | `kubectl port-forward` |
+| Grafana, Prometheus | — | opcionális `monitoring` profil, csak `127.0.0.1` (`GRAFANA_PORT`, `PROMETHEUS_PORT`) |
 
 ## Perzisztens állapot
 
 | Tároló | Tartalom | Mentés |
 |---|---|---|
-| MySQL | felhasználók, webhelyek, oldalak (`content` JSON), publikálási állapot | napi `mysqldump`: PVC és Azure Blob |
+| MySQL | felhasználók, webhelyek, oldalak (`content` JSON), publikálási állapot | kézi `scripts/backup.sh` (`backups/`), ütemezés nincs |
 | Publikált oldalak | statikus HTML | újragenerálható |
 | Redis | session, queue, cache | AOF, nem mentett |
 
@@ -60,7 +95,7 @@ flowchart LR
 |---|---|
 | Lokális | Docker Compose |
 | CI | GitHub Actions, ideiglenes Compose-stack |
-| Production (terv) | Azure VM, k3s, Argo CD: a konfiguráció kész, de nincs kitelepítve; a deploy és a rollback kind-clusteren igazolt |
+| Production (terv) | Azure VM, k3s, Argo CD: a konfiguráció kész, de nincs kitelepítve; clusteres deploy és rollback nem bizonyított (T6.4/2 nyitott) |
 
 ## Döntésnapló
 
@@ -98,4 +133,4 @@ Az indoklás és az elvetett alternatívák az [AI auditban](ai-audit.md). A Q1�
 | Q28 | Törölt céloldal kezelése | [database-design](database-design.md) | AI-031 |
 | Q29 | Redis-perzisztencia (AOF), MySQL 9.7 LTS | [architecture](architecture.md), `compose.yaml` | AI-041 |
 | Q30 | MVP-egyszerűsítés: JSON-komponensek, 3 típus, egyszerűsített publikálás, Traefik ACME, sima manifestek | [roadmap](roadmap.md), [backlog](backlog.md) | AI-044 |
-| Q31 | Nincs Azure-kitelepítés: Terraform és `deploy/` megtartva; bizonyíték: Compose, kind + Argo CD, helyi backup és restore | [roadmap](roadmap.md) | AI-050 |
+| Q31 | Nincs Azure-kitelepítés: Terraform és `deploy/` megtartva; bizonyíték: Compose, CI, helyi backup és restore; a kind + Argo CD még nem bizonyított (T6.4/2) | [roadmap](roadmap.md) | AI-050 |
