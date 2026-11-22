@@ -129,6 +129,66 @@ describe('PageEditorView', () => {
     expect(titles(wrapper)).toEqual(['Szöveg', 'Gomb', 'Címsor'])
   })
 
+  it('az előnézet a betöltött tartalmat mutatja', async () => {
+    const wrapper = await mountEditor()
+    const preview = wrapper.find('.preview')
+
+    expect(preview.find('h1').text()).toBe('Első')
+    expect(preview.text()).toContain('Második')
+    expect(preview.find('.preview__button').text()).toBe('Harmadik')
+  })
+
+  it('az új komponens mentés előtt azonnal megjelenik az előnézetben', async () => {
+    const wrapper = await mountEditor()
+
+    await wrapper
+      .findAll('.add-bar button')
+      .find((b) => b.text().includes('Szöveg'))!
+      .trigger('click')
+
+    expect(wrapper.find('.preview').text()).toContain('Új bekezdés')
+    expect(pagesApi.update).not.toHaveBeenCalled()
+  })
+
+  it('a szerkesztett szöveg mentés előtt frissíti az előnézetet', async () => {
+    const wrapper = await mountEditor()
+
+    await wrapper.find('.component input').setValue('Átírt cím')
+
+    expect(wrapper.find('.preview h1').text()).toBe('Átírt cím')
+    expect(pagesApi.update).not.toHaveBeenCalled()
+  })
+
+  it('a törölt komponens eltűnik az előnézetből', async () => {
+    const wrapper = await mountEditor()
+
+    await wrapper.findAll('[aria-label="Komponens törlése"]')[1]!.trigger('click')
+
+    expect(wrapper.find('.preview').text()).not.toContain('Második')
+  })
+
+  it('az előnézet a webhely témáját és kiemelőszínét használja', async () => {
+    vi.mocked(websitesApi.get).mockResolvedValue({
+      id: 1,
+      slug: 'demo',
+      page_theme: 'purple',
+      accent_color: '#e11d48',
+    } as Website)
+    const wrapper = await mountEditor()
+
+    const style = wrapper.find('.preview').attributes('style')
+    expect(style).toContain('--bg: #f5f0ff')
+    expect(style).toContain('--accent: #e11d48')
+  })
+
+  it('a webhely betöltési hibája után az alapértelmezett megjelenéssel marad az előnézet', async () => {
+    vi.mocked(websitesApi.get).mockRejectedValue(new Error('hiba'))
+    const wrapper = await mountEditor()
+
+    expect(wrapper.find('.preview').attributes('style')).toContain('--bg: #ffffff')
+    expect(wrapper.find('.preview h1').text()).toBe('Első')
+  })
+
   it('másolja a komponenst az eredeti alá, mentetlen állapotot jelezve', async () => {
     const wrapper = await mountEditor()
 

@@ -144,6 +144,10 @@ textarea {
   padding: 0 var(--space-4);
 }
 
+.container--wide {
+  max-width: 72rem;
+}
+
 .page-head {
   display: flex;
   flex-wrap: wrap;

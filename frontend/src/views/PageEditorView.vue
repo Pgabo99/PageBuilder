@@ -7,10 +7,11 @@ import { pagesApi } from '@/api/pages'
 import { websitesApi } from '@/api/websites'
 import ComponentEditor from '@/components/ComponentEditor.vue'
 import FormField from '@/components/FormField.vue'
+import PagePreview from '@/components/PagePreview.vue'
 import StatusBlock from '@/components/StatusBlock.vue'
 import { useConfirm } from '@/composables/useConfirm'
 import { useToast } from '@/composables/useToast'
-import type { ComponentType, Page, PageComponent } from '@/types/content'
+import type { ComponentType, Page, PageComponent, Website } from '@/types/content'
 import {
   cloneComponent,
   componentTypes,
@@ -30,6 +31,8 @@ const loading = ref(true)
 const loadError = ref<string | null>(null)
 
 const targets = ref<PageTarget[]>([])
+// A webhely megjelenése az előnézethez; hiba esetén az alapértelmezett megjelenés marad.
+const website = ref<Website | null>(null)
 
 const form = reactive<{ title: string; slug: string; content: PageComponent[] }>({
   title: '',
@@ -64,11 +67,12 @@ async function load(): Promise<void> {
 // A javaslatok kiegészítők: a hibájuk nem akadályozza a szerkesztést.
 async function loadTargets(websiteId: number): Promise<void> {
   try {
-    const [website, pages] = await Promise.all([
+    const [loaded, pages] = await Promise.all([
       websitesApi.get(websiteId),
       pagesApi.list(websiteId),
     ])
-    targets.value = pageTargets(website.slug, pages)
+    website.value = loaded
+    targets.value = pageTargets(loaded.slug, pages)
   } catch {
     targets.value = []
   }
@@ -179,7 +183,7 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', warnBeforeUnloa
 </script>
 
 <template>
-  <main class="container">
+  <main class="container container--wide">
     <StatusBlock
       :loading="loading"
       :error="loadError"
@@ -217,45 +221,59 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', warnBeforeUnloa
         <FormField v-model="form.slug" label="Webcím" :error="errors.slug" />
       </form>
 
-      <h2>Tartalom</h2>
-      <p v-if="form.content.length === 0" class="muted">
-        Az oldal még üres. Adj hozzá egy komponenst!
-      </p>
-      <ul class="list">
-        <li
-          v-for="(component, index) in form.content"
-          :key="component.id"
-          :class="{ 'drop-target': overIndex === index && dragIndex !== index }"
-          @dragover="onDragOver(index, $event)"
-          @drop.prevent="onDrop(index)"
-          @dragend="onDragEnd"
-        >
-          <ComponentEditor
-            v-model="form.content[index] as PageComponent"
-            :errors="componentErrors(index)"
-            :first="index === 0"
-            :last="index === form.content.length - 1"
-            :targets="targets"
-            @up="move(index, index - 1)"
-            @down="move(index, index + 1)"
-            @duplicate="duplicate(index)"
-            @remove="remove(index)"
-            @dragstart="onDragStart(index, $event)"
-          />
-        </li>
-      </ul>
+      <div class="editor-grid">
+        <section>
+          <h2>Tartalom</h2>
+          <p v-if="form.content.length === 0" class="muted">
+            Az oldal még üres. Adj hozzá egy komponenst!
+          </p>
+          <ul class="list">
+            <li
+              v-for="(component, index) in form.content"
+              :key="component.id"
+              :class="{ 'drop-target': overIndex === index && dragIndex !== index }"
+              @dragover="onDragOver(index, $event)"
+              @drop.prevent="onDrop(index)"
+              @dragend="onDragEnd"
+            >
+              <ComponentEditor
+                v-model="form.content[index] as PageComponent"
+                :errors="componentErrors(index)"
+                :first="index === 0"
+                :last="index === form.content.length - 1"
+                :targets="targets"
+                @up="move(index, index - 1)"
+                @down="move(index, index + 1)"
+                @duplicate="duplicate(index)"
+                @remove="remove(index)"
+                @dragstart="onDragStart(index, $event)"
+              />
+            </li>
+          </ul>
 
-      <div class="add-bar" role="group" aria-label="Komponens hozzáadása">
-        <span class="muted">Hozzáadás:</span>
-        <button
-          v-for="item in componentTypes"
-          :key="item.type"
-          class="btn btn--secondary"
-          type="button"
-          @click="add(item.type)"
-        >
-          + {{ item.label }}
-        </button>
+          <div class="add-bar" role="group" aria-label="Komponens hozzáadása">
+            <span class="muted">Hozzáadás:</span>
+            <button
+              v-for="item in componentTypes"
+              :key="item.type"
+              class="btn btn--secondary"
+              type="button"
+              @click="add(item.type)"
+            >
+              + {{ item.label }}
+            </button>
+          </div>
+        </section>
+
+        <aside class="preview-pane" aria-labelledby="preview-title">
+          <h2 id="preview-title">Előnézet</h2>
+          <PagePreview
+            :components="form.content"
+            :theme="website?.page_theme"
+            :accent="website?.accent_color"
+          />
+          <p class="muted preview-pane__hint">A mentetlen módosításokat is mutatja.</p>
+        </aside>
       </div>
     </StatusBlock>
   </main>
@@ -283,5 +301,28 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', warnBeforeUnloa
 h2 {
   margin: var(--space-6) 0 var(--space-3);
   font-size: 1.125rem;
+}
+
+/* Széles képernyőn a tartalom és az előnézet egymás mellett, az előnézet görgetéskor is látszik. */
+.editor-grid {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.preview-pane__hint {
+  margin: var(--space-2) 0 0;
+  font-size: 0.875rem;
+}
+
+@media (min-width: 64rem) {
+  .editor-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .preview-pane {
+    position: sticky;
+    top: var(--space-4);
+  }
 }
 </style>
