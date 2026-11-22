@@ -52,6 +52,7 @@ class PageContentRules
             'heading' => [
                 'text' => ['required', 'string', 'max:255'],
                 'level' => ['required', 'integer', 'between:1,3'],
+                'icon' => ['nullable', 'string', Rule::in(Icons::names())],
             ],
             'text' => [
                 'text' => ['required', 'string', 'max:5000'],

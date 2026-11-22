@@ -47,6 +47,12 @@ class SiteRenderContext
         return $this->isIndex($page) ? $base : $base.$page->slug.'/';
     }
 
+    /** Az engedélyezett ikon SVG-je; ismeretlen vagy hibás érték esetén üres (felhasználói SVG sosem kerül ki). */
+    public function icon(mixed $name): string
+    {
+        return Icons::svg($name);
+    }
+
     /** Futáskor is ellenőrizzük a komponens URL-jét (a validációval azonos szabály). */
     public function isSafeUrl(mixed $url): bool
     {

@@ -7,6 +7,7 @@ use App\Models\Page;
 use App\Models\User;
 use App\Models\Website;
 use App\Services\SitePublisher;
+use App\Support\Icons;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
@@ -129,6 +130,43 @@ describe('job', function () {
             ->not->toContain('Rossz')
             ->toContain('&lt;script&gt;alert(1)&lt;/script&gt;')
             ->toContain('href="https://example.com/?a=1&amp;b=&quot;2&quot;"');
+    });
+
+    it('a címsor ikonja inline SVG-ként, a kiemelőszínnel jelenik meg', function () {
+        $this->index->update(['content' => [
+            ['id' => 'a', 'type' => 'heading', 'text' => 'Kapcsolat', 'level' => 2, 'icon' => 'mail'],
+            ['id' => 'b', 'type' => 'heading', 'text' => 'Ikon nélkül', 'level' => 2],
+        ]]);
+
+        runJob($this->website);
+
+        $html = file_get_contents("{$this->dir}/proba/index.html");
+        expect($html)
+            ->toContain('<h2><svg class="icon" viewBox="0 0 24 24"')
+            ->toContain('aria-hidden="true"')
+            ->toContain(Icons::markup('mail').'</svg>Kapcsolat</h2>')
+            ->toContain('<h2>Ikon nélkül</h2>')
+            ->toContain('.icon {')
+            ->toContain('color: var(--accent)')
+            ->not->toContain('<script');
+    });
+
+    it('az ismeretlen vagy hibás tárolt ikon nem renderelődik (a validációt megkerülve sem)', function () {
+        $this->index->update(['content' => [
+            ['id' => 'a', 'type' => 'heading', 'text' => 'Egy', 'level' => 2, 'icon' => '<script>alert(1)</script>'],
+            ['id' => 'b', 'type' => 'heading', 'text' => 'Kettő', 'level' => 2, 'icon' => ['star']],
+            ['id' => 'c', 'type' => 'heading', 'text' => 'Három', 'level' => 2, 'icon' => 'nincs-ilyen'],
+        ]]);
+
+        runJob($this->website);
+
+        $html = file_get_contents("{$this->dir}/proba/index.html");
+        expect($html)
+            ->not->toContain('<script')
+            ->not->toContain('<svg')
+            ->toContain('<h2>Egy</h2>')
+            ->toContain('<h2>Kettő</h2>')
+            ->toContain('<h2>Három</h2>');
     });
 
     it('idempotens: ismételt futtatás ugyanazt adja, és nem hagy ideiglenes könyvtárat', function () {
