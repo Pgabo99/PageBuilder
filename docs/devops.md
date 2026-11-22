@@ -1,6 +1,6 @@
 # DevOps
 
-> **Hatókör:** nincs Azure-kitelepítés; a Terraform és a `deploy/` kész és tesztelt, de nem telepített, a bizonyíték helyben (Compose, kind) vagy CI-ban fut ([roadmap](roadmap.md)). Az Azure-specifikus szakaszok (TLS, Blob backup, Application Insights) a kitelepítéshez szólnak.
+> **Hatókör:** nincs Azure-kitelepítés; a Terraform és a `deploy/` kész és tesztelt, de nem telepített, a bizonyíték helyben (Compose) vagy CI-ban fut; a kind + Argo CD sync és rollback még nem futott le (T6.4/2, [roadmap](roadmap.md)). Az Azure-specifikus szakaszok (TLS, Blob backup, Application Insights) a kitelepítéshez szólnak.
 >
 > A „Lokális környezet” és a „CI (MVP)” szakasz aktuális; a többi **bővített terv** a beadandó utáni továbbfejlesztéshez, nem karbantartott. Az MVP-hatókör: [roadmap](roadmap.md), a halasztott elemek: [backlog](backlog.md).
 
@@ -66,14 +66,14 @@ flowchart LR
   pr[Pull request] --> lint[Lint: Pint, ESLint, vue-tsc]
   pr --> test[Pest]
   pr --> e2e[Playwright Compose-stacken]
-  pr --> scan1[composer/npm audit, Trivy config, Gitleaks]
+  pr --> scan1[composer/npm audit, Trivy fs és config deploy-ra, secret-ellenőrzés]
   main[Merge main-re] --> build[Image build]
   build --> scan2[Trivy image scan<br/>HIGH/CRITICAL = stop]
   scan2 --> push[Push GHCR]
-  push --> bump[Commit: image tag a deploy/app-ban]
-  bump --> argo[Argo CD sync]
-  argo --> smoke[Smoke teszt: /up, /sites/demo/]
+  push --> bump[Tag-bump PR a deploy/app-ban]
 ```
+
+Az Argo CD sync és a clusteres smoke teszt **nem része a CI-nak** és nem bizonyított (T6.4/2). A PR-ágon továbbá futnak az `install`, `e2e`, `recovery`, `monitoring`, `scripts` és `terraform` jobok.
 
 - Az actionök commit SHA-ra rögzítettek, a `permissions` minimális (alapból `contents: read`; a tag-commit job `contents: write`, a push `packages: write`).
 - A tag-commit nem indít újabb buildet (a `deploy/**` útvonal kizárva).
@@ -81,6 +81,8 @@ flowchart LR
 - Kivétel (pl. `.trivyignore`) csak indoklással, jóváhagyással és lejárati dátummal ([security.md](security.md)).
 
 ## GitOps, deploy és rollback
+
+> **Bizonyítottság:** igazolt a tag-bump PR (#85). Az Argo CD szinkron és a rollback (`git revert`) clusteren **nem futott le**; a leírás a tervezett működés (T6.4/2).
 
 - Az Argo CD a `main` ág `deploy/app` könyvtárát szinkronizálja (`deploy/argocd/application.yaml`: automated sync, self-heal, prune). A kézzel létrehozott `pagebuilder-secrets` nem része a gitnek, ezért a prune nem érinti.
 - A tag-commit PR-ban érkezik (a branch protection érvényben marad, lásd „Tag-bump PR”); alkalmazás-rollback: a tag-commit `git revert`-je; az Argo CD visszaállítja az előző image-et. Minden deploy és rollback commitként visszakereshető.

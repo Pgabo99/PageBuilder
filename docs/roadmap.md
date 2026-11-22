@@ -14,8 +14,8 @@ Hatókör: a rendszert nem telepítjük Azure-ba vagy más publikus felhőbe. A 
 | Setup és repository (5) | Compose-stack, README telepítési és futtatási útmutató (Windows, Linux, macOS), tiszta gépen reprodukálható indítás valódi secretek nélkül, branch protection, issue/PR workflow |
 | CI (9) | GitHub Actions PR-ra: Pint, ESLint, `vue-tsc`, Pest, Vitest, Playwright (felhasználói út) |
 | Artifact és security (7) | SHA-tagelt image-ek a GHCR-ben; Trivy (fs, image, config), `composer audit`, `npm audit` |
-| Deployment és rollback (9) | a CI az image taget PR-ban írja át a `deploy/`-ban (a branch protection érvényben marad); bizonyíték: kind-clusteren futtatott deploy és rollback (`git revert`) |
-| GitOps (5) | sima manifestek (`deploy/`), Argo CD `Application`; bizonyíték: külön indítható CI-job kind-en, valódi sync és rollback |
+| Deployment és rollback (9) | a CI az image taget PR-ban írja át a `deploy/`-ban (a branch protection érvényben marad); bizonyított: a tag-bump PR (#85) és a manifesztek Trivy config vizsgálata; a clusteres deploy és rollback (`git revert`) **nincs bizonyítva** (T6.4/2) |
+| GitOps (5) | sima manifestek (`deploy/`), Argo CD `Application`; a valódi sync és rollback **nincs bizonyítva**, a külön indítható kind-job a T6.4/2 feladata |
 | IaC (5) | Terraform (Azure VM, NSG, IP, storage) megtartva: `fmt`, `validate`, offline `terraform test` a CI-ban; `apply` nincs |
 | Observability és SLO (7) | Compose-profil: Prometheus, Grafana, exporterek; két mérhető SLO (rendelkezésre állás, p95), dashboard |
 | Recovery (4) | helyi backup és restore szkript; ténylegesen végrehajtott, ellenőrzött visszaállítás mért RPO/RTO-val |
@@ -97,7 +97,7 @@ Regisztráció és bejelentkezés (Sanctum); webhelyek és oldalak CRUD, Policy-
 |---|---|
 | T8.1/1 ✅ | E2E-környezet: konfigurálható auth-korlát, Playwright Compose-profil, `scripts/e2e.sh`, próbateszt |
 | T8.1/2 ✅ | Három folyamat (szerkesztés és mentés; publikálás; hibaút) Playwrighttal, CI `e2e` job, hibakeresési artifact |
-| T8.2 | README, architektúra véglegesítése, AI audit |
+| T8.2 🔄 | README, architektúra véglegesítése, AI audit |
 
 ## Technikai adósság
 
