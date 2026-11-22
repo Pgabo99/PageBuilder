@@ -131,6 +131,88 @@ describe('PagePreview', () => {
     })
   })
 
+  describe('becsukható részek', () => {
+    const accordion: PageComponent = {
+      id: 'acc',
+      type: 'accordion',
+      items: [
+        { id: 'a', title: 'Első', text: 'Első szöveg' },
+        { id: 'b', title: '<b>Második</b>', text: 'Második szöveg' },
+      ],
+    }
+
+    it('natív details/summary elemekkel jeleníti meg a részeket, alapból zártan', () => {
+      const wrapper = mount(PagePreview, { props: { components: [accordion] } })
+      const details = wrapper.findAll('details')
+
+      expect(wrapper.find('.preview__accordion').exists()).toBe(true)
+      expect(details).toHaveLength(2)
+      expect(details.every((d) => !(d.element as HTMLDetailsElement).open)).toBe(true)
+      expect(details[0]!.find('summary').text()).toBe('Első')
+      expect(details[0]!.find('p').text()).toBe('Első szöveg')
+    })
+
+    it('a szöveget escape-elve jeleníti meg, és a summary nem fókuszálható (az előnézet rejtett)', () => {
+      const wrapper = mount(PagePreview, { props: { components: [accordion] } })
+      const second = wrapper.findAll('summary')[1]!
+
+      expect(wrapper.find('b').exists()).toBe(false)
+      expect(second.text()).toBe('<b>Második</b>')
+      expect(wrapper.findAll('summary').every((s) => s.attributes('tabindex') === '-1')).toBe(true)
+    })
+
+    it('a nyitás és csukás nincs megakadályozva, a kattintás közben kijelölést kér', async () => {
+      const wrapper = mount(PagePreview, {
+        props: { components: [accordion] },
+        attachTo: document.body,
+      })
+      const event = new MouseEvent('click', { bubbles: true, cancelable: true })
+
+      wrapper.find('summary').element.dispatchEvent(event)
+
+      expect(event.defaultPrevented).toBe(false)
+      expect(wrapper.emitted('select')).toEqual([['acc']])
+      wrapper.unmount()
+    })
+
+    it('a nyitott rész újrarenderelésnél (kijelölés, szerkesztés) nyitva marad', async () => {
+      const wrapper = mount(PagePreview, { props: { components: [accordion] } })
+      ;(wrapper.findAll('details')[0]!.element as HTMLDetailsElement).open = true
+
+      await wrapper.setProps({ activeId: 'acc' })
+      expect(wrapper.find('.preview__accordion').classes()).toContain('preview__item--active')
+      await wrapper.setProps({
+        components: [
+          {
+            ...accordion,
+            items: [{ id: 'a', title: 'Átírt', text: 'Első szöveg' }, accordion.items[1]!],
+          } as PageComponent,
+        ],
+      })
+
+      const first = wrapper.findAll('details')[0]!
+      expect(first.find('summary').text()).toBe('Átírt')
+      expect((first.element as HTMLDetailsElement).open).toBe(true)
+      expect((wrapper.findAll('details')[1]!.element as HTMLDetailsElement).open).toBe(false)
+    })
+
+    it('legfeljebb húsz részt mutat', () => {
+      const many: PageComponent = {
+        id: 'm',
+        type: 'accordion',
+        items: Array.from({ length: 25 }, (_, i) => ({
+          id: `i${i}`,
+          title: `Rész ${i}`,
+          text: 'X',
+        })),
+      }
+
+      expect(mount(PagePreview, { props: { components: [many] } }).findAll('details')).toHaveLength(
+        20,
+      )
+    })
+  })
+
   it('a gomb nem navigál: nincs link és nincs kattintható elem', () => {
     const wrapper = mount(PagePreview, { props: { components } })
 

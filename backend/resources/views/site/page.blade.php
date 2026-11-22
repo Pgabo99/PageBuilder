@@ -17,6 +17,12 @@
         .card__icon .icon { width: 1.75rem; height: 1.75rem; margin: 0 0 .25rem; }
         .card h3 { margin: .25rem 0 .5rem; font-size: 1.1rem; }
         .card p { margin: .5rem 0; }
+        .accordion { margin: 1rem 0; border: 1px solid var(--border); border-radius: .75rem; overflow: hidden; }
+        .accordion details + details { border-top: 1px solid var(--border); }
+        .accordion summary { cursor: pointer; padding: .75rem 1rem; font-weight: 600; }
+        .accordion summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+        .accordion details[open] summary { color: var(--accent); }
+        .accordion details p { margin: 0; padding: 0 1rem 1rem; }
         .button { display: inline-block; padding: .5rem 1rem; color: var(--on-accent); background: var(--accent); border-radius: .5rem; text-decoration: none; font-weight: 600; }
     </style>
 </head>
@@ -53,6 +59,16 @@
                         <p><a class="button" href="{{ $card['url'] }}">{{ $card['label'] }}</a></p>
                     @endif
                 </article>
+            @endforeach
+            </div>
+            @break
+        @case('accordion')
+            <div class="accordion">
+            @foreach ($site->accordionItems($component) as $item)
+                <details>
+                    <summary>{{ $item['title'] ?? '' }}</summary>
+                    <p>{{ $item['text'] ?? '' }}</p>
+                </details>
             @endforeach
             </div>
             @break

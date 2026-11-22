@@ -157,6 +157,49 @@ describe('tartalom validálása', function () {
         ])->assertUnprocessable()->assertJsonValidationErrors('content.0.cards');
     });
 
+    it('elfogadja a becsukható részeket, és csak a megengedett mezőket tárolja', function () {
+        $accordion = ['id' => 'a', 'type' => 'accordion', 'items' => [
+            ['id' => 'i1', 'title' => 'Kérdés', 'text' => 'Válasz', 'open' => true, 'html' => '<script>'],
+            ['id' => 'i2', 'title' => 'Másik', 'text' => 'Szöveg'],
+        ]];
+
+        $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [
+            'title' => 'X', 'slug' => 'x', 'content' => [$accordion],
+        ])->assertCreated()->assertJsonCount(2, 'data.content.0.items');
+
+        expect(Page::first()->content[0]['items'][0])->toEqual(['id' => 'i1', 'title' => 'Kérdés', 'text' => 'Válasz']);
+    });
+
+    it('a húsz rész még elfogadott, a huszonegy nem', function () {
+        $make = fn (int $n) => ['id' => 'a', 'type' => 'accordion', 'items' => array_map(
+            fn ($i) => ['id' => "i$i", 'title' => "Rész $i", 'text' => 'Szöveg'], range(1, $n),
+        )];
+
+        $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [
+            'title' => 'X', 'slug' => 'x', 'content' => [$make(20)],
+        ])->assertCreated();
+
+        $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [
+            'title' => 'Y', 'slug' => 'y', 'content' => [$make(21)],
+        ])->assertUnprocessable()->assertJsonValidationErrors('content.0.items');
+    });
+
+    it('hibás részeket elutasít, a hibakulcs a rész mezőjére mutat', function (array $component, string $errorKey) {
+        $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [
+            'title' => 'X', 'slug' => 'x', 'content' => [['id' => 'a', 'type' => 'accordion', ...$component]],
+        ])->assertUnprocessable()->assertJsonValidationErrors($errorKey);
+    })->with([
+        'rész nélkül' => [[], 'content.0.items'],
+        'üres lista' => [['items' => []], 'content.0.items'],
+        'nem tömb' => [['items' => 'szöveg'], 'content.0.items'],
+        'cím nélkül' => [['items' => [['id' => 'i', 'text' => 'X']]], 'content.0.items.0.title'],
+        'szöveg nélkül' => [['items' => [['id' => 'i', 'title' => 'X']]], 'content.0.items.0.text'],
+        'túl hosszú cím' => [['items' => [['id' => 'i', 'title' => str_repeat('a', 151), 'text' => 'X']]], 'content.0.items.0.title'],
+        'túl hosszú szöveg' => [['items' => [['id' => 'i', 'title' => 'X', 'text' => str_repeat('a', 2001)]]], 'content.0.items.0.text'],
+        'azonosító nélkül' => [['items' => [['title' => 'X', 'text' => 'Y']]], 'content.0.items.0.id'],
+        'második rész hibás' => [['items' => [['id' => 'i', 'title' => 'X', 'text' => 'Y'], ['id' => 'j', 'title' => 'Z']]], 'content.0.items.1.text'],
+    ]);
+
     it('elfogadja az engedélyezett ikont és az ikon nélküli címsort', function (mixed $icon) {
         $heading = ['id' => 'a', 'type' => 'heading', 'text' => 'X', 'level' => 2];
         $heading['icon'] = $icon;
