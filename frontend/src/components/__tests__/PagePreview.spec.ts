@@ -77,6 +77,17 @@ describe('PagePreview', () => {
     expect(custom.attributes('style')).toContain('--bg: #0f1115')
   })
 
+  it('a kattintás kijelölést kér, és a megadott azonosítójú elem kiemelt', async () => {
+    const wrapper = mount(PagePreview, { props: { components, activeId: 'b' } })
+
+    expect(wrapper.findAll('.preview__item')).toHaveLength(3)
+    expect(wrapper.findAll('.preview__item--active')).toHaveLength(1)
+    expect(wrapper.find('.preview__item--active').text()).toBe('Bekezdés')
+
+    await wrapper.findAll('.preview__item')[2]!.trigger('click')
+    expect(wrapper.emitted('select')).toEqual([['c']])
+  })
+
   it('a képernyőolvasók elől rejtett: a tartalom az űrlapban is elérhető', () => {
     expect(mount(PagePreview, { props: { components } }).attributes('aria-hidden')).toBe('true')
   })

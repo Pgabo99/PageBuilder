@@ -56,6 +56,9 @@ async function mountEditor() {
 const titles = (wrapper: Awaited<ReturnType<typeof mountEditor>>) =>
   wrapper.findAll('.component').map((c) => c.find('strong').text())
 
+const activeTitles = (wrapper: Awaited<ReturnType<typeof mountEditor>>) =>
+  wrapper.findAll('.component--active').map((c) => c.find('strong').text())
+
 describe('PageEditorView', () => {
   afterEach(() => mounted.splice(0).forEach((wrapper) => wrapper.unmount()))
 
@@ -129,6 +132,131 @@ describe('PageEditorView', () => {
     expect(titles(wrapper)).toEqual(['Szöveg', 'Gomb', 'Címsor'])
   })
 
+  it('betöltés után minden komponens összecsukott, rövid összefoglalóval', async () => {
+    const wrapper = await mountEditor()
+
+    expect(activeTitles(wrapper)).toEqual([])
+    expect(wrapper.find('.component input, .component textarea').exists()).toBe(false)
+    expect(wrapper.findAll('.component__summary').map((s) => s.text())).toEqual([
+      'Első',
+      'Második',
+      'Harmadik → /x',
+    ])
+  })
+
+  it('egyszerre legfeljebb egy komponens nyitott', async () => {
+    const wrapper = await mountEditor()
+    const toggles = () => wrapper.findAll('.component__toggle')
+
+    await toggles()[0]!.trigger('click')
+    expect(activeTitles(wrapper)).toEqual(['Címsor'])
+    expect(toggles()[0]!.attributes('aria-expanded')).toBe('true')
+
+    await toggles()[1]!.trigger('click')
+    expect(activeTitles(wrapper)).toEqual(['Szöveg'])
+    expect(toggles()[0]!.attributes('aria-expanded')).toBe('false')
+    expect(wrapper.findAll('.component textarea')).toHaveLength(1)
+
+    await toggles()[1]!.trigger('click')
+    expect(activeTitles(wrapper)).toEqual([])
+  })
+
+  it('az új komponens aktív lesz, az előzőleg nyitott összecsukódik', async () => {
+    const wrapper = await mountEditor()
+    await wrapper.findAll('.component__toggle')[0]!.trigger('click')
+
+    await wrapper
+      .findAll('.add-bar button')
+      .find((b) => b.text().includes('Gomb'))!
+      .trigger('click')
+    await flushPromises()
+
+    expect(activeTitles(wrapper)).toEqual(['Gomb'])
+    expect(wrapper.findAll('.component')).toHaveLength(4)
+  })
+
+  it('a másolat aktív lesz', async () => {
+    const wrapper = await mountEditor()
+
+    await wrapper.findAll('[aria-label="Komponens másolása"]')[1]!.trigger('click')
+    await flushPromises()
+
+    expect(wrapper.findAll('.component')[2]!.classes()).toContain('component--active')
+    expect(activeTitles(wrapper)).toHaveLength(1)
+  })
+
+  it('az aktív komponens törlése után nincs aktív elem', async () => {
+    const wrapper = await mountEditor()
+    await wrapper.findAll('.component__toggle')[1]!.trigger('click')
+
+    await wrapper.findAll('[aria-label="Komponens törlése"]')[1]!.trigger('click')
+
+    expect(activeTitles(wrapper)).toEqual([])
+  })
+
+  it('átrendezés után ugyanaz az elem marad aktív', async () => {
+    const wrapper = await mountEditor()
+    await wrapper.findAll('.component__toggle')[0]!.trigger('click')
+
+    await wrapper.findAll('.component')[0]!.find('[aria-label="Lejjebb"]').trigger('click')
+
+    expect(titles(wrapper)).toEqual(['Szöveg', 'Címsor', 'Gomb'])
+    expect(wrapper.findAll('.component')[1]!.classes()).toContain('component--active')
+  })
+
+  it('az előnézetben minden elem látszik, az aktív kijelölve', async () => {
+    const wrapper = await mountEditor()
+    await wrapper.findAll('.component__toggle')[1]!.trigger('click')
+
+    const items = wrapper.findAll('.preview__item')
+    expect(items).toHaveLength(3)
+    expect(items.map((item) => item.classes().includes('preview__item--active'))).toEqual([
+      false,
+      true,
+      false,
+    ])
+  })
+
+  it('az előnézetre kattintva az elem aktív lesz a szerkesztőben', async () => {
+    const wrapper = await mountEditor()
+
+    await wrapper.findAll('.preview__item')[2]!.trigger('click')
+    await flushPromises()
+
+    expect(activeTitles(wrapper)).toEqual(['Gomb'])
+    expect(wrapper.findAll('.preview__item--active')).toHaveLength(1)
+  })
+
+  it('a kijelölés nem mentetlen módosítás, és nem kerül a mentett tartalomba', async () => {
+    const wrapper = await mountEditor()
+    vi.mocked(pagesApi.update).mockImplementation(async (_id, payload) => ({ ...page, ...payload }))
+
+    await wrapper.findAll('.component__toggle')[0]!.trigger('click')
+    await wrapper.findAll('.preview__item')[1]!.trigger('click')
+    expect(wrapper.text()).toContain('Mentve')
+    expect(wrapper.text()).not.toContain('Nem mentett módosítások')
+
+    await wrapper.find('.component textarea').setValue('Átírt')
+    await wrapper.find('button.btn:not(.btn--secondary)').trigger('click')
+    await flushPromises()
+
+    const saved = vi.mocked(pagesApi.update).mock.calls[0]![1]
+    expect(saved.content.map((c) => Object.keys(c).sort())).toEqual([
+      ['id', 'level', 'text', 'type'],
+      ['id', 'text', 'type'],
+      ['id', 'label', 'type', 'url'],
+    ])
+  })
+
+  it('az összefoglaló sora billentyűzettel is használható (gomb, aria-expanded)', async () => {
+    const wrapper = await mountEditor()
+    const toggle = wrapper.find('.component__toggle')
+
+    expect(toggle.element.tagName).toBe('BUTTON')
+    expect(toggle.attributes('aria-expanded')).toBe('false')
+    expect(toggle.attributes('aria-controls')).toBeDefined()
+  })
+
   it('az előnézet a betöltött tartalmat mutatja', async () => {
     const wrapper = await mountEditor()
     const preview = wrapper.find('.preview')
@@ -153,6 +281,7 @@ describe('PageEditorView', () => {
   it('a szerkesztett szöveg mentés előtt frissíti az előnézetet', async () => {
     const wrapper = await mountEditor()
 
+    await wrapper.find('.component__toggle').trigger('click')
     await wrapper.find('.component input').setValue('Átírt cím')
 
     expect(wrapper.find('.preview h1').text()).toBe('Átírt cím')
@@ -200,6 +329,7 @@ describe('PageEditorView', () => {
 
   it('a gomb céljához az oldalak címét javasolja', async () => {
     const wrapper = await mountEditor()
+    await wrapper.findAll('.component__toggle')[2]!.trigger('click')
 
     const options = wrapper.findAll('datalist option').map((o) => o.attributes('value'))
     expect(options).toEqual(['/sites/demo/', '/sites/demo/kapcsolat/'])
@@ -229,12 +359,52 @@ describe('PageEditorView', () => {
       new ValidationError('Hibás', { 'content.2.url': ['Hibás cím.'], title: ['Hibás cím.'] }),
     )
 
+    await wrapper.findAll('.component__toggle')[2]!.trigger('click')
     await wrapper.findAll('.component')[2]!.find('input').setValue('javascript:x')
     await wrapper.find('button.btn:not(.btn--secondary)').trigger('click')
     await flushPromises()
 
     expect(wrapper.findAll('.component')[2]!.text()).toContain('Hibás cím.')
     expect(wrapper.find('[role="alert"]').text()).toContain('Javítsd a jelölt mezőket')
+  })
+
+  it('mentési hibánál az első hibás, összecsukott komponens kinyílik', async () => {
+    const wrapper = await mountEditor()
+    vi.mocked(pagesApi.update).mockRejectedValue(
+      new ValidationError('Hibás', {
+        'content.2.url': ['Hibás cím.'],
+        'content.1.text': ['Üres.'],
+      }),
+    )
+    // Módosítás kell ahhoz, hogy a mentés engedélyezett legyen; közben egyik elem sem marad nyitva.
+    await wrapper.findAll('.component__toggle')[0]!.trigger('click')
+    await wrapper.find('.component input').setValue('Átírt cím')
+    await wrapper.findAll('.component__toggle')[0]!.trigger('click')
+    expect(activeTitles(wrapper)).toEqual([])
+
+    await wrapper.find('button.btn:not(.btn--secondary)').trigger('click')
+    await flushPromises()
+
+    expect(activeTitles(wrapper)).toEqual(['Szöveg'])
+    expect(wrapper.findAll('.component')[1]!.text()).toContain('Üres.')
+  })
+
+  it('az összecsukott, hibás komponensen jelzi a hibát', async () => {
+    const wrapper = await mountEditor()
+    vi.mocked(pagesApi.update).mockRejectedValue(
+      new ValidationError('Hibás', { 'content.0.text': ['Üres.'], 'content.2.url': ['Hibás.'] }),
+    )
+    await wrapper.findAll('.component__toggle')[0]!.trigger('click')
+    await wrapper.find('.component input').setValue('Átírt cím')
+    await wrapper.findAll('.component__toggle')[0]!.trigger('click')
+    await wrapper.find('button.btn:not(.btn--secondary)').trigger('click')
+    await flushPromises()
+
+    // Az első hibás komponens kinyílik; a másik hibás összecsukva marad, és jelzi a hibát.
+    expect(activeTitles(wrapper)).toEqual(['Címsor'])
+    const invalid = wrapper.findAll('.component__invalid')
+    expect(invalid).toHaveLength(1)
+    expect(wrapper.findAll('.component')[2]!.find('.component__invalid').text()).toBe('Hibás mező')
   })
 
   it('mentetlen módosításnál az elhagyás előtt rákérdez; a mégsem a lapon tart', async () => {
