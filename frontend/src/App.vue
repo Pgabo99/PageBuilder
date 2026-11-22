@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import { errorMessage } from '@/api/client'
@@ -12,6 +12,12 @@ const auth = useAuthStore()
 const router = useRouter()
 const loggingOut = ref(false)
 const logoutError = ref<string | null>(null)
+
+// Az első navigációt a guard az /api/v1/user válaszáig tartja; közben nem maradhat üres az oldal.
+const ready = ref(false)
+onMounted(() => {
+  void router.isReady().finally(() => (ready.value = true))
+})
 
 async function logout(): Promise<void> {
   loggingOut.value = true
@@ -41,7 +47,10 @@ async function logout(): Promise<void> {
     </div>
   </header>
   <p v-if="logoutError" class="alert" role="alert">{{ logoutError }}</p>
-  <RouterView />
+  <main v-if="!ready" class="container">
+    <p class="muted" role="status">Betöltés…</p>
+  </main>
+  <RouterView v-else />
   <ConfirmDialog />
   <ToastHost />
 </template>
