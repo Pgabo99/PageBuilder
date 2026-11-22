@@ -17,6 +17,14 @@ class SiteRenderContext
     private const PALETTES = [
         'light' => ['bg' => '#ffffff', 'text' => '#1f2328', 'border' => '#d1d9e0'],
         'dark' => ['bg' => '#0f1115', 'text' => '#e6e8ec', 'border' => '#2b313c'],
+        'blue' => ['bg' => '#eef4ff', 'text' => '#10264a', 'border' => '#bcd0f2'],
+        'purple' => ['bg' => '#f5f0ff', 'text' => '#261448', 'border' => '#cdbdf0'],
+    ];
+
+    /** Témánkénti alapértelmezett kiemelőszín; a megadott `accent_color` felülírja. */
+    private const ACCENTS = [
+        'blue' => '#1d5fd1',
+        'purple' => '#6d3fd0',
     ];
 
     /**
@@ -52,7 +60,7 @@ class SiteRenderContext
 
         return is_string($color) && preg_match(StoreWebsiteRequest::COLOR_PATTERN, $color) === 1
             ? strtolower($color)
-            : self::DEFAULT_ACCENT;
+            : (self::ACCENTS[$this->website->page_theme] ?? self::DEFAULT_ACCENT);
     }
 
     /** A kiemelőszínű felületen olvasható szövegszín (a relatív fényességből). */

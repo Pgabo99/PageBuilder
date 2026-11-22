@@ -156,6 +156,30 @@ describe('WebsiteFormView', () => {
     expect(wrapper.find('button.btn--small').exists()).toBe(false)
   })
 
+  it.each([
+    ['blue', '#1d5fd1'],
+    ['purple', '#6d3fd0'],
+  ] as const)(
+    'a(z) %s témát elküldi, és a színválasztó az alapértelmezett színt mutatja',
+    async (theme, accent) => {
+      vi.mocked(websitesApi.create).mockResolvedValue(website)
+      const wrapper = mountView(WebsiteFormView)
+      await wrapper.findAll('input')[0]!.setValue('Név')
+
+      await wrapper.find('select').setValue(theme)
+      expect((wrapper.find('input[type="color"]').element as HTMLInputElement).value).toBe(accent)
+      await wrapper.find('form').trigger('submit')
+      await flushPromises()
+
+      expect(websitesApi.create).toHaveBeenLastCalledWith({
+        name: 'Név',
+        slug: 'nev',
+        accent_color: null,
+        page_theme: theme,
+      })
+    },
+  )
+
   it('szerkesztéskor betölti a mentett színt és témát', async () => {
     await router.replace('/websites/7/edit')
     vi.mocked(websitesApi.get).mockResolvedValue({

@@ -13,7 +13,7 @@ class StoreWebsiteRequest extends FormRequest
     /** Hat számjegyű hexadecimális szín (#RRGGBB). */
     public const COLOR_PATTERN = '/^#[0-9a-fA-F]{6}$/';
 
-    public const PAGE_THEMES = ['light', 'dark'];
+    public const PAGE_THEMES = ['light', 'dark', 'blue', 'purple'];
 
     /**
      * @return array<string, mixed>
