@@ -29,6 +29,16 @@ export function createComponent(type: ComponentType): PageComponent {
   }
 }
 
+/** A húzott elem beszúrási rése: hány elem közepe van az egérkurzor felett (0..elemszám). */
+export function dropSlot(midpoints: readonly number[], y: number): number {
+  return midpoints.filter((midpoint) => midpoint < y).length
+}
+
+/** A rés (az eredeti listában az elem elé) → a húzott elem célindexe az eltávolítása után. */
+export function slotTarget(from: number, slot: number): number {
+  return slot > from ? slot - 1 : slot
+}
+
 /** Rövid tartalmi összefoglaló az összecsukott komponenshez. */
 export function componentSummary(component: PageComponent, max = 60): string {
   const raw =

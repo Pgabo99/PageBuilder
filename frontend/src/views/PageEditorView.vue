@@ -14,10 +14,13 @@ import { useToast } from '@/composables/useToast'
 import type { ComponentType, Page, PageComponent, Website } from '@/types/content'
 import {
   cloneComponent,
+  componentLabel,
   componentTypes,
   createComponent,
+  dropSlot,
   moveItem,
   pageTargets,
+  slotTarget,
   type PageTarget,
 } from '@/utils/components'
 
@@ -161,31 +164,76 @@ function componentErrors(index: number): Record<string, string[]> {
 }
 
 // Húzással átrendezés (natív HTML5 drag & drop); a fel/le gombok a billentyűzetes alternatíva.
+// A sorrend csak elengedéskor (`drop`) változik: húzás közben a húzott elem a helyén marad (halványan),
+// a helykitöltő pedig a beszúrási résben jelenik meg. Megszakításnál (`dragend` drop nélkül) semmi nem változik.
 const dragIndex = ref<number | null>(null)
-const overIndex = ref<number | null>(null)
+// A beszúrási rés: az eredeti lista hányadik eleme elé kerülne a húzott elem (0..elemszám).
+const slot = ref<number | null>(null)
+
+// Ha a rés a húzott elem saját helye, nincs mozgás, ezért nincs helykitöltő sem.
+const placeholderAt = computed(() =>
+  dragIndex.value !== null &&
+  slot.value !== null &&
+  slotTarget(dragIndex.value, slot.value) !== dragIndex.value
+    ? slot.value
+    : null,
+)
+const draggedComponent = computed(() =>
+  dragIndex.value === null ? null : (form.content[dragIndex.value] ?? null),
+)
 
 function onDragStart(index: number, event: DragEvent): void {
   dragIndex.value = index
+  slot.value = null
   if (event.dataTransfer) {
     event.dataTransfer.effectAllowed = 'move'
     event.dataTransfer.setData('text/plain', String(index))
+    // A fogantyú helyett az egész komponens a húzott kép.
+    const item = (event.target as HTMLElement | null)?.closest('li')
+    if (item) event.dataTransfer.setDragImage?.(item, 16, 16)
   }
 }
 
-function onDragOver(index: number, event: DragEvent): void {
+// A rést az egér függőleges helye adja a komponensek (a helykitöltő nélkül mért) közepéhez képest, így a
+// helykitöltő megjelenése nem billenti át a rést (nincs villogás).
+function onDragOver(event: DragEvent): void {
   if (dragIndex.value === null) return
   event.preventDefault()
-  overIndex.value = index
+  if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
+  const items = Array.from(listEl.value?.children ?? []).filter(
+    (el): el is HTMLElement => el instanceof HTMLElement && el.dataset.componentId !== undefined,
+  )
+  slot.value = dropSlot(
+    items.map((el) => {
+      const rect = el.getBoundingClientRect()
+      return rect.top + rect.height / 2
+    }),
+    event.clientY,
+  )
 }
 
-function onDrop(index: number): void {
-  if (dragIndex.value !== null) move(dragIndex.value, index)
+// A listából kihúzva a helykitöltő eltűnik, és az elengedés nem mozgat.
+function onDragLeave(event: DragEvent): void {
+  const rect = listEl.value?.getBoundingClientRect()
+  if (!rect) return
+  const inside =
+    event.clientX >= rect.left &&
+    event.clientX <= rect.right &&
+    event.clientY >= rect.top &&
+    event.clientY <= rect.bottom
+  if (!inside) slot.value = null
+}
+
+function onDrop(): void {
+  if (dragIndex.value !== null && slot.value !== null) {
+    move(dragIndex.value, slotTarget(dragIndex.value, slot.value))
+  }
   onDragEnd()
 }
 
 function onDragEnd(): void {
   dragIndex.value = null
-  overIndex.value = null
+  slot.value = null
 }
 
 // Nem mentett módosítás elhagyása előtt figyelmeztetés.
@@ -257,30 +305,44 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', warnBeforeUnloa
           <p v-if="form.content.length === 0" class="muted">
             Az oldal még üres. Adj hozzá egy komponenst!
           </p>
-          <ul ref="listEl" class="list">
+          <ul
+            ref="listEl"
+            class="list"
+            @dragover="onDragOver"
+            @dragleave="onDragLeave"
+            @drop.prevent="onDrop"
+            @dragend="onDragEnd"
+          >
+            <template v-for="(component, index) in form.content" :key="component.id">
+              <li v-if="placeholderAt === index" class="drop-placeholder" aria-hidden="true">
+                Ide kerül: {{ componentLabel(draggedComponent!.type) }}
+              </li>
+              <li
+                :data-component-id="component.id"
+                :class="{ 'is-dragging': dragIndex === index && slot !== null }"
+              >
+                <ComponentEditor
+                  v-model="form.content[index] as PageComponent"
+                  :errors="componentErrors(index)"
+                  :first="index === 0"
+                  :last="index === form.content.length - 1"
+                  :active="component.id === activeId"
+                  :targets="targets"
+                  @toggle="toggleActive(component.id)"
+                  @up="move(index, index - 1)"
+                  @down="move(index, index + 1)"
+                  @duplicate="duplicate(index)"
+                  @remove="remove(index)"
+                  @dragstart="onDragStart(index, $event)"
+                />
+              </li>
+            </template>
             <li
-              v-for="(component, index) in form.content"
-              :key="component.id"
-              :data-component-id="component.id"
-              :class="{ 'drop-target': overIndex === index && dragIndex !== index }"
-              @dragover="onDragOver(index, $event)"
-              @drop.prevent="onDrop(index)"
-              @dragend="onDragEnd"
+              v-if="placeholderAt === form.content.length"
+              class="drop-placeholder"
+              aria-hidden="true"
             >
-              <ComponentEditor
-                v-model="form.content[index] as PageComponent"
-                :errors="componentErrors(index)"
-                :first="index === 0"
-                :last="index === form.content.length - 1"
-                :active="component.id === activeId"
-                :targets="targets"
-                @toggle="toggleActive(component.id)"
-                @up="move(index, index - 1)"
-                @down="move(index, index + 1)"
-                @duplicate="duplicate(index)"
-                @remove="remove(index)"
-                @dragstart="onDragStart(index, $event)"
-              />
+              Ide kerül: {{ componentLabel(draggedComponent!.type) }}
             </li>
           </ul>
 
@@ -327,10 +389,26 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', warnBeforeUnloa
   margin-top: var(--space-4);
 }
 
-.drop-target {
-  outline: 2px dashed var(--color-primary);
+/* A húzott elem a helyén marad, halványan; a helykitöltő mutatja, hová kerül elengedéskor. */
+.is-dragging {
+  opacity: 0.45;
+  outline: 2px dashed var(--color-muted);
   outline-offset: 2px;
   border-radius: var(--radius);
+}
+
+.drop-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3rem;
+  padding: var(--space-2) var(--space-4);
+  font-weight: 600;
+  color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  border: 2px dashed var(--color-primary);
+  border-radius: var(--radius);
+  pointer-events: none;
 }
 
 h2 {

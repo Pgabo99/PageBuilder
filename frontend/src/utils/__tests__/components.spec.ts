@@ -4,9 +4,39 @@ import {
   cloneComponent,
   componentSummary,
   createComponent,
+  dropSlot,
   moveItem,
   pageTargets,
+  slotTarget,
 } from '../components'
+
+describe('dropSlot', () => {
+  it('a kurzor feletti közepű elemek számát adja', () => {
+    const mids = [50, 150, 250]
+
+    expect(dropSlot(mids, 0)).toBe(0)
+    expect(dropSlot(mids, 60)).toBe(1)
+    expect(dropSlot(mids, 160)).toBe(2)
+    expect(dropSlot(mids, 999)).toBe(3)
+  })
+
+  it('üres listánál a rés 0', () => {
+    expect(dropSlot([], 40)).toBe(0)
+  })
+})
+
+describe('slotTarget', () => {
+  it('lefelé húzásnál az eltávolított elem miatt eggyel kisebb index', () => {
+    expect(slotTarget(0, 3)).toBe(2)
+    expect(slotTarget(0, 2)).toBe(1)
+  })
+
+  it('felfelé húzásnál és a saját helyén változatlan', () => {
+    expect(slotTarget(2, 0)).toBe(0)
+    expect(slotTarget(1, 1)).toBe(1)
+    expect(slotTarget(1, 2)).toBe(1)
+  })
+})
 
 describe('componentSummary', () => {
   it('típusonként a szöveget vagy a feliratot és a célt mutatja', () => {
