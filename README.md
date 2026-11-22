@@ -78,7 +78,7 @@ A jelszavakat helyi használatra a placeholder is megteszi; máshol az első ind
 
 ### Monitoring (opcionális profil)
 
-`docker compose --profile monitoring up -d --wait` a futó stack mellé indítja a Prometheust, a blackbox exportert és a Grafanát (az alap `docker compose up` nem indítja őket). Csak `127.0.0.1`-en érhetők el: Grafana http://localhost:3000 (`admin`, jelszó: `GRAFANA_ADMIN_PASSWORD`, placeholder az `.env.example`-ben), Prometheus http://localhost:9090. A dashboard: „PageBuilder – SLO (szintetikus)". Leírás és SLO-k: [DevOps](docs/devops.md#monitoring-helyi-megvalósítva). Ellenőrzés: `bash scripts/monitoring-check.sh` (elkülönített projekten).
+`docker compose --profile monitoring up -d --wait` a futó stack mellé indítja a Prometheust, a blackbox exportert és a Grafanát (az alap `docker compose up` nem indítja őket). Csak `127.0.0.1`-en érhetők el: Grafana http://localhost:3000 (`admin`, jelszó: `GRAFANA_ADMIN_PASSWORD`, placeholder az `.env.example`-ben), Prometheus http://localhost:9090. A dashboard: „PageBuilder – SLO (szintetikus)" (felül a szintetikus SLO-k, alul külön sorban a valódi forgalom az Nginx naplójából, `layer=real`). Leírás és SLO-k: [DevOps](docs/devops.md#monitoring-helyi-megvalósítva). Ellenőrzés: `bash scripts/monitoring-check.sh` (elkülönített projekten).
 
 ### Backup és restore (MySQL)
 

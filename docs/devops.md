@@ -185,7 +185,7 @@ Opcionális Compose-profil: `docker compose --profile monitoring up -d --wait` (
 | Réteg | Forrás | Mit mér | Állít-e SLO-t |
 |---|---|---|---|
 | `synthetic` | blackbox exporter, 5 s-os próbák az Nginxen át: `/up` (`api_health`), `/` (`spa`) | rendelkezésre állás és válaszidő, forgalomtól függetlenül | igen (alább) |
-| valódi forgalom | az Nginx hozzáférési naplója (T7.1/2) | a ténylegesen kiszolgált kérések sikeressége és válaszideje | nem, csak mért forgalom |
+| `real` | az Nginx tényleges hozzáférési naplója, `prometheus-nginxlog-exporter` | a ténylegesen kiszolgált kérések száma státuszkódonként és válaszideje (`pagebuilder_nginx_*`, `real:*` szabályok) | nem, csak mért forgalom |
 
 **SLO-k** (szintetikus, 15 perces ablak; a 30 napos cél hosszú távú, azt elegendő mérési adat nélkül nem állítjuk):
 
@@ -199,6 +199,14 @@ Opcionális Compose-profil: `docker compose --profile monitoring up -d --wait` (
 - **Mért érték, környezetfüggő:** a p95 válaszidő a helyi Windows 11 + Docker Desktop környezetben **2,05 s** volt (30 s-os ablak), tehát a 0,5 s-os SLO itt nem teljesül: minden `/up` kérés a bind mountról tölti be a Laravelt (lásd a backlog „fejlesztői környezet válaszideje" elemét). A válaszidő környezetfüggő, ezért az ellenőrzés a mérhetőséget igazolja, az értéket kiírja a küszöb mellett, de nem kényszeríti rá.
 - **Leletek a megvalósítás közben:** (1) a Vite dev szerver `403`-mal elutasítja az ismeretlen `Host: nginx` fejlécet, ezért a próbák `Host: localhost` fejléccel mennek; (2) hideg indulásnál az első kérések lassúak és a próba időtúllépésébe futnak, ezért a monitoring a bemelegített stack mellé indul (a Prometheus az Nginx egészségére vár); (3) az újraindított backend után az Nginxet újra kell indítani (lásd a helyreállítást).
 - Nem része: Alertmanager, Loki, node-exporter, Laravel `/metrics`, Kubernetes-monitoring.
+
+**Valódi forgalmi réteg (`layer="real"`, nem SLO):**
+- Az Nginx fejlesztői konfigurációja (`docker/nginx/default.conf`) a szokásos stdout-napló mellett egy második, időzített naplót ír a `nginx-timed-logs` kötetre (`log_format timed`: `$remote_addr - [$time_local] "$request" $status $body_bytes_sent $request_time`). A blackbox próbák saját `User-Agent` fejlécet kapnak (`pagebuilder-blackbox`), és az Nginx ezt a naplóból kihagyja, így a napló csak valódi kéréseket tartalmaz. **Ez az Nginx-konfig és a kötet az alapstack része** (nem csak a profilé): funkcionálisan nem változtat semmin, de az Nginx a profil nélkül is ír egy kis naplófájlt a kötetre, amit senki nem olvas. A fájl mérete a forgalommal nő; `docker compose down -v` törli.
+- Az exporter (`quay.io/martinhelmich/prometheus-nginxlog-exporter` v1.11.0, digest-pinnelve; a projekt saját, hivatalos publikálása) a naplót tail-eli (csak az induláskor utáni sorokat), és a kérésszámot (`method`, `status` címkével), a válaszidő-hisztogramot (`..._hist_*`) és a `parse_errors_total` számlálót adja. Az útvonal nem címke (alacsony kardinalitás). A `format` azonos a `log_format`-tal; a `monitoring-check.sh` a két sort összeveti, futás közben pedig a `parse_errors_total` értékének 0-nak kell lennie.
+- A `real:http_requests:rate5m`, `real:http_success_ratio:ratio_5m` (5xx-mentes arány) és `real:http_latency_p95:seconds_5m` szabályoknak forgalom nélkül nincs értékük (a dashboardon „Nincs forgalom"). A valódi forgalomra nem állítunk SLO-t.
+- **Bizonyíték** (`scripts/monitoring-check.sh`): kiindulásnál a valódi forgalmi számláló 0 (a próbák nincsenek benne); ismert mennyiségű kérés (7 × `/up` → 200, 3 × `/api/v1/user` → 401, 2 × ismeretlen végpont → 404) pontosan ennyivel növeli a számlálókat, és 20 s múlva sem nő tovább (a próbák nem számítanak bele); nincs parse-hiba; a `layer="real"` és a `layer="synthetic"` sorozatok nem keverednek.
+- **Az image kockázata:** a v1.11.0 2023-ban épült, Go 1.18.10-zel; a Trivy 0.76.2 vizsgálata 45 HIGH/CRITICAL találatot adott (4 CRITICAL, 41 HIGH), mind a Go standard könyvtárban, mind javítható lenne újraépítéssel. A projekt nem ad ki újabb verziót. Enyhítés: csak az opcionális profilban fut, a 4040-es portja nincs a hostra kiadva (csak a Prometheus éri el a Compose-hálózaton), a napló csak olvasható mount, nem root (`65534`), `read_only`, `cap_drop: ALL`, `no-new-privileges`, titkot nem kezel. A CI nem vizsgálja (a Trivy kapuk a production image-eket és a fájlrendszert fedik).
+- **Leletek:** (1) a blackbox nem küld `Blackbox Exporter` User-Agentet, ezért az első szűrés a próbákat a valódi forgalomba engedte; a saját UA ezt javította; (2) az exporter a `method` címkét csak a `$request` mezőből képzi, a `$request_method`-ból nem.
 
 ## Megfigyelhetőség (bővített terv)
 

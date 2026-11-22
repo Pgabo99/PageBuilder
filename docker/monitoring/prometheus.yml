@@ -15,6 +15,12 @@ scrape_configs:
     static_configs:
       - targets: ["blackbox:9115"]
 
+  # Valódi forgalmi réteg: az Nginx tényleges hozzáférési naplójából (layer="real"), a szintetikustól elkülönítve.
+  - job_name: nginxlog
+    static_configs:
+      - targets: ["nginxlog-exporter:4040"]
+        labels: { layer: real }
+
   # Szintetikus réteg: a blackbox exporter próbái, forgalomtól függetlenek (layer="synthetic").
   - job_name: synthetic
     scrape_interval: 5s

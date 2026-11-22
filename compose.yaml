@@ -119,6 +119,8 @@ services:
       # Csak a public könyvtár: a .env és a többi backend-fájl nincs az Nginx konténerben.
       - ./backend/public:/var/www/backend/public:ro
       - sites-data:/var/www/sites:ro
+      # Időzített napló a monitoring profil exporterének (docker/nginx/default.conf); a profil nélkül nem olvassa senki.
+      - nginx-timed-logs:/var/log/nginx-timed
     depends_on:
       backend:
         condition: service_healthy
@@ -164,6 +166,24 @@ services:
       retries: 5
       start_period: 5s
 
+  # Valódi forgalmi réteg: az Nginx időzített naplóját olvassa. A port nincs a hostra kiadva (csak a Prometheus éri el);
+  # az image (v1.11.0, 2023) régi Go-val épült (lásd docs/devops.md), ezért szűkített jogokkal fut.
+  nginxlog-exporter:
+    profiles: [monitoring]
+    image: quay.io/martinhelmich/prometheus-nginxlog-exporter:v1.11.0@sha256:b36976cb58584529381a92404a7ba9868b03e1a321c9dc7228cc9ecd93a80440
+    command: ["-config-file", "/etc/nginxlog/nginxlog.yml"]
+    user: "65534:65534"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - ./docker/monitoring/nginxlog.yml:/etc/nginxlog/nginxlog.yml:ro
+      - nginx-timed-logs:/var/log/nginx-timed:ro
+    depends_on:
+      nginx:
+        condition: service_healthy
+
   prometheus:
     profiles: [monitoring]
     image: prom/prometheus:v3.15.1@sha256:fa3302279710be2f21a8301ec17a8b4f2301fd829bd113839b3b6b02b6f191a2
@@ -183,6 +203,8 @@ services:
         condition: service_healthy
       nginx:
         condition: service_healthy
+      nginxlog-exporter:
+        condition: service_started
     healthcheck:
       test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:9090/-/healthy"]
       interval: 10s
@@ -221,5 +243,6 @@ volumes:
   frontend-node-modules:
   sites-data:
   e2e-node-modules:
+  nginx-timed-logs:
   prometheus-data:
   grafana-data:
