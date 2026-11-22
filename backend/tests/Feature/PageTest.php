@@ -96,7 +96,28 @@ describe('tartalom validálása', function () {
         'javascript: URL' => [['id' => 'a', 'type' => 'button', 'label' => 'X', 'url' => 'javascript:alert(1)'], 'content.0.url'],
         'data: URL' => [['id' => 'a', 'type' => 'button', 'label' => 'X', 'url' => 'data:text/html,x'], 'content.0.url'],
         'azonosító nélkül' => [['type' => 'text', 'text' => 'X'], 'content.0.id'],
+        'ismeretlen ikon' => [['id' => 'a', 'type' => 'heading', 'text' => 'X', 'level' => 1, 'icon' => 'nincs-ilyen'], 'content.0.icon'],
+        'SVG-kód ikonként' => [['id' => 'a', 'type' => 'heading', 'text' => 'X', 'level' => 1, 'icon' => '<svg onload=alert(1)></svg>'], 'content.0.icon'],
+        'tömb ikonként' => [['id' => 'a', 'type' => 'heading', 'text' => 'X', 'level' => 1, 'icon' => ['star']], 'content.0.icon'],
     ]);
+
+    it('elfogadja az engedélyezett ikont és az ikon nélküli címsort', function (mixed $icon) {
+        $heading = ['id' => 'a', 'type' => 'heading', 'text' => 'X', 'level' => 2];
+        $heading['icon'] = $icon;
+
+        $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [
+            'title' => 'X', 'slug' => 'x', 'content' => [$heading],
+        ])->assertCreated()->assertJsonPath('data.content.0.icon', $icon);
+    })->with(['star', 'check-circle', 'gift', null]);
+
+    it('az ikon nélküli, régi címsor továbbra is érvényes és nem kap ikon mezőt', function () {
+        $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [
+            'title' => 'X', 'slug' => 'x',
+            'content' => [['id' => 'a', 'type' => 'heading', 'text' => 'X', 'level' => 1]],
+        ])->assertCreated();
+
+        expect(Page::first()->content[0])->toEqual(['id' => 'a', 'type' => 'heading', 'text' => 'X', 'level' => 1]);
+    });
 
     it('elfogadja a biztonságos URL-eket', function (string $url) {
         $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [

@@ -412,6 +412,54 @@ describe('PageEditorView', () => {
     expect(toggle.attributes('aria-controls')).toBeDefined()
   })
 
+  it('a címsor ikonja kiválasztható, azonnal látszik az előnézetben, és mentéskor elmegy', async () => {
+    const wrapper = await mountEditor()
+    vi.mocked(pagesApi.update).mockImplementation(async (_id, payload) => ({ ...page, ...payload }))
+    await wrapper.findAll('.component__toggle')[0]!.trigger('click')
+    expect(wrapper.find('.preview h1 svg').exists()).toBe(false)
+
+    await wrapper.find('input[aria-label="Csillag"]').setValue(true)
+
+    expect(wrapper.find('.preview h1 svg').exists()).toBe(true)
+    expect(wrapper.text()).toContain('Nem mentett módosítások')
+    await wrapper.find('button.btn:not(.btn--secondary)').trigger('click')
+    await flushPromises()
+
+    expect(vi.mocked(pagesApi.update).mock.calls[0]![1].content[0]).toMatchObject({
+      type: 'heading',
+      icon: 'star',
+    })
+  })
+
+  it('az ikon törölhető ("Nincs"), ilyenkor az előnézetben sincs ikon', async () => {
+    vi.mocked(pagesApi.get).mockResolvedValue(
+      structuredClone({
+        ...page,
+        content: [{ id: 'a', type: 'heading', text: 'Első', level: 1, icon: 'gift' }],
+      } as Page),
+    )
+    const wrapper = await mountEditor()
+    expect(wrapper.find('.preview h1 svg').exists()).toBe(true)
+
+    await wrapper.find('.component__toggle').trigger('click')
+    await wrapper.find('input[value=""]').setValue(true)
+
+    expect(wrapper.find('.preview h1 svg').exists()).toBe(false)
+  })
+
+  it('az ikonválasztó hibáját a címsornál jeleníti meg', async () => {
+    const wrapper = await mountEditor()
+    vi.mocked(pagesApi.update).mockRejectedValue(
+      new ValidationError('Hibás', { 'content.0.icon': ['Ismeretlen ikon.'] }),
+    )
+    await wrapper.findAll('.component__toggle')[0]!.trigger('click')
+    await wrapper.find('input[aria-label="Szív"]').setValue(true)
+    await wrapper.find('button.btn:not(.btn--secondary)').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.findAll('.component')[0]!.text()).toContain('Ismeretlen ikon.')
+  })
+
   it('az előnézet a betöltött tartalmat mutatja', async () => {
     const wrapper = await mountEditor()
     const preview = wrapper.find('.preview')

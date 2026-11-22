@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
+import AppIcon from '@/components/AppIcon.vue'
 import type { PageComponent } from '@/types/content'
 import { pageStyle, type PageTheme } from '@/utils/themes'
 
@@ -37,7 +38,9 @@ const level = (value: number): 1 | 2 | 3 =>
         :data-component-id="component.id"
         @click="$emit('select', component.id)"
       >
-        {{ component.text }}
+        <AppIcon v-if="component.icon" class="preview__icon" :name="component.icon" />{{
+          component.text
+        }}
       </component>
       <p
         v-else-if="component.type === 'text'"
@@ -88,6 +91,13 @@ const level = (value: number): 1 | 2 | 3 =>
   outline: 2px solid var(--accent);
   outline-offset: 4px;
   background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+/* Mint a publikált oldal `.icon` szabálya: a kiemelőszínt veszi át. */
+.preview__icon {
+  margin-right: 0.4em;
+  color: var(--accent);
+  vertical-align: -0.15em;
 }
 
 .preview__empty {

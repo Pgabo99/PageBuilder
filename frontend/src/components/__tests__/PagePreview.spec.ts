@@ -34,6 +34,27 @@ describe('PagePreview', () => {
     expect(wrapper.findAll('h1, h2, h3').map((h) => h.element.tagName)).toEqual(['H1', 'H3', 'H3'])
   })
 
+  it('a címsor ikonját a szöveg előtt, a kiemelőszínnel rajzolja ki', () => {
+    const wrapper = mount(PagePreview, {
+      props: {
+        components: [
+          { id: 'a', type: 'heading', text: 'Kapcsolat', level: 2, icon: 'mail' },
+          { id: 'b', type: 'heading', text: 'Ikon nélkül', level: 2 },
+          { id: 'c', type: 'heading', text: 'Hibás', level: 2, icon: 'nincs-ilyen' },
+        ],
+        theme: 'purple',
+      },
+    })
+    const headings = wrapper.findAll('h2')
+
+    expect(headings[0]!.find('svg.icon').exists()).toBe(true)
+    expect(headings[0]!.find('svg').classes()).toContain('preview__icon')
+    expect(headings[0]!.text()).toBe('Kapcsolat')
+    expect(headings[1]!.find('svg').exists()).toBe(false)
+    expect(headings[2]!.find('svg').exists()).toBe(false)
+    expect(wrapper.attributes('style')).toContain('--accent: #6d3fd0')
+  })
+
   it('a gomb nem navigál: nincs link és nincs kattintható elem', () => {
     const wrapper = mount(PagePreview, { props: { components } })
 
