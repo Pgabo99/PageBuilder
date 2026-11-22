@@ -2,6 +2,8 @@
 # Telepítés utáni ellenőrzés: szolgáltatások, health, SPA és egy felhasználói út az API-n
 # (regisztráció, webhely, oldal, publikálás, kiszolgálás). Bármely hiba nem nulla kilépési kódot ad.
 # Követelmény: bash, curl, docker compose; a repó gyökeréből fut. Windows: Git Bash vagy WSL.
+# SMOKE_SKIP_COMPOSE=1: a Compose-ellenőrzés kimarad (más környezet, pl. kind); SMOKE_REFERER: a Sanctum
+# stateful hoszt és a Referer, ha az elérési cím portja nem szerepel a SANCTUM_STATEFUL_DOMAINS-ben.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -10,6 +12,7 @@ cd "$(dirname "$0")/.."
 DC="${DC:-docker compose}"
 PORT="${NGINX_PORT:-$(sed -n 's/^NGINX_PORT=//p' .env 2>/dev/null | tail -n 1)}"
 BASE="http://localhost:${PORT:-8080}"
+REFERER="${SMOKE_REFERER:-$BASE}"
 RUN_ID="$(date +%s)"
 JAR="$(mktemp)"
 trap 'rm -f "$JAR"' EXIT
@@ -18,11 +21,13 @@ fail() { echo "HIBA: $*" >&2; exit 1; }
 ok() { echo "OK   $*"; }
 
 # 1. Szolgáltatások: mind fut és healthy.
-for service in mysql redis backend worker frontend nginx; do
-  health="$($DC ps --format '{{.Health}}' "$service")"
-  [ "$health" = "healthy" ] || fail "a(z) $service nem healthy (állapot: '${health:-nem fut}')"
-done
-ok "mysql, redis, backend, worker, frontend, nginx healthy"
+if [ "${SMOKE_SKIP_COMPOSE:-}" != "1" ]; then
+  for service in mysql redis backend worker frontend nginx; do
+    health="$($DC ps --format '{{.Health}}' "$service")"
+    [ "$health" = "healthy" ] || fail "a(z) $service nem healthy (állapot: '${health:-nem fut}')"
+  done
+  ok "mysql, redis, backend, worker, frontend, nginx healthy"
+fi
 
 # 2. Health végpont és SPA.
 curl -fsS -o /dev/null "$BASE/up" || fail "/up nem elérhető"
@@ -36,7 +41,7 @@ api() {
   token="$(awk '$6 == "XSRF-TOKEN" { print $7 }' "$JAR" | tail -n 1 | sed 's/%3D/=/g')"
   response="$(curl -sS --fail-with-body -X "$method" "$BASE$path" -b "$JAR" -c "$JAR" \
     -H 'Accept: application/json' -H 'Content-Type: application/json' \
-    -H "Referer: $BASE/" -H "X-XSRF-TOKEN: $token" ${body:+-d "$body"})" || {
+    -H "Referer: $REFERER/" -H "X-XSRF-TOKEN: $token" ${body:+-d "$body"})" || {
     echo "$method $path: $response" >&2
     return 1
   }

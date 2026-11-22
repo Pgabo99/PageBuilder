@@ -80,7 +80,8 @@ Regisztráció és bejelentkezés (Sanctum); webhelyek és oldalak CRUD, Policy-
 | T6.2/2 ✅ | Argo CD `Application` és bootstrap-leírás |
 | T6.3 ✅ | Telepítési és futtatási útmutató (előfeltételek, `.env`, parancsok Windows, Linux, macOS); tiszta gépen reprodukálható indítás, secret nélküli `.env.example`, `.gitattributes` |
 | T6.4/1 ✅ | CI: image tag PR-ban a `deploy/`-ban (branch protection megkerülése nélkül) |
-| T6.4/2 | Külön indítható CI-job: kind, Argo CD, valódi sync, deploy és rollback (`git revert`) smoke teszttel |
+| T6.4/2a 🔄 | Külön indítható CI-job: kind, Argo CD, a `deploy/app` valódi szinkronja smoke teszttel (helyben igazolt; a CI-futás a merge után) |
+| T6.4/2b | Deploy és rollback (`git revert`) eldobható `ci/gitops-*` ágon, smoke teszttel |
 
 ## M7 – Observability és recovery
 
