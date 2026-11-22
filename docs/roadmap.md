@@ -87,7 +87,7 @@ Regisztráció és bejelentkezés (Sanctum); webhelyek és oldalak CRUD, Policy-
 | ID | Feladat |
 |---|---|
 | T7.1/1 ✅ | Compose-profil (`monitoring`): Prometheus, blackbox exporter, Grafana; két mérhető szintetikus SLO (rendelkezésre állás, p95 válaszidő), dashboard |
-| T7.1/2 | Valódi forgalmi metrikák az Nginx hozzáférési naplójából, külön a szintetikus rétegtől |
+| T7.1/2 ✅ | Valódi forgalmi metrikák az Nginx hozzáférési naplójából, külön a szintetikus rétegtől |
 | T7.2 ✅ | Helyi backup és restore szkript (`mysqldump`, Compose-kötet) |
 | T7.3 ✅ | Ténylegesen végrehajtott, ellenőrzött visszaállítás külön adatbázisba, mért RPO/RTO, dokumentálva |
 

@@ -18,3 +18,15 @@ groups:
         expr: (slo:synthetic_availability:ratio_15m >= bool 0.99) and on(probe) (slo:synthetic_window_coverage:ratio_15m >= 0.95)
       - record: slo:synthetic_latency_slo_met:bool_15m
         expr: (slo:synthetic_latency_p95:seconds_15m < bool 0.5) and on(probe) (slo:synthetic_window_coverage:ratio_15m >= 0.95)
+
+  # Valódi forgalom (layer="real"): az Nginx tényleges hozzáférési naplójából. Nem SLO, csak mért forgalom;
+  # forgalom nélkül nincs adat (az osztás nem ad értéket), így nincs ál-megfelelés.
+  - name: real-traffic
+    interval: 15s
+    rules:
+      - record: real:http_requests:rate5m
+        expr: sum(rate(pagebuilder_nginx_http_response_count_total{layer="real"}[5m]))
+      - record: real:http_success_ratio:ratio_5m
+        expr: sum(rate(pagebuilder_nginx_http_response_count_total{layer="real",status!~"5.."}[5m])) / sum(rate(pagebuilder_nginx_http_response_count_total{layer="real"}[5m]))
+      - record: real:http_latency_p95:seconds_5m
+        expr: histogram_quantile(0.95, sum by (le) (rate(pagebuilder_nginx_http_response_time_seconds_hist_bucket{layer="real"}[5m])))

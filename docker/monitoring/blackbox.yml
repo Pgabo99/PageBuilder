@@ -8,5 +8,7 @@ modules:
       method: GET
       # A Vite dev szerver csak az ismert hosztneveket szolgálja ki (az Nginx tovább is adja a Host fejlécet),
       # ezért a próba a böngészőkkel azonos localhost néven fordul az Nginxhez.
+      # A User-Agent alapján az Nginx kihagyja a próbákat a valódi forgalmi naplóból (docker/nginx/default.conf).
       headers:
         Host: localhost
+        User-Agent: pagebuilder-blackbox

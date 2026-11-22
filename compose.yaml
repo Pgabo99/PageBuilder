@@ -119,6 +119,8 @@ services:
       # Csak a public könyvtár: a .env és a többi backend-fájl nincs az Nginx konténerben.
       - ./backend/public:/var/www/backend/public:ro
       - sites-data:/var/www/sites:ro
+      # Időzített napló a monitoring profil exporterének (docker/nginx/default.conf); a profil nélkül nem olvassa senki.
+      - nginx-timed-logs:/var/log/nginx-timed
     depends_on:
       backend:
         condition: service_healthy
@@ -164,6 +166,27 @@ services:
       retries: 5
       start_period: 5s
 
+  # Valódi forgalmi réteg: az Nginx időzített naplóját olvassa. A port nincs a hostra kiadva (csak a Prometheus éri el).
+  # A hivatalos image 2023-as (Go 1.18, 45 HIGH/CRITICAL), ezért a docker/nginxlog-exporter/Dockerfile friss Go-val fordítja
+  # ugyanazt a forrást (lásd docs/devops.md); szűkített jogokkal fut.
+  nginxlog-exporter:
+    profiles: [monitoring]
+    build:
+      context: ./docker/nginxlog-exporter
+    image: pagebuilder-nginxlog-exporter:dev
+    command: ["-config-file", "/etc/nginxlog/nginxlog.yml"]
+    user: "65534:65534"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - ./docker/monitoring/nginxlog.yml:/etc/nginxlog/nginxlog.yml:ro
+      - nginx-timed-logs:/var/log/nginx-timed:ro
+    depends_on:
+      nginx:
+        condition: service_healthy
+
   prometheus:
     profiles: [monitoring]
     image: prom/prometheus:v3.15.1@sha256:fa3302279710be2f21a8301ec17a8b4f2301fd829bd113839b3b6b02b6f191a2
@@ -183,6 +206,8 @@ services:
         condition: service_healthy
       nginx:
         condition: service_healthy
+      nginxlog-exporter:
+        condition: service_started
     healthcheck:
       test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:9090/-/healthy"]
       interval: 10s
@@ -221,5 +246,14 @@ volumes:
   frontend-node-modules:
   sites-data:
   e2e-node-modules:
+  # Az Nginx időzített naplója memóriában (tmpfs), legfeljebb 16 MiB: a napló mérete így korlátos, és a stack
+  # leállításakor (az Nginx és az exporter is leáll) törlődik. Betelés esetén az Nginx tovább szolgál ki, de a
+  # valódi forgalmi számlálók nem nőnek tovább (a sorok ~16 bájtosak, tehát kb. 1 millió kérés fér bele).
+  nginx-timed-logs:
+    driver: local
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
+      o: size=16m
   prometheus-data:
   grafana-data:
