@@ -12,9 +12,27 @@
         nav a[aria-current="page"] { font-weight: 700; color: var(--text); }
         main { max-width: 42rem; margin: 2rem auto; padding: 0 1rem; }
         .icon { width: 1.1em; height: 1.1em; margin-right: .4em; vertical-align: -.15em; color: var(--accent); }
-        .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 1rem; margin: 1rem 0; }
-        .card { padding: 1rem; border: 1px solid var(--border); border-radius: .75rem; }
-        .card__icon .icon { width: 1.75rem; height: 1.75rem; margin: 0 0 .25rem; }
+        .cards { --gap: 1rem; --pad: 1rem; --radius: .75rem; --border-width: 1px; --shadow: none; --icon-size: 1.75rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: var(--gap); margin: 1rem 0; }
+        .card { padding: var(--pad); border: var(--border-width) solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
+        .card__icon .icon { width: var(--icon-size); height: var(--icon-size); margin: 0 0 .25rem; }
+        .cards--columns-1 { --cols: 1; } .cards--columns-2 { --cols: 2; } .cards--columns-3 { --cols: 3; } .cards--columns-4 { --cols: 4; }
+        .cards--columns-1, .cards--columns-2, .cards--columns-3, .cards--columns-4 { grid-template-columns: repeat(auto-fit, minmax(max(14rem, calc((100% - (var(--cols) - 1) * var(--gap)) / var(--cols))), 1fr)); }
+        .cards--icon-position-top-center .card__icon { text-align: center; }
+        .cards--icon-position-left .card, .cards--icon-position-right .card { display: grid; column-gap: .75rem; align-content: start; }
+        .cards--icon-position-left .card { grid-template-columns: auto 1fr; }
+        .cards--icon-position-right .card { grid-template-columns: 1fr auto; }
+        .cards--icon-position-left .card > *, .cards--icon-position-right .card > * { grid-column: 1; }
+        .cards--icon-position-left .card > * { grid-column: 2; }
+        .cards--icon-position-left .card > .card__icon { grid-column: 1; grid-row: 1 / span 4; }
+        .cards--icon-position-right .card > .card__icon { grid-column: 2; grid-row: 1 / span 4; }
+        .cards--icon-size-small { --icon-size: 1.25rem; } .cards--icon-size-medium { --icon-size: 1.75rem; } .cards--icon-size-large { --icon-size: 2.5rem; }
+        .cards--text-align-left .card { text-align: left; } .cards--text-align-center .card { text-align: center; } .cards--text-align-right .card { text-align: right; }
+        .cards--button-position-left .card__action { text-align: left; } .cards--button-position-center .card__action { text-align: center; } .cards--button-position-right .card__action { text-align: right; }
+        .cards--border-none { --border-width: 0px; } .cards--border-thin { --border-width: 1px; } .cards--border-thick { --border-width: 3px; }
+        .cards--shadow-none { --shadow: none; } .cards--shadow-small { --shadow: 0 1px 3px rgba(0, 0, 0, .2); } .cards--shadow-medium { --shadow: 0 6px 16px rgba(0, 0, 0, .25); }
+        .cards--radius-none { --radius: 0; } .cards--radius-small { --radius: .375rem; } .cards--radius-medium { --radius: .75rem; } .cards--radius-large { --radius: 1.25rem; }
+        .cards--gap-small { --gap: .5rem; } .cards--gap-medium { --gap: 1rem; } .cards--gap-large { --gap: 2rem; }
+        .cards--padding-small { --pad: .5rem; } .cards--padding-medium { --pad: 1rem; } .cards--padding-large { --pad: 2rem; }
         .card h3 { margin: .25rem 0 .5rem; font-size: 1.1rem; }
         .card p { margin: .5rem 0; }
         .accordion { margin: 1rem 0; border: 1px solid var(--border); border-radius: .75rem; overflow: hidden; }
@@ -67,7 +85,7 @@
             <p>{{ $component['text'] ?? '' }}</p>
             @break
         @case('cards')
-            <div class="cards">
+            <div class="{{ $site->cardsClass($component) }}">
             @foreach ($site->cards($component) as $card)
                 <article class="card">
                     @if ($icon = $site->icon($card['icon'] ?? null))
@@ -78,7 +96,7 @@
                         <p>{{ $card['text'] }}</p>
                     @endif
                     @if (filled($card['label'] ?? null) && $site->isSafeUrl($card['url'] ?? ''))
-                        <p><a class="button" href="{{ $card['url'] }}">{{ $card['label'] }}</a></p>
+                        <p class="card__action"><a class="button" href="{{ $card['url'] }}">{{ $card['label'] }}</a></p>
                     @endif
                 </article>
             @endforeach

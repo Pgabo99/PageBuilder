@@ -35,6 +35,23 @@ class PageContentRules
 
     public const BUTTON_RADII = ['none', 'small', 'medium', 'full'];
 
+    /**
+     * A kártyacsoport elrendezése: beállítás => engedélyezett értékek. Az üres érték a jelenlegi megjelenés
+     * (automatikus oszlopok, ikon felül balra, balra igazított szöveg, 1 px keret, nincs árnyék, közepes méretek).
+     */
+    public const CARDS_OPTIONS = [
+        'columns' => [1, 2, 3, 4],
+        'icon_position' => ['top-left', 'top-center', 'left', 'right'],
+        'icon_size' => ['small', 'medium', 'large'],
+        'text_align' => ['left', 'center', 'right'],
+        'border' => ['none', 'thin', 'thick'],
+        'shadow' => ['none', 'small', 'medium'],
+        'radius' => ['none', 'small', 'medium', 'large'],
+        'button_position' => ['left', 'center', 'right'],
+        'gap' => ['small', 'medium', 'large'],
+        'padding' => ['small', 'medium', 'large'],
+    ];
+
     private const TYPES = ['heading', 'text', 'button', 'cards', 'accordion'];
 
     /**
@@ -69,6 +86,13 @@ class PageContentRules
     private static function fields(mixed $type, int|string $index): array
     {
         $card = "content.$index.cards.*";
+        $cardsLayout = collect(self::CARDS_OPTIONS)
+            ->map(fn (array $values, string $option) => [
+                'nullable',
+                ...($option === 'columns' ? ['integer'] : ['string']),
+                Rule::in($values),
+            ])
+            ->all();
 
         return match ($type) {
             'heading' => [
@@ -91,6 +115,7 @@ class PageContentRules
             ],
             // A gomb felirata és célja együtt kötelező, vagy mindkettő üres; a leírás és az ikon opcionális.
             'cards' => [
+                ...$cardsLayout,
                 'cards' => ['required', 'array', 'min:1', 'max:'.self::MAX_CARDS],
                 'cards.*.id' => ['required', 'string', 'max:64'],
                 'cards.*.title' => ['required', 'string', 'max:100'],
