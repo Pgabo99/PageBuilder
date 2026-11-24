@@ -3,9 +3,14 @@ import { useId } from 'vue'
 
 import AccordionEditor from '@/components/AccordionEditor.vue'
 import CardsEditor from '@/components/CardsEditor.vue'
+import ChoiceSelect from '@/components/ChoiceSelect.vue'
 import IconPicker from '@/components/IconPicker.vue'
-import type { HeadingAlign, HeadingSize, PageComponent } from '@/types/content'
+import type { PageComponent } from '@/types/content'
 import {
+  BUTTON_ALIGNS,
+  BUTTON_RADII,
+  BUTTON_SIZES,
+  BUTTON_STYLES,
   componentLabel,
   componentSummary,
   HEADING_ALIGNS,
@@ -35,19 +40,6 @@ defineEmits<{
 }>()
 
 const uid = useId()
-
-// Az üres választás (alapértelmezett) `null`: a régi, mező nélküli címsor is ezt jelenti.
-function setHeadingSize(event: Event) {
-  if (model.value.type === 'heading') {
-    model.value.size = ((event.target as HTMLSelectElement).value || null) as HeadingSize | null
-  }
-}
-
-function setHeadingAlign(event: Event) {
-  if (model.value.type === 'heading') {
-    model.value.align = ((event.target as HTMLSelectElement).value || null) as HeadingAlign | null
-  }
-}
 </script>
 
 <template>
@@ -134,26 +126,20 @@ function setHeadingAlign(event: Event) {
           </select>
           <p v-if="errors.level" class="field__error">{{ errors.level.join(' ') }}</p>
         </div>
-        <div class="field">
-          <label :for="`${uid}-size`">Megjelenési méret</label>
-          <select :id="`${uid}-size`" :value="model.size ?? ''" @change="setHeadingSize">
-            <option value="">Alapértelmezett (a szinthez igazodik)</option>
-            <option v-for="size in HEADING_SIZES" :key="size.value" :value="size.value">
-              {{ size.label }}
-            </option>
-          </select>
-          <p v-if="errors.size" class="field__error">{{ errors.size.join(' ') }}</p>
-        </div>
-        <div class="field">
-          <label :for="`${uid}-align`">Igazítás</label>
-          <select :id="`${uid}-align`" :value="model.align ?? ''" @change="setHeadingAlign">
-            <option value="">Alapértelmezett (balra)</option>
-            <option v-for="align in HEADING_ALIGNS" :key="align.value" :value="align.value">
-              {{ align.label }}
-            </option>
-          </select>
-          <p v-if="errors.align" class="field__error">{{ errors.align.join(' ') }}</p>
-        </div>
+        <ChoiceSelect
+          v-model="model.size"
+          label="Megjelenési méret"
+          default-label="Alapértelmezett (a szinthez igazodik)"
+          :options="HEADING_SIZES"
+          :error="errors.size"
+        />
+        <ChoiceSelect
+          v-model="model.align"
+          label="Igazítás"
+          default-label="Alapértelmezett (balra)"
+          :options="HEADING_ALIGNS"
+          :error="errors.align"
+        />
         <IconPicker v-model="model.icon" :error="errors.icon" />
       </template>
 
@@ -195,6 +181,34 @@ function setHeadingAlign(event: Event) {
           </datalist>
           <p v-if="errors.url" class="field__error">{{ errors.url.join(' ') }}</p>
         </div>
+        <ChoiceSelect
+          v-model="model.style"
+          label="Stílus"
+          default-label="Alapértelmezett (kitöltött)"
+          :options="BUTTON_STYLES"
+          :error="errors.style"
+        />
+        <ChoiceSelect
+          v-model="model.size"
+          label="Méret"
+          default-label="Alapértelmezett (közepes)"
+          :options="BUTTON_SIZES"
+          :error="errors.size"
+        />
+        <ChoiceSelect
+          v-model="model.align"
+          label="Igazítás"
+          default-label="Alapértelmezett (balra)"
+          :options="BUTTON_ALIGNS"
+          :error="errors.align"
+        />
+        <ChoiceSelect
+          v-model="model.radius"
+          label="Lekerekítés"
+          default-label="Alapértelmezett (közepes)"
+          :options="BUTTON_RADII"
+          :error="errors.radius"
+        />
       </template>
 
       <CardsEditor

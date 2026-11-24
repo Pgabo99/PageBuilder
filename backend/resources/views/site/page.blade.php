@@ -31,7 +31,20 @@
         .heading--left { text-align: left; }
         .heading--center { text-align: center; }
         .heading--right { text-align: right; }
-        .button { display: inline-block; padding: .5rem 1rem; color: var(--on-accent); background: var(--accent); border-radius: .5rem; text-decoration: none; font-weight: 600; }
+        .button { display: inline-block; max-width: 100%; padding: .5rem 1rem; color: var(--on-accent); background: var(--accent); border-radius: .5rem; text-decoration: none; font-weight: 600; box-sizing: border-box; overflow-wrap: anywhere; }
+        .button--outline { color: var(--accent); background: transparent; box-shadow: inset 0 0 0 2px var(--accent); }
+        .button--soft { color: var(--accent); background: color-mix(in srgb, var(--accent) 15%, transparent); }
+        .button--link { padding-inline: 0; color: var(--accent); background: transparent; text-decoration: underline; }
+        .button--small { padding: .25rem .75rem; font-size: .875rem; }
+        .button--medium { padding: .5rem 1rem; }
+        .button--large { padding: .75rem 1.5rem; font-size: 1.125rem; }
+        .button--r-none { border-radius: 0; }
+        .button--r-small { border-radius: .25rem; }
+        .button--r-medium { border-radius: .5rem; }
+        .button--r-full { border-radius: 999px; }
+        .button-wrap--left { text-align: left; }
+        .button-wrap--center { text-align: center; }
+        .button-wrap--right { text-align: right; }
     </style>
 </head>
 <body>
@@ -83,7 +96,8 @@
             @break
         @case('button')
             @if ($site->isSafeUrl($component['url'] ?? ''))
-                <p><a class="button" href="{{ $component['url'] }}">{{ $component['label'] ?? '' }}</a></p>
+                @php($wrap = $site->buttonWrapClass($component))
+                <p{!! $wrap !== '' ? ' class="'.e($wrap).'"' : '' !!}><a class="{{ $site->buttonClass($component) }}" href="{{ $component['url'] }}">{{ $component['label'] ?? '' }}</a></p>
             @endif
             @break
     @endswitch

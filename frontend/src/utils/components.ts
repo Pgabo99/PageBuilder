@@ -1,5 +1,8 @@
 import type {
   AccordionItem,
+  ButtonRadius,
+  ButtonSize,
+  ButtonStyle,
   CardItem,
   ComponentType,
   HeadingAlign,
@@ -42,6 +45,55 @@ export function headingClasses(heading: { size?: string | null; align?: string |
     classes.push(`preview__heading--${heading.align}`)
   }
   return classes
+}
+
+/** A gomb választható stílusai, méretei, igazításai és lekerekítései (a backend `PageContentRules` értékeivel azonos). */
+export const BUTTON_STYLES: { value: ButtonStyle; label: string }[] = [
+  { value: 'filled', label: 'Kitöltött' },
+  { value: 'outline', label: 'Körvonalas' },
+  { value: 'soft', label: 'Halvány' },
+  { value: 'link', label: 'Szöveges (link)' },
+]
+
+export const BUTTON_SIZES: { value: ButtonSize; label: string }[] = [
+  { value: 'small', label: 'Kicsi' },
+  { value: 'medium', label: 'Közepes' },
+  { value: 'large', label: 'Nagy' },
+]
+
+export const BUTTON_ALIGNS = HEADING_ALIGNS
+
+export const BUTTON_RADII: { value: ButtonRadius; label: string }[] = [
+  { value: 'none', label: 'Nincs' },
+  { value: 'small', label: 'Kicsi' },
+  { value: 'medium', label: 'Közepes' },
+  { value: 'full', label: 'Teljes (kapszula)' },
+]
+
+/** A gomb megjelenési osztályai; ismeretlen érték elmarad, így a régi vagy hibás adat az alapmegjelenést kapja. */
+export function buttonClasses(button: {
+  style?: string | null
+  size?: string | null
+  radius?: string | null
+}): string[] {
+  const classes: string[] = []
+  if (BUTTON_STYLES.some((item) => item.value === button.style)) {
+    classes.push(`preview__button--${button.style}`)
+  }
+  if (BUTTON_SIZES.some((item) => item.value === button.size)) {
+    classes.push(`preview__button--${button.size}`)
+  }
+  if (BUTTON_RADII.some((item) => item.value === button.radius)) {
+    classes.push(`preview__button--r-${button.radius}`)
+  }
+  return classes
+}
+
+/** A gombot tartalmazó bekezdés igazítási osztálya (ismeretlen érték esetén nincs). */
+export function buttonWrapClasses(button: { align?: string | null }): string[] {
+  return BUTTON_ALIGNS.some((item) => item.value === button.align)
+    ? [`preview__button-wrap--${button.align}`]
+    : []
 }
 
 export const componentTypes: { type: ComponentType; label: string }[] = [
