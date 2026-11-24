@@ -3,6 +3,7 @@ import { useId } from 'vue'
 
 import AccordionEditor from '@/components/AccordionEditor.vue'
 import CardsEditor from '@/components/CardsEditor.vue'
+import CardsSettings from '@/components/CardsSettings.vue'
 import ChoiceSelect from '@/components/ChoiceSelect.vue'
 import IconPicker from '@/components/IconPicker.vue'
 import type { PageComponent } from '@/types/content'
@@ -211,12 +212,10 @@ const uid = useId()
         />
       </template>
 
-      <CardsEditor
-        v-else-if="model.type === 'cards'"
-        v-model="model.cards"
-        :errors="errors"
-        :targets="targets"
-      />
+      <template v-else-if="model.type === 'cards'">
+        <CardsSettings v-model="model" :errors="errors" />
+        <CardsEditor v-model="model.cards" :errors="errors" :targets="targets" />
+      </template>
 
       <AccordionEditor
         v-else-if="model.type === 'accordion'"

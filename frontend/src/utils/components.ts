@@ -1,5 +1,6 @@
 import type {
   AccordionItem,
+  CardsLayout,
   ButtonRadius,
   ButtonSize,
   ButtonStyle,
@@ -94,6 +95,106 @@ export function buttonWrapClasses(button: { align?: string | null }): string[] {
   return BUTTON_ALIGNS.some((item) => item.value === button.align)
     ? [`preview__button-wrap--${button.align}`]
     : []
+}
+
+const SIZES = [
+  { value: 'small', label: 'Kicsi' },
+  { value: 'medium', label: 'Közepes' },
+  { value: 'large', label: 'Nagy' },
+]
+
+/** A kártyacsoport elrendezési beállításai (a backend `PageContentRules::CARDS_OPTIONS` értékeivel azonos). */
+export const CARDS_OPTIONS: {
+  key: keyof CardsLayout
+  label: string
+  defaultLabel: string
+  options: { value: string; label: string }[]
+}[] = [
+  {
+    key: 'columns',
+    label: 'Oszlopok (legfeljebb)',
+    defaultLabel: 'Alapértelmezett (automatikus)',
+    options: [1, 2, 3, 4].map((n) => ({ value: String(n), label: String(n) })),
+  },
+  {
+    key: 'icon_position',
+    label: 'Ikon helye',
+    defaultLabel: 'Alapértelmezett (felül balra)',
+    options: [
+      { value: 'top-left', label: 'Felül balra' },
+      { value: 'top-center', label: 'Felül középen' },
+      { value: 'left', label: 'Szöveg mellett balra' },
+      { value: 'right', label: 'Szöveg mellett jobbra' },
+    ],
+  },
+  {
+    key: 'icon_size',
+    label: 'Ikon mérete',
+    defaultLabel: 'Alapértelmezett (közepes)',
+    options: SIZES,
+  },
+  {
+    key: 'text_align',
+    label: 'Szövegigazítás',
+    defaultLabel: 'Alapértelmezett (balra)',
+    options: HEADING_ALIGNS,
+  },
+  {
+    key: 'border',
+    label: 'Keret',
+    defaultLabel: 'Alapértelmezett (vékony)',
+    options: [
+      { value: 'none', label: 'Nincs' },
+      { value: 'thin', label: 'Vékony' },
+      { value: 'thick', label: 'Vastag' },
+    ],
+  },
+  {
+    key: 'shadow',
+    label: 'Árnyék',
+    defaultLabel: 'Alapértelmezett (nincs)',
+    options: [
+      { value: 'none', label: 'Nincs' },
+      { value: 'small', label: 'Kicsi' },
+      { value: 'medium', label: 'Közepes' },
+    ],
+  },
+  {
+    key: 'radius',
+    label: 'Lekerekítés',
+    defaultLabel: 'Alapértelmezett (közepes)',
+    options: [{ value: 'none', label: 'Nincs' }, ...SIZES],
+  },
+  {
+    key: 'button_position',
+    label: 'Gomb helye',
+    defaultLabel: 'Alapértelmezett (a szöveggel egyező)',
+    options: HEADING_ALIGNS,
+  },
+  {
+    key: 'gap',
+    label: 'Kártyák közti térköz',
+    defaultLabel: 'Alapértelmezett (közepes)',
+    options: SIZES,
+  },
+  {
+    key: 'padding',
+    label: 'Kártya belső margója',
+    defaultLabel: 'Alapértelmezett (közepes)',
+    options: SIZES,
+  },
+]
+
+/** A kártyacsoport elrendezési osztályai; ismeretlen érték elmarad, így a régi vagy hibás adat az alapmegjelenést kapja. */
+export function cardsClasses(cards: CardsLayout): string[] {
+  const values = cards as Record<string, unknown>
+  return CARDS_OPTIONS.flatMap(({ key, options }) => {
+    const value = values[key]
+    const known =
+      (typeof value === 'string' || typeof value === 'number') &&
+      options.some((option) => option.value === String(value))
+    return known ? [`preview__cards--${key.replace('_', '-')}-${value}`] : []
+  })
 }
 
 export const componentTypes: { type: ComponentType; label: string }[] = [

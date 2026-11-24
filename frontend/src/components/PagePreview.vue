@@ -5,6 +5,7 @@ import AppIcon from '@/components/AppIcon.vue'
 import {
   buttonClasses,
   buttonWrapClasses,
+  cardsClasses,
   headingClasses,
   MAX_ACCORDION_ITEMS,
   MAX_CARDS,
@@ -61,7 +62,7 @@ const level = (value: number): number => Math.min(6, Math.max(1, Math.trunc(valu
       <div
         v-else-if="component.type === 'cards'"
         class="preview__item preview__cards"
-        :class="{ 'preview__item--active': component.id === activeId }"
+        :class="[{ 'preview__item--active': component.id === activeId }, cardsClasses(component)]"
         :data-component-id="component.id"
         @click="$emit('select', component.id)"
       >
@@ -75,7 +76,7 @@ const level = (value: number): number => Math.min(6, Math.max(1, Math.trunc(valu
           </div>
           <h3>{{ card.title }}</h3>
           <p v-if="card.text">{{ card.text }}</p>
-          <p v-if="card.label && card.url && SAFE_URL.test(card.url)">
+          <p v-if="card.label && card.url && SAFE_URL.test(card.url)" class="preview__card-action">
             <span class="preview__button">{{ card.label }}</span>
           </p>
         </article>
@@ -184,23 +185,196 @@ const level = (value: number): number => Math.min(6, Math.max(1, Math.trunc(valu
 
 /* Mint a publikált oldal kártyái: reszponzív rács media query nélkül. */
 .preview__cards {
+  --gap: 1rem;
+  --pad: 1rem;
+  --radius: 0.75rem;
+  --border-width: 1px;
+  --shadow: none;
+  --icon-size: 1.75rem;
+
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
-  gap: 1rem;
+  gap: var(--gap);
   margin: 1rem 0;
 }
 
 .preview__card {
-  padding: 1rem;
-  border: 1px solid var(--border);
-  border-radius: 0.75rem;
+  padding: var(--pad);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
 }
 
 .preview__card-icon .icon {
-  width: 1.75rem;
-  height: 1.75rem;
+  width: var(--icon-size);
+  height: var(--icon-size);
   margin-bottom: 0.25rem;
   color: var(--accent);
+}
+
+/* A kártyacsoport elrendezési módosítói: mint a publikált oldal `.cards--*` szabályai. */
+.preview__cards--columns-1 {
+  --cols: 1;
+}
+
+.preview__cards--columns-2 {
+  --cols: 2;
+}
+
+.preview__cards--columns-3 {
+  --cols: 3;
+}
+
+.preview__cards--columns-4 {
+  --cols: 4;
+}
+
+.preview__cards--columns-1,
+.preview__cards--columns-2,
+.preview__cards--columns-3,
+.preview__cards--columns-4 {
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(max(14rem, calc((100% - (var(--cols) - 1) * var(--gap)) / var(--cols))), 1fr)
+  );
+}
+
+.preview__cards--icon-position-top-center .preview__card-icon {
+  text-align: center;
+}
+
+.preview__cards--icon-position-left .preview__card,
+.preview__cards--icon-position-right .preview__card {
+  display: grid;
+  align-content: start;
+  column-gap: 0.75rem;
+}
+
+.preview__cards--icon-position-left .preview__card {
+  grid-template-columns: auto 1fr;
+}
+
+.preview__cards--icon-position-right .preview__card {
+  grid-template-columns: 1fr auto;
+}
+
+.preview__cards--icon-position-left .preview__card > *,
+.preview__cards--icon-position-right .preview__card > * {
+  grid-column: 1;
+}
+
+.preview__cards--icon-position-left .preview__card > * {
+  grid-column: 2;
+}
+
+.preview__cards--icon-position-left .preview__card > .preview__card-icon {
+  grid-row: 1 / span 4;
+  grid-column: 1;
+}
+
+.preview__cards--icon-position-right .preview__card > .preview__card-icon {
+  grid-row: 1 / span 4;
+  grid-column: 2;
+}
+
+.preview__cards--icon-size-small {
+  --icon-size: 1.25rem;
+}
+
+.preview__cards--icon-size-medium {
+  --icon-size: 1.75rem;
+}
+
+.preview__cards--icon-size-large {
+  --icon-size: 2.5rem;
+}
+
+.preview__cards--text-align-left .preview__card {
+  text-align: left;
+}
+
+.preview__cards--text-align-center .preview__card {
+  text-align: center;
+}
+
+.preview__cards--text-align-right .preview__card {
+  text-align: right;
+}
+
+.preview__cards--button-position-left .preview__card-action {
+  text-align: left;
+}
+
+.preview__cards--button-position-center .preview__card-action {
+  text-align: center;
+}
+
+.preview__cards--button-position-right .preview__card-action {
+  text-align: right;
+}
+
+.preview__cards--border-none {
+  --border-width: 0px;
+}
+
+.preview__cards--border-thin {
+  --border-width: 1px;
+}
+
+.preview__cards--border-thick {
+  --border-width: 3px;
+}
+
+.preview__cards--shadow-none {
+  --shadow: none;
+}
+
+.preview__cards--shadow-small {
+  --shadow: 0 1px 3px rgb(0 0 0 / 20%);
+}
+
+.preview__cards--shadow-medium {
+  --shadow: 0 6px 16px rgb(0 0 0 / 25%);
+}
+
+.preview__cards--radius-none {
+  --radius: 0;
+}
+
+.preview__cards--radius-small {
+  --radius: 0.375rem;
+}
+
+.preview__cards--radius-medium {
+  --radius: 0.75rem;
+}
+
+.preview__cards--radius-large {
+  --radius: 1.25rem;
+}
+
+.preview__cards--gap-small {
+  --gap: 0.5rem;
+}
+
+.preview__cards--gap-medium {
+  --gap: 1rem;
+}
+
+.preview__cards--gap-large {
+  --gap: 2rem;
+}
+
+.preview__cards--padding-small {
+  --pad: 0.5rem;
+}
+
+.preview__cards--padding-medium {
+  --pad: 1rem;
+}
+
+.preview__cards--padding-large {
+  --pad: 2rem;
 }
 
 .preview__card h3 {
