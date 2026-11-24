@@ -30,10 +30,11 @@ test('címsorok: a szint, a méret és az igazítás független, és az előnéz
   await addComponent(page, 'Címsor')
   await page.getByLabel('Szöveg', { exact: true }).fill(`Alap ${id}`)
 
+  // Az előnézet aria-hidden, ezért nem szerepkörre, hanem elemre és szövegre keresünk.
   const preview = page.locator('.preview')
   const previewStyles = {
-    custom: await style(preview.getByRole('heading', { name: `Hatos ${id}` })),
-    plain: await style(preview.getByRole('heading', { name: `Alap ${id}` })),
+    custom: await style(preview.locator('h6', { hasText: `Hatos ${id}` })),
+    plain: await style(preview.locator('h2', { hasText: `Alap ${id}` })),
   }
   expect(previewStyles.custom.tag).toBe('H6')
   expect(previewStyles.custom.textAlign).toBe('center')
