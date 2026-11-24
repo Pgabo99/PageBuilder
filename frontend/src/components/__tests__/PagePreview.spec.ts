@@ -103,6 +103,73 @@ describe('PagePreview', () => {
     expect(wrapper.attributes('style')).toContain('--accent: #6d3fd0')
   })
 
+  describe('gomb', () => {
+    it('a stílus, a méret és a lekerekítés a gombon, az igazítás a bekezdésen jelenik meg', () => {
+      const wrapper = mount(PagePreview, {
+        props: {
+          components: [
+            {
+              id: 'a',
+              type: 'button',
+              label: 'Egy',
+              url: '/x',
+              style: 'outline',
+              size: 'large',
+              radius: 'full',
+              align: 'center',
+            },
+          ],
+        },
+      })
+
+      expect(wrapper.find('.preview__button').classes()).toEqual(
+        expect.arrayContaining([
+          'preview__button--outline',
+          'preview__button--large',
+          'preview__button--r-full',
+        ]),
+      )
+      expect(wrapper.find('p').classes()).toContain('preview__button-wrap--center')
+    })
+
+    it('a régi, null értékű és hibás értékű gomb alapmegjelenést kap', () => {
+      const wrapper = mount(PagePreview, {
+        props: {
+          components: [
+            { id: 'a', type: 'button', label: 'Régi', url: '/x' },
+            {
+              id: 'b',
+              type: 'button',
+              label: 'Null',
+              url: '/x',
+              style: null,
+              size: null,
+              align: null,
+              radius: null,
+            },
+            {
+              id: 'c',
+              type: 'button',
+              label: 'Hibás',
+              url: '/x',
+              style: 'neon' as 'soft',
+              size: 'huge' as 'small',
+              align: 'justify' as 'left',
+              radius: 'round' as 'none',
+            },
+          ],
+        },
+      })
+
+      for (const button of wrapper.findAll('.preview__button')) {
+        expect(button.classes()).toEqual(['preview__button'])
+      }
+      for (const p of wrapper.findAll('p')) {
+        expect(p.classes().filter((c) => c.includes('button-wrap'))).toEqual([])
+      }
+    })
+  })
+
   describe('kártyák', () => {
     const cards: PageComponent = {
       id: 'k',

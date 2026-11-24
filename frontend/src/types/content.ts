@@ -46,11 +46,21 @@ export interface TextComponent {
   text: string
 }
 
+/** A gomb megjelenése; az üres érték a jelenlegi (kitöltött, közepes, balra igazított, kissé lekerekített) megjelenés. */
+export type ButtonStyle = 'filled' | 'outline' | 'soft' | 'link'
+export type ButtonSize = 'small' | 'medium' | 'large'
+export type ButtonAlign = 'left' | 'center' | 'right'
+export type ButtonRadius = 'none' | 'small' | 'medium' | 'full'
+
 export interface ButtonComponent {
   id: string
   type: 'button'
   label: string
   url: string
+  style?: ButtonStyle | null
+  size?: ButtonSize | null
+  align?: ButtonAlign | null
+  radius?: ButtonRadius | null
 }
 
 /** A kártya gombja: a felirat és a cél együtt kötelező, vagy mindkettő üres. */

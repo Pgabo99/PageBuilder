@@ -5,6 +5,8 @@ import {
   componentLabel,
   componentSummary,
   componentTypes,
+  buttonClasses,
+  buttonWrapClasses,
   createAccordionItem,
   createCard,
   createComponent,
@@ -240,5 +242,24 @@ describe('headingClasses', () => {
     expect(headingClasses({})).toEqual([])
     expect(headingClasses({ size: null, align: null })).toEqual([])
     expect(headingClasses({ size: 'huge', align: '"><x' })).toEqual([])
+  })
+})
+
+describe('buttonClasses', () => {
+  it('csak az engedélyezett értékekből képez osztályt', () => {
+    expect(buttonClasses({ style: 'soft', size: 'small', radius: 'none' })).toEqual([
+      'preview__button--soft',
+      'preview__button--small',
+      'preview__button--r-none',
+    ])
+    expect(buttonWrapClasses({ align: 'right' })).toEqual(['preview__button-wrap--right'])
+  })
+
+  it('üres, hiányzó vagy ismeretlen értéknél nincs osztály', () => {
+    expect(buttonClasses({})).toEqual([])
+    expect(buttonClasses({ style: null, size: null, radius: null })).toEqual([])
+    expect(buttonClasses({ style: 'neon', size: '"><x', radius: 'round' })).toEqual([])
+    expect(buttonWrapClasses({ align: 'justify' })).toEqual([])
+    expect(buttonWrapClasses({})).toEqual([])
   })
 })

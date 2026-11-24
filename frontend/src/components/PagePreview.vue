@@ -2,7 +2,13 @@
 import { computed } from 'vue'
 
 import AppIcon from '@/components/AppIcon.vue'
-import { headingClasses, MAX_ACCORDION_ITEMS, MAX_CARDS } from '@/utils/components'
+import {
+  buttonClasses,
+  buttonWrapClasses,
+  headingClasses,
+  MAX_ACCORDION_ITEMS,
+  MAX_CARDS,
+} from '@/utils/components'
 import { findIcon } from '@/utils/icons'
 import type { PageComponent } from '@/types/content'
 import { pageStyle, type PageTheme } from '@/utils/themes'
@@ -91,11 +97,14 @@ const level = (value: number): number => Math.min(6, Math.max(1, Math.trunc(valu
       <p
         v-else-if="component.type === 'button' && SAFE_URL.test(component.url)"
         class="preview__item"
-        :class="{ 'preview__item--active': component.id === activeId }"
+        :class="[
+          { 'preview__item--active': component.id === activeId },
+          buttonWrapClasses(component),
+        ]"
         :data-component-id="component.id"
         @click="$emit('select', component.id)"
       >
-        <span class="preview__button">{{ component.label }}</span>
+        <span class="preview__button" :class="buttonClasses(component)">{{ component.label }}</span>
       </p>
     </template>
   </div>
@@ -237,10 +246,73 @@ const level = (value: number): number => Math.min(6, Math.max(1, Math.trunc(valu
 
 .preview__button {
   display: inline-block;
+  box-sizing: border-box;
+  max-width: 100%;
   padding: 0.5rem 1rem;
   font-weight: 600;
   color: var(--on-accent);
   background: var(--accent);
   border-radius: 0.5rem;
+}
+
+/* Mint a publikált oldal `.button--*` szabályai. */
+.preview__button--outline {
+  color: var(--accent);
+  background: transparent;
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.preview__button--soft {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+}
+
+.preview__button--link {
+  padding-inline: 0;
+  color: var(--accent);
+  text-decoration: underline;
+  background: transparent;
+}
+
+.preview__button--small {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+.preview__button--medium {
+  padding: 0.5rem 1rem;
+}
+
+.preview__button--large {
+  padding: 0.75rem 1.5rem;
+  font-size: 1.125rem;
+}
+
+.preview__button--r-none {
+  border-radius: 0;
+}
+
+.preview__button--r-small {
+  border-radius: 0.25rem;
+}
+
+.preview__button--r-medium {
+  border-radius: 0.5rem;
+}
+
+.preview__button--r-full {
+  border-radius: 999px;
+}
+
+.preview__button-wrap--left {
+  text-align: left;
+}
+
+.preview__button-wrap--center {
+  text-align: center;
+}
+
+.preview__button-wrap--right {
+  text-align: right;
 }
 </style>

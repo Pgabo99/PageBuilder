@@ -59,6 +59,13 @@ const titles = (wrapper: Awaited<ReturnType<typeof mountEditor>>) =>
 const activeTitles = (wrapper: Awaited<ReturnType<typeof mountEditor>>) =>
   wrapper.findAll('.component--active').map((c) => c.find('strong').text())
 
+/** A címkéje alapján megkeresi a legördülő listát (a mezők azonosítója generált). */
+function selectByLabel(wrapper: VueWrapper, label: string) {
+  const field = wrapper.findAll('.field').find((f) => f.find('label').text() === label)
+  if (!field) throw new Error(`Nincs "${label}" mező`)
+  return field.find('select')
+}
+
 describe('PageEditorView', () => {
   afterEach(() => mounted.splice(0).forEach((wrapper) => wrapper.unmount()))
 
@@ -416,15 +423,16 @@ describe('PageEditorView', () => {
     const wrapper = await mountEditor()
     vi.mocked(pagesApi.update).mockImplementation(async (_id, payload) => ({ ...page, ...payload }))
     await wrapper.findAll('.component__toggle')[0]!.trigger('click')
-    const select = (label: string) => wrapper.find(`select[id$="-${label}"]`)
 
-    expect(select('level').findAll('option')).toHaveLength(6)
-    expect((select('size').element as HTMLSelectElement).value).toBe('')
-    expect((select('align').element as HTMLSelectElement).value).toBe('')
+    expect(selectByLabel(wrapper, 'Szint').findAll('option')).toHaveLength(6)
+    expect((selectByLabel(wrapper, 'Megjelenési méret').element as HTMLSelectElement).value).toBe(
+      '',
+    )
+    expect((selectByLabel(wrapper, 'Igazítás').element as HTMLSelectElement).value).toBe('')
 
-    await select('level').setValue(4)
-    await select('size').setValue('xlarge')
-    await select('align').setValue('center')
+    await selectByLabel(wrapper, 'Szint').setValue(4)
+    await selectByLabel(wrapper, 'Megjelenési méret').setValue('xlarge')
+    await selectByLabel(wrapper, 'Igazítás').setValue('center')
 
     const heading = wrapper.find('.preview h4')
     expect(heading.exists()).toBe(true)
@@ -453,9 +461,58 @@ describe('PageEditorView', () => {
     await wrapper.find('.component__toggle').trigger('click')
     expect(wrapper.find('.preview h1').classes()).toContain('preview__heading--large')
 
-    await wrapper.find('select[id$="-size"]').setValue('')
+    await selectByLabel(wrapper, 'Megjelenési méret').setValue('')
 
     expect(wrapper.find('.preview h1').classes()).not.toContain('preview__heading--large')
+  })
+
+  it('a gomb stílusa, mérete, igazítása és lekerekítése állítható, az előnézet követi, mentéskor elmegy', async () => {
+    const wrapper = await mountEditor()
+    vi.mocked(pagesApi.update).mockImplementation(async (_id, payload) => ({ ...page, ...payload }))
+    await wrapper.findAll('.component__toggle')[2]!.trigger('click')
+
+    await selectByLabel(wrapper, 'Stílus').setValue('outline')
+    await selectByLabel(wrapper, 'Méret').setValue('large')
+    await selectByLabel(wrapper, 'Igazítás').setValue('right')
+    await selectByLabel(wrapper, 'Lekerekítés').setValue('full')
+
+    const button = wrapper.find('.preview .preview__button')
+    expect(button.classes()).toEqual(
+      expect.arrayContaining([
+        'preview__button--outline',
+        'preview__button--large',
+        'preview__button--r-full',
+      ]),
+    )
+    expect(button.element.parentElement!.classList).toContain('preview__button-wrap--right')
+    await wrapper.find('button.btn:not(.btn--secondary)').trigger('click')
+    await flushPromises()
+
+    expect(vi.mocked(pagesApi.update).mock.calls[0]![1].content[2]).toMatchObject({
+      type: 'button',
+      style: 'outline',
+      size: 'large',
+      align: 'right',
+      radius: 'full',
+    })
+  })
+
+  it('a gomb alapértelmezett stílusa visszaállítható (null)', async () => {
+    vi.mocked(pagesApi.get).mockResolvedValue(
+      structuredClone({
+        ...page,
+        content: [{ id: 'a', type: 'button', label: 'Gomb', url: '/x', style: 'soft' }],
+      } as Page),
+    )
+    const wrapper = await mountEditor()
+    await wrapper.find('.component__toggle').trigger('click')
+    expect(wrapper.find('.preview .preview__button').classes()).toContain('preview__button--soft')
+
+    await selectByLabel(wrapper, 'Stílus').setValue('')
+
+    expect(wrapper.find('.preview .preview__button').classes()).not.toContain(
+      'preview__button--soft',
+    )
   })
 
   it('a címsor ikonja kiválasztható, azonnal látszik az előnézetben, és mentéskor elmegy', async () => {
