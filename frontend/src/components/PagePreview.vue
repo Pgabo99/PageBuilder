@@ -6,6 +6,7 @@ import {
   buttonClasses,
   buttonWrapClasses,
   cardsClasses,
+  dividerClasses,
   headingClasses,
   MAX_ACCORDION_ITEMS,
   MAX_CARDS,
@@ -94,6 +95,15 @@ const level = (value: number): number => Math.min(6, Math.max(1, Math.trunc(valu
           <summary tabindex="-1">{{ item.title }}</summary>
           <p>{{ item.text }}</p>
         </details>
+      </div>
+      <div
+        v-else-if="component.type === 'divider'"
+        class="preview__item preview__divider-wrap"
+        :class="{ 'preview__item--active': component.id === activeId }"
+        :data-component-id="component.id"
+        @click="$emit('select', component.id)"
+      >
+        <hr class="preview__divider" :class="dividerClasses(component)" />
       </div>
       <p
         v-else-if="component.type === 'button' && SAFE_URL.test(component.url)"
@@ -411,6 +421,54 @@ const level = (value: number): number => Math.min(6, Math.max(1, Math.trunc(valu
 .preview__accordion details p {
   margin: 0;
   padding: 0 1rem 1rem;
+}
+
+/* Mint a publikált oldal `.divider` szabályai; a körítés a kattintható felület. */
+.preview__divider-wrap {
+  padding: 0.25rem 0;
+}
+
+.preview__divider {
+  margin: 1.5rem 0;
+  border: 0;
+  border-top: var(--divider-width, 1px) var(--divider-style, solid)
+    var(--divider-color, var(--border));
+}
+
+.preview__divider--thickness-thin {
+  --divider-width: 1px;
+}
+
+.preview__divider--thickness-medium {
+  --divider-width: 2px;
+}
+
+.preview__divider--thickness-thick {
+  --divider-width: 4px;
+}
+
+.preview__divider--style-solid {
+  --divider-style: solid;
+}
+
+.preview__divider--style-dashed {
+  --divider-style: dashed;
+}
+
+.preview__divider--style-dotted {
+  --divider-style: dotted;
+}
+
+.preview__divider--color-border {
+  --divider-color: var(--border);
+}
+
+.preview__divider--color-text {
+  --divider-color: var(--text);
+}
+
+.preview__divider--color-accent {
+  --divider-color: var(--accent);
 }
 
 .preview__empty {

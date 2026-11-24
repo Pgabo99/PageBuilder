@@ -3,17 +3,19 @@ import { useId } from 'vue'
 
 import AccordionEditor from '@/components/AccordionEditor.vue'
 import CardsEditor from '@/components/CardsEditor.vue'
-import CardsSettings from '@/components/CardsSettings.vue'
 import ChoiceSelect from '@/components/ChoiceSelect.vue'
 import IconPicker from '@/components/IconPicker.vue'
+import OptionFields from '@/components/OptionFields.vue'
 import type { PageComponent } from '@/types/content'
 import {
   BUTTON_ALIGNS,
   BUTTON_RADII,
   BUTTON_SIZES,
   BUTTON_STYLES,
+  CARDS_OPTIONS,
   componentLabel,
   componentSummary,
+  DIVIDER_OPTIONS,
   HEADING_ALIGNS,
   HEADING_LEVELS,
   HEADING_SIZES,
@@ -213,9 +215,19 @@ const uid = useId()
       </template>
 
       <template v-else-if="model.type === 'cards'">
-        <CardsSettings v-model="model" :errors="errors" />
+        <details class="component__options">
+          <summary>Elrendezés</summary>
+          <OptionFields v-model="model" :spec="CARDS_OPTIONS" :errors="errors" />
+        </details>
         <CardsEditor v-model="model.cards" :errors="errors" :targets="targets" />
       </template>
+
+      <OptionFields
+        v-else-if="model.type === 'divider'"
+        v-model="model"
+        :spec="DIVIDER_OPTIONS"
+        :errors="errors"
+      />
 
       <AccordionEditor
         v-else-if="model.type === 'accordion'"

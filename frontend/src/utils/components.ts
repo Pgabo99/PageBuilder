@@ -104,12 +104,15 @@ const SIZES = [
 ]
 
 /** A kártyacsoport elrendezési beállításai (a backend `PageContentRules::CARDS_OPTIONS` értékeivel azonos). */
-export const CARDS_OPTIONS: {
-  key: keyof CardsLayout
+/** Egy komponens előre definiált beállításai: a JSON mező neve, a címkék és a választható értékek. */
+export type OptionSpec = {
+  key: string
   label: string
   defaultLabel: string
   options: { value: string; label: string }[]
-}[] = [
+}[]
+
+export const CARDS_OPTIONS: OptionSpec = [
   {
     key: 'columns',
     label: 'Oszlopok (legfeljebb)',
@@ -185,17 +188,57 @@ export const CARDS_OPTIONS: {
   },
 ]
 
-/** A kártyacsoport elrendezési osztályai; ismeretlen érték elmarad, így a régi vagy hibás adat az alapmegjelenést kapja. */
-export function cardsClasses(cards: CardsLayout): string[] {
-  const values = cards as Record<string, unknown>
-  return CARDS_OPTIONS.flatMap(({ key, options }) => {
-    const value = values[key]
+/** Az elválasztó beállításai (a backend `PageContentRules::DIVIDER_OPTIONS` értékeivel azonos). */
+export const DIVIDER_OPTIONS: OptionSpec = [
+  {
+    key: 'thickness',
+    label: 'Vastagság',
+    defaultLabel: 'Alapértelmezett (vékony)',
+    options: [
+      { value: 'thin', label: 'Vékony' },
+      { value: 'medium', label: 'Közepes' },
+      { value: 'thick', label: 'Vastag' },
+    ],
+  },
+  {
+    key: 'style',
+    label: 'Stílus',
+    defaultLabel: 'Alapértelmezett (folytonos)',
+    options: [
+      { value: 'solid', label: 'Folytonos' },
+      { value: 'dashed', label: 'Szaggatott' },
+      { value: 'dotted', label: 'Pontozott' },
+    ],
+  },
+  {
+    key: 'color',
+    label: 'Szín',
+    defaultLabel: 'Alapértelmezett (keretszín)',
+    options: [
+      { value: 'border', label: 'Keretszín' },
+      { value: 'text', label: 'Szövegszín' },
+      { value: 'accent', label: 'Kiemelőszín' },
+    ],
+  },
+]
+
+/** Az előre definiált beállításokból osztályok; ismeretlen érték elmarad, így a régi vagy hibás adat az alapmegjelenést kapja. */
+function modifierClasses(values: object, spec: typeof CARDS_OPTIONS, prefix: string): string[] {
+  const record = values as Record<string, unknown>
+  return spec.flatMap(({ key, options }) => {
+    const value = record[key]
     const known =
       (typeof value === 'string' || typeof value === 'number') &&
       options.some((option) => option.value === String(value))
-    return known ? [`preview__cards--${key.replace('_', '-')}-${value}`] : []
+    return known ? [`${prefix}--${key.replace('_', '-')}-${value}`] : []
   })
 }
+
+export const cardsClasses = (cards: CardsLayout): string[] =>
+  modifierClasses(cards, CARDS_OPTIONS, 'preview__cards')
+
+export const dividerClasses = (divider: object): string[] =>
+  modifierClasses(divider, DIVIDER_OPTIONS, 'preview__divider')
 
 export const componentTypes: { type: ComponentType; label: string }[] = [
   { type: 'heading', label: 'Címsor' },
@@ -203,6 +246,7 @@ export const componentTypes: { type: ComponentType; label: string }[] = [
   { type: 'button', label: 'Gomb' },
   { type: 'cards', label: 'Kártyák' },
   { type: 'accordion', label: 'Becsukható részek' },
+  { type: 'divider', label: 'Elválasztó' },
 ]
 
 export function componentLabel(type: ComponentType): string {
@@ -239,6 +283,8 @@ export function createComponent(type: ComponentType): PageComponent {
       return { id, type, cards: [createCard()] }
     case 'accordion':
       return { id, type, items: [createAccordionItem()] }
+    case 'divider':
+      return { id, type }
   }
 }
 
@@ -260,6 +306,8 @@ function summarySource(component: PageComponent): string {
       const first = component.cards[0]?.title ?? ''
       return `${component.cards.length} kártya${first ? `: ${first}` : ''}`
     }
+    case 'divider':
+      return 'Vízszintes vonal'
     case 'accordion': {
       const first = component.items[0]?.title ?? ''
       return `${component.items.length} rész${first ? `: ${first}` : ''}`
