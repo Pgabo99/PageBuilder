@@ -1,4 +1,12 @@
-import type { AccordionItem, CardItem, ComponentType, PageComponent } from '@/types/content'
+import type {
+  AccordionItem,
+  CardItem,
+  ComponentType,
+  HeadingAlign,
+  HeadingLevel,
+  HeadingSize,
+  PageComponent,
+} from '@/types/content'
 
 /** A kártyák megengedett száma egy csoportban (a backend `PageContentRules::MAX_CARDS`-jával azonos). */
 export const MIN_CARDS = 1
@@ -7,6 +15,34 @@ export const MAX_CARDS = 6
 /** A becsukható részek megengedett száma (a backend `PageContentRules::MAX_ACCORDION_ITEMS`-ével azonos). */
 export const MIN_ACCORDION_ITEMS = 1
 export const MAX_ACCORDION_ITEMS = 20
+
+/** A címsor választható szintjei, mérete és igazítása (a backend `PageContentRules` értékeivel azonos). */
+export const HEADING_LEVELS: readonly HeadingLevel[] = [1, 2, 3, 4, 5, 6]
+
+export const HEADING_SIZES: { value: HeadingSize; label: string }[] = [
+  { value: 'small', label: 'Kicsi' },
+  { value: 'medium', label: 'Közepes' },
+  { value: 'large', label: 'Nagy' },
+  { value: 'xlarge', label: 'Óriási' },
+]
+
+export const HEADING_ALIGNS: { value: HeadingAlign; label: string }[] = [
+  { value: 'left', label: 'Balra' },
+  { value: 'center', label: 'Középre' },
+  { value: 'right', label: 'Jobbra' },
+]
+
+/** A címsor megjelenési osztályai; ismeretlen érték elmarad, így a régi vagy hibás adat az alapmegjelenést kapja. */
+export function headingClasses(heading: { size?: string | null; align?: string | null }): string[] {
+  const classes: string[] = []
+  if (HEADING_SIZES.some((item) => item.value === heading.size)) {
+    classes.push(`preview__heading--${heading.size}`)
+  }
+  if (HEADING_ALIGNS.some((item) => item.value === heading.align)) {
+    classes.push(`preview__heading--${heading.align}`)
+  }
+  return classes
+}
 
 export const componentTypes: { type: ComponentType; label: string }[] = [
   { type: 'heading', label: 'Címsor' },

@@ -151,6 +151,43 @@ describe('job', function () {
             ->not->toContain('<script');
     });
 
+    it('a címsor szintje, mérete és igazítása egymástól függetlenül, osztályként jelenik meg', function () {
+        $this->index->update(['content' => [
+            ['id' => 'a', 'type' => 'heading', 'text' => 'Hatos nagyban', 'level' => 6, 'size' => 'xlarge', 'align' => 'center'],
+            ['id' => 'b', 'type' => 'heading', 'text' => 'Egyes kicsiben', 'level' => 1, 'size' => 'small'],
+            ['id' => 'c', 'type' => 'heading', 'text' => 'Csak igazítás', 'level' => 3, 'align' => 'right'],
+            ['id' => 'd', 'type' => 'heading', 'text' => 'Régi', 'level' => 2],
+            ['id' => 'e', 'type' => 'heading', 'text' => 'Üres', 'level' => '4', 'size' => null, 'align' => null],
+        ]]);
+
+        runJob($this->website);
+
+        $html = file_get_contents("{$this->dir}/proba/index.html");
+        expect($html)
+            ->toContain('<h6 class="heading--xlarge heading--center">Hatos nagyban</h6>')
+            ->toContain('<h1 class="heading--small">Egyes kicsiben</h1>')
+            ->toContain('<h3 class="heading--right">Csak igazítás</h3>')
+            ->toContain('<h2>Régi</h2>')
+            ->toContain('<h4>Üres</h4>')
+            ->toContain('.heading--xlarge {')
+            ->toContain('.heading--center {');
+    });
+
+    it('a hibás tárolt címsorbeállítás nem kerül a HTML-be (a validációt megkerülve sem)', function () {
+        $this->index->update(['content' => [
+            ['id' => 'a', 'type' => 'heading', 'text' => 'Egy', 'level' => 9, 'size' => '"><script>alert(1)</script>', 'align' => ['x']],
+            ['id' => 'b', 'type' => 'heading', 'text' => 'Kettő', 'level' => 0, 'size' => 'huge'],
+        ]]);
+
+        runJob($this->website);
+
+        $html = file_get_contents("{$this->dir}/proba/index.html");
+        expect($html)
+            ->not->toContain('<script')
+            ->toContain('<h6>Egy</h6>')
+            ->toContain('<h1>Kettő</h1>');
+    });
+
     it('az ismeretlen vagy hibás tárolt ikon nem renderelődik (a validációt megkerülve sem)', function () {
         $this->index->update(['content' => [
             ['id' => 'a', 'type' => 'heading', 'text' => 'Egy', 'level' => 2, 'icon' => '<script>alert(1)</script>'],

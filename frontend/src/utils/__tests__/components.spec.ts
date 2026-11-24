@@ -13,6 +13,7 @@ import {
   MIN_ACCORDION_ITEMS,
   MIN_CARDS,
   dropSlot,
+  headingClasses,
   moveItem,
   pageTargets,
   slotTarget,
@@ -223,5 +224,21 @@ describe('pageTargets', () => {
       { label: 'Kezdőlap', url: '/sites/demo/' },
       { label: 'Kapcsolat', url: '/sites/demo/kapcsolat/' },
     ])
+  })
+})
+
+describe('headingClasses', () => {
+  it('csak az engedélyezett méretből és igazításból képez osztályt', () => {
+    expect(headingClasses({ size: 'large', align: 'center' })).toEqual([
+      'preview__heading--large',
+      'preview__heading--center',
+    ])
+    expect(headingClasses({ size: 'large' })).toEqual(['preview__heading--large'])
+  })
+
+  it('üres, hiányzó vagy ismeretlen értéknél nincs osztály', () => {
+    expect(headingClasses({})).toEqual([])
+    expect(headingClasses({ size: null, align: null })).toEqual([])
+    expect(headingClasses({ size: 'huge', align: '"><x' })).toEqual([])
   })
 })

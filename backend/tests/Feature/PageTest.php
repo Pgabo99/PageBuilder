@@ -91,6 +91,11 @@ describe('tartalom validálása', function () {
         'ismeretlen típus' => [['id' => 'a', 'type' => 'video'], 'content.0.type'],
         'címsor szöveg nélkül' => [['id' => 'a', 'type' => 'heading', 'level' => 1], 'content.0.text'],
         'címsor szintje tartományon kívül' => [['id' => 'a', 'type' => 'heading', 'text' => 'X', 'level' => 7], 'content.0.level'],
+        'címsor szintje nulla' => [['id' => 'a', 'type' => 'heading', 'text' => 'X', 'level' => 0], 'content.0.level'],
+        'ismeretlen címsorméret' => [['id' => 'a', 'type' => 'heading', 'text' => 'X', 'level' => 2, 'size' => 'huge'], 'content.0.size'],
+        'CSS címsorméretként' => [['id' => 'a', 'type' => 'heading', 'text' => 'X', 'level' => 2, 'size' => '3rem;color:red'], 'content.0.size'],
+        'tömb címsorméretként' => [['id' => 'a', 'type' => 'heading', 'text' => 'X', 'level' => 2, 'size' => ['large']], 'content.0.size'],
+        'ismeretlen címsorigazítás' => [['id' => 'a', 'type' => 'heading', 'text' => 'X', 'level' => 2, 'align' => 'justify'], 'content.0.align'],
         'szöveg nélküli szövegblokk' => [['id' => 'a', 'type' => 'text'], 'content.0.text'],
         'gomb felirat nélkül' => [['id' => 'a', 'type' => 'button', 'url' => '/x'], 'content.0.label'],
         'javascript: URL' => [['id' => 'a', 'type' => 'button', 'label' => 'X', 'url' => 'javascript:alert(1)'], 'content.0.url'],
@@ -208,6 +213,21 @@ describe('tartalom validálása', function () {
             'title' => 'X', 'slug' => 'x', 'content' => [$heading],
         ])->assertCreated()->assertJsonPath('data.content.0.icon', $icon);
     })->with(['star', 'check-circle', 'gift', null]);
+
+    it('elfogadja a H1–H6 szintet, a méretet és az igazítást egymástól függetlenül', function (int $level, ?string $size, ?string $align) {
+        $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [
+            'title' => 'X', 'slug' => 'x',
+            'content' => [['id' => 'a', 'type' => 'heading', 'text' => 'X', 'level' => $level, 'size' => $size, 'align' => $align]],
+        ])->assertCreated()
+            ->assertJsonPath('data.content.0.level', $level)
+            ->assertJsonPath('data.content.0.size', $size)
+            ->assertJsonPath('data.content.0.align', $align);
+    })->with([
+        'H1 kicsiben' => [1, 'small', 'left'],
+        'H6 óriásban' => [6, 'xlarge', 'right'],
+        'H3 középre' => [3, 'medium', 'center'],
+        'H4 alapmérettel' => [4, null, null],
+    ]);
 
     it('az ikon nélküli, régi címsor továbbra is érvényes és nem kap ikon mezőt', function () {
         $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [

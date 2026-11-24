@@ -412,6 +412,52 @@ describe('PageEditorView', () => {
     expect(toggle.attributes('aria-controls')).toBeDefined()
   })
 
+  it('a címsor szintje, mérete és igazítása külön állítható, az előnézet azonnal követi, mentéskor elmegy', async () => {
+    const wrapper = await mountEditor()
+    vi.mocked(pagesApi.update).mockImplementation(async (_id, payload) => ({ ...page, ...payload }))
+    await wrapper.findAll('.component__toggle')[0]!.trigger('click')
+    const select = (label: string) => wrapper.find(`select[id$="-${label}"]`)
+
+    expect(select('level').findAll('option')).toHaveLength(6)
+    expect((select('size').element as HTMLSelectElement).value).toBe('')
+    expect((select('align').element as HTMLSelectElement).value).toBe('')
+
+    await select('level').setValue(4)
+    await select('size').setValue('xlarge')
+    await select('align').setValue('center')
+
+    const heading = wrapper.find('.preview h4')
+    expect(heading.exists()).toBe(true)
+    expect(heading.classes()).toEqual(
+      expect.arrayContaining(['preview__heading--xlarge', 'preview__heading--center']),
+    )
+    await wrapper.find('button.btn:not(.btn--secondary)').trigger('click')
+    await flushPromises()
+
+    expect(vi.mocked(pagesApi.update).mock.calls[0]![1].content[0]).toMatchObject({
+      type: 'heading',
+      level: 4,
+      size: 'xlarge',
+      align: 'center',
+    })
+  })
+
+  it('az alapértelmezett méret visszaállítható (null)', async () => {
+    vi.mocked(pagesApi.get).mockResolvedValue(
+      structuredClone({
+        ...page,
+        content: [{ id: 'a', type: 'heading', text: 'Első', level: 1, size: 'large' }],
+      } as Page),
+    )
+    const wrapper = await mountEditor()
+    await wrapper.find('.component__toggle').trigger('click')
+    expect(wrapper.find('.preview h1').classes()).toContain('preview__heading--large')
+
+    await wrapper.find('select[id$="-size"]').setValue('')
+
+    expect(wrapper.find('.preview h1').classes()).not.toContain('preview__heading--large')
+  })
+
   it('a címsor ikonja kiválasztható, azonnal látszik az előnézetben, és mentéskor elmegy', async () => {
     const wrapper = await mountEditor()
     vi.mocked(pagesApi.update).mockImplementation(async (_id, payload) => ({ ...page, ...payload }))

@@ -23,7 +23,7 @@ Hatókör: a rendszert nem telepítjük Azure-ba vagy más publikus felhőbe. A 
 
 ## Alkalmazás (MVP)
 
-Regisztráció és bejelentkezés (Sanctum); webhelyek és oldalak CRUD, Policy-vel; szerkesztő 5 komponenstípussal (címsor, szöveg, gomb/link, kártyacsoport: 1–6 kártya ikonnal, címmel, leírással és opcionális gombbal, becsukható részek: 1–20 rész natív details/summary elemekkel, JavaScript nélkül), a címsorhoz választható előre definiált ikonnal (20 Feather-ikon, [licenc](third-party-licenses.md)), egyszerű drag & droppal, a komponensek a `pages.content` JSON oszlopban; publikálás queue jobbal statikus HTML-be, kiszolgálás `/sites/{slug}/` alatt, állapot: folyamatban / kész / hibás.
+Regisztráció és bejelentkezés (Sanctum); webhelyek és oldalak CRUD, Policy-vel; szerkesztő 5 komponenstípussal (címsor H1–H6 szinttel, a szinttől független előre definiált mérettel és igazítással, szöveg, gomb/link, kártyacsoport: 1–6 kártya ikonnal, címmel, leírással és opcionális gombbal, becsukható részek: 1–20 rész natív details/summary elemekkel, JavaScript nélkül), a címsorhoz választható előre definiált ikonnal (20 Feather-ikon, [licenc](third-party-licenses.md)), egyszerű drag & droppal, a komponensek a `pages.content` JSON oszlopban; publikálás queue jobbal statikus HTML-be, kiszolgálás `/sites/{slug}/` alatt, állapot: folyamatban / kész / hibás.
 
 ## M1 – Fejlesztői környezet
 

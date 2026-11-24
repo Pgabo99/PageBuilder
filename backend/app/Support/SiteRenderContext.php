@@ -79,6 +79,26 @@ class SiteRenderContext
         return array_slice(array_values(array_filter($items, 'is_array')), 0, PageContentRules::MAX_ACCORDION_ITEMS);
     }
 
+    /** A címsor szemantikus szintje 1–6 közé szorítva (a validáció a számot szövegként is elfogadja, ezért az egészre alakítás). */
+    public function headingLevel(array $component): int
+    {
+        return min(PageContentRules::HEADING_MAX_LEVEL, max(1, (int) ($component['level'] ?? 2)));
+    }
+
+    /** A címsor megjelenési osztályai; csak az engedélyezett értékekből, így hibás adat nem kerülhet a HTML-be. */
+    public function headingClass(array $component): string
+    {
+        $classes = [];
+        if (in_array($component['size'] ?? null, PageContentRules::HEADING_SIZES, true)) {
+            $classes[] = 'heading--'.$component['size'];
+        }
+        if (in_array($component['align'] ?? null, PageContentRules::HEADING_ALIGNS, true)) {
+            $classes[] = 'heading--'.$component['align'];
+        }
+
+        return implode(' ', $classes);
+    }
+
     /** Futáskor is ellenőrizzük a komponens URL-jét (a validációval azonos szabály). */
     public function isSafeUrl(mixed $url): bool
     {

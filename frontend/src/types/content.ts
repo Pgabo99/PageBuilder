@@ -23,11 +23,19 @@ export interface WebsitePayload {
   page_theme: PageTheme | null
 }
 
+/** A címsor megjelenési mérete; az üres érték a szemantikus szinthez igazodó alapméret. */
+export type HeadingSize = 'small' | 'medium' | 'large' | 'xlarge'
+export type HeadingAlign = 'left' | 'center' | 'right'
+export type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6
+
 export interface HeadingComponent {
   id: string
   type: 'heading'
   text: string
-  level: 1 | 2 | 3
+  /** Szemantikus szint (a dokumentumszerkezet), a megjelenéstől függetlenül. */
+  level: HeadingLevel
+  size?: HeadingSize | null
+  align?: HeadingAlign | null
   /** Az engedélyezett ikonkészlet egy neve (`utils/icons.ts`); üres: nincs ikon. */
   icon?: string | null
 }

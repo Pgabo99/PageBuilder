@@ -19,6 +19,13 @@ class PageContentRules
 
     public const MAX_ACCORDION_ITEMS = 20;
 
+    public const HEADING_MAX_LEVEL = 6;
+
+    /** A címsor megjelenési mérete és igazítása: előre definiált értékek; az üres érték a szinthez igazodó alapmegjelenés. */
+    public const HEADING_SIZES = ['small', 'medium', 'large', 'xlarge'];
+
+    public const HEADING_ALIGNS = ['left', 'center', 'right'];
+
     private const TYPES = ['heading', 'text', 'button', 'cards', 'accordion'];
 
     /**
@@ -57,7 +64,9 @@ class PageContentRules
         return match ($type) {
             'heading' => [
                 'text' => ['required', 'string', 'max:255'],
-                'level' => ['required', 'integer', 'between:1,3'],
+                'level' => ['required', 'integer', 'between:1,'.self::HEADING_MAX_LEVEL],
+                'size' => ['nullable', 'string', Rule::in(self::HEADING_SIZES)],
+                'align' => ['nullable', 'string', Rule::in(self::HEADING_ALIGNS)],
                 'icon' => ['nullable', 'string', Rule::in(Icons::names())],
             ],
             'text' => [

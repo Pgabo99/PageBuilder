@@ -4,8 +4,15 @@ import { useId } from 'vue'
 import AccordionEditor from '@/components/AccordionEditor.vue'
 import CardsEditor from '@/components/CardsEditor.vue'
 import IconPicker from '@/components/IconPicker.vue'
-import type { PageComponent } from '@/types/content'
-import { componentLabel, componentSummary, type PageTarget } from '@/utils/components'
+import type { HeadingAlign, HeadingSize, PageComponent } from '@/types/content'
+import {
+  componentLabel,
+  componentSummary,
+  HEADING_ALIGNS,
+  HEADING_LEVELS,
+  HEADING_SIZES,
+  type PageTarget,
+} from '@/utils/components'
 
 // Egy komponens szerkesztője: a mezők típusonként változnak, a hibák mezőnként jelennek meg.
 defineProps<{
@@ -28,6 +35,19 @@ defineEmits<{
 }>()
 
 const uid = useId()
+
+// Az üres választás (alapértelmezett) `null`: a régi, mező nélküli címsor is ezt jelenti.
+function setHeadingSize(event: Event) {
+  if (model.value.type === 'heading') {
+    model.value.size = ((event.target as HTMLSelectElement).value || null) as HeadingSize | null
+  }
+}
+
+function setHeadingAlign(event: Event) {
+  if (model.value.type === 'heading') {
+    model.value.align = ((event.target as HTMLSelectElement).value || null) as HeadingAlign | null
+  }
+}
 </script>
 
 <template>
@@ -108,11 +128,31 @@ const uid = useId()
         <div class="field">
           <label :for="`${uid}-level`">Szint</label>
           <select :id="`${uid}-level`" v-model.number="model.level">
-            <option :value="1">Nagy (H1)</option>
-            <option :value="2">Közepes (H2)</option>
-            <option :value="3">Kicsi (H3)</option>
+            <option v-for="level in HEADING_LEVELS" :key="level" :value="level">
+              H{{ level }}
+            </option>
           </select>
           <p v-if="errors.level" class="field__error">{{ errors.level.join(' ') }}</p>
+        </div>
+        <div class="field">
+          <label :for="`${uid}-size`">Megjelenési méret</label>
+          <select :id="`${uid}-size`" :value="model.size ?? ''" @change="setHeadingSize">
+            <option value="">Alapértelmezett (a szinthez igazodik)</option>
+            <option v-for="size in HEADING_SIZES" :key="size.value" :value="size.value">
+              {{ size.label }}
+            </option>
+          </select>
+          <p v-if="errors.size" class="field__error">{{ errors.size.join(' ') }}</p>
+        </div>
+        <div class="field">
+          <label :for="`${uid}-align`">Igazítás</label>
+          <select :id="`${uid}-align`" :value="model.align ?? ''" @change="setHeadingAlign">
+            <option value="">Alapértelmezett (balra)</option>
+            <option v-for="align in HEADING_ALIGNS" :key="align.value" :value="align.value">
+              {{ align.label }}
+            </option>
+          </select>
+          <p v-if="errors.align" class="field__error">{{ errors.align.join(' ') }}</p>
         </div>
         <IconPicker v-model="model.icon" :error="errors.icon" />
       </template>
