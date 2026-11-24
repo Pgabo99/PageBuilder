@@ -20,18 +20,66 @@ describe('PagePreview', () => {
     expect(wrapper.find('.preview__button').text()).toBe('Gomb')
   })
 
-  it('a címsorszintet 1 és 3 közé szorítja', () => {
+  it('a címsorszintet 1 és 6 közé szorítja', () => {
     const wrapper = mount(PagePreview, {
       props: {
         components: [
           { id: 'a', type: 'heading', text: 'Egy', level: 1 },
-          { id: 'b', type: 'heading', text: 'Három', level: 3 },
-          { id: 'c', type: 'heading', text: 'Hibás', level: 9 as 3 },
+          { id: 'b', type: 'heading', text: 'Hat', level: 6 },
+          { id: 'c', type: 'heading', text: 'Hibás', level: 9 as 6 },
         ],
       },
     })
 
-    expect(wrapper.findAll('h1, h2, h3').map((h) => h.element.tagName)).toEqual(['H1', 'H3', 'H3'])
+    expect(wrapper.findAll('h1, h2, h3, h4, h5, h6').map((h) => h.element.tagName)).toEqual([
+      'H1',
+      'H6',
+      'H6',
+    ])
+  })
+
+  it('a címsor mérete és igazítása a szinttől függetlenül osztályként jelenik meg', () => {
+    const wrapper = mount(PagePreview, {
+      props: {
+        components: [
+          { id: 'a', type: 'heading', text: 'A', level: 6, size: 'xlarge', align: 'center' },
+          { id: 'b', type: 'heading', text: 'B', level: 1, size: 'small' },
+          { id: 'c', type: 'heading', text: 'C', level: 3, align: 'right' },
+        ],
+      },
+    })
+    const classes = (selector: string) => wrapper.find(selector).classes()
+
+    expect(classes('h6')).toEqual(
+      expect.arrayContaining(['preview__heading--xlarge', 'preview__heading--center']),
+    )
+    expect(classes('h1')).toContain('preview__heading--small')
+    expect(classes('h1').some((c) => c.includes('--left') || c.includes('--center'))).toBe(false)
+    expect(classes('h3')).toEqual(expect.arrayContaining(['preview__heading--right']))
+    expect(classes('h3').some((c) => /--(small|medium|large|xlarge)/.test(c))).toBe(false)
+  })
+
+  it('a régi, méret nélküli, null értékű és hibás értékű címsor alapmegjelenést kap', () => {
+    const wrapper = mount(PagePreview, {
+      props: {
+        components: [
+          { id: 'a', type: 'heading', text: 'Régi', level: 2 },
+          { id: 'b', type: 'heading', text: 'Null', level: 2, size: null, align: null },
+          {
+            id: 'c',
+            type: 'heading',
+            text: 'Hibás',
+            level: 2,
+            size: 'huge' as 'small',
+            align: 'justify' as 'left',
+          },
+        ],
+      },
+    })
+
+    for (const h of wrapper.findAll('h2')) {
+      expect(h.classes().filter((c) => c.startsWith('preview__heading'))).toEqual([])
+    }
   })
 
   it('a címsor ikonját a szöveg előtt, a kiemelőszínnel rajzolja ki', () => {

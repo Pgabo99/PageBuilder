@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 
 import AppIcon from '@/components/AppIcon.vue'
-import { MAX_ACCORDION_ITEMS, MAX_CARDS } from '@/utils/components'
+import { headingClasses, MAX_ACCORDION_ITEMS, MAX_CARDS } from '@/utils/components'
 import { findIcon } from '@/utils/icons'
 import type { PageComponent } from '@/types/content'
 import { pageStyle, type PageTheme } from '@/utils/themes'
@@ -24,8 +24,7 @@ const style = computed(() => pageStyle(props.theme, props.accent))
 // A backend `PageContentRules::URL_PATTERN`-jével azonos szabály: a publikált oldal a nem biztonságos URL-ű gombot elhagyja.
 const SAFE_URL = /^(?:https?:\/\/\S+|\/(?!\/)\S*|#\S*)$/i
 
-const level = (value: number): 1 | 2 | 3 =>
-  Math.min(3, Math.max(1, Math.trunc(value) || 2)) as 1 | 2 | 3
+const level = (value: number): number => Math.min(6, Math.max(1, Math.trunc(value) || 2))
 </script>
 
 <template>
@@ -36,7 +35,7 @@ const level = (value: number): 1 | 2 | 3 =>
         :is="`h${level(component.level)}`"
         v-if="component.type === 'heading'"
         class="preview__item"
-        :class="{ 'preview__item--active': component.id === activeId }"
+        :class="[{ 'preview__item--active': component.id === activeId }, headingClasses(component)]"
         :data-component-id="component.id"
         @click="$emit('select', component.id)"
       >
@@ -129,6 +128,42 @@ const level = (value: number): 1 | 2 | 3 =>
   outline: 2px solid var(--accent);
   outline-offset: 4px;
   background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+/* Mint a publikált oldal `.heading--*` szabályai: a megjelenési méret és az igazítás a szinttől független. */
+.preview__heading--small,
+.preview__heading--medium,
+.preview__heading--large,
+.preview__heading--xlarge {
+  line-height: 1.25;
+}
+
+.preview__heading--small {
+  font-size: 1.25rem;
+}
+
+.preview__heading--medium {
+  font-size: 1.75rem;
+}
+
+.preview__heading--large {
+  font-size: clamp(1.75rem, 6vw, 2.5rem);
+}
+
+.preview__heading--xlarge {
+  font-size: clamp(2rem, 9vw, 3.5rem);
+}
+
+.preview__heading--left {
+  text-align: left;
+}
+
+.preview__heading--center {
+  text-align: center;
+}
+
+.preview__heading--right {
+  text-align: right;
 }
 
 /* Mint a publikált oldal `.icon` szabálya: a kiemelőszínt veszi át. */
