@@ -52,7 +52,14 @@ class PageContentRules
         'padding' => ['small', 'medium', 'large'],
     ];
 
-    private const TYPES = ['heading', 'text', 'button', 'cards', 'accordion'];
+    /** Az elválasztó vonal megjelenése; az üres érték a vékony, folytonos, a keretszínű vonal. */
+    public const DIVIDER_OPTIONS = [
+        'thickness' => ['thin', 'medium', 'thick'],
+        'style' => ['solid', 'dashed', 'dotted'],
+        'color' => ['border', 'text', 'accent'],
+    ];
+
+    private const TYPES = ['heading', 'text', 'button', 'cards', 'accordion', 'divider'];
 
     /**
      * @return array<string, mixed>
@@ -81,18 +88,29 @@ class PageContentRules
     }
 
     /**
+     * Opcionális, előre definiált értékek szabályai (az üres érték az alapmegjelenés); a számokat egészként várja.
+     *
+     * @param  array<string, list<int|string>>  $options
+     * @return array<string, array<int, mixed>>
+     */
+    private static function optionRules(array $options): array
+    {
+        return collect($options)
+            ->map(fn (array $values) => [
+                'nullable',
+                is_int($values[0]) ? 'integer' : 'string',
+                Rule::in($values),
+            ])
+            ->all();
+    }
+
+    /**
      * @return array<string, array<int, mixed>>
      */
     private static function fields(mixed $type, int|string $index): array
     {
         $card = "content.$index.cards.*";
-        $cardsLayout = collect(self::CARDS_OPTIONS)
-            ->map(fn (array $values, string $option) => [
-                'nullable',
-                ...($option === 'columns' ? ['integer'] : ['string']),
-                Rule::in($values),
-            ])
-            ->all();
+        $cardsLayout = self::optionRules(self::CARDS_OPTIONS);
 
         return match ($type) {
             'heading' => [
@@ -131,6 +149,7 @@ class PageContentRules
                 'items.*.title' => ['required', 'string', 'max:150'],
                 'items.*.text' => ['required', 'string', 'max:2000'],
             ],
+            'divider' => self::optionRules(self::DIVIDER_OPTIONS),
             default => [],
         };
     }

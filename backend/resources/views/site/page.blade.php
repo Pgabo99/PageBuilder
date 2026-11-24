@@ -49,6 +49,10 @@
         .heading--left { text-align: left; }
         .heading--center { text-align: center; }
         .heading--right { text-align: right; }
+        .divider { margin: 1.5rem 0; border: 0; border-top: var(--divider-width, 1px) var(--divider-style, solid) var(--divider-color, var(--border)); }
+        .divider--thickness-thin { --divider-width: 1px; } .divider--thickness-medium { --divider-width: 2px; } .divider--thickness-thick { --divider-width: 4px; }
+        .divider--style-solid { --divider-style: solid; } .divider--style-dashed { --divider-style: dashed; } .divider--style-dotted { --divider-style: dotted; }
+        .divider--color-border { --divider-color: var(--border); } .divider--color-text { --divider-color: var(--text); } .divider--color-accent { --divider-color: var(--accent); }
         .button { display: inline-block; max-width: 100%; padding: .5rem 1rem; color: var(--on-accent); background: var(--accent); border-radius: .5rem; text-decoration: none; font-weight: 600; box-sizing: border-box; overflow-wrap: anywhere; }
         .button--outline { color: var(--accent); background: transparent; box-shadow: inset 0 0 0 2px var(--accent); }
         .button--soft { color: var(--accent); background: color-mix(in srgb, var(--accent) 15%, transparent); }
@@ -101,6 +105,9 @@
                 </article>
             @endforeach
             </div>
+            @break
+        @case('divider')
+            <hr class="{{ $site->dividerClass($component) }}">
             @break
         @case('accordion')
             <div class="accordion">

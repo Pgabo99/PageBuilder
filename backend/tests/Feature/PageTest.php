@@ -178,6 +178,34 @@ describe('tartalom validálása', function () {
         expect(Page::first()->content[0])->toEqual($old);
     });
 
+    it('hibás elválasztót elutasít', function (string $option, mixed $value) {
+        $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [
+            'title' => 'X', 'slug' => 'x',
+            'content' => [['id' => 'd', 'type' => 'divider', $option => $value]],
+        ])->assertUnprocessable()->assertJsonValidationErrors("content.0.$option");
+    })->with([
+        'ismeretlen vastagság' => ['thickness', 'huge'],
+        'ismeretlen stílus' => ['style', 'wavy'],
+        'ismeretlen szín' => ['color', 'red'],
+        'CSS színként' => ['color', '#ff0000;x:y'],
+        'tömb stílusként' => ['style', ['dashed']],
+    ]);
+
+    it('elfogadja az elválasztót, a beállításokat és az üres (régi, alapértelmezett) formát is', function () {
+        $full = ['id' => 'd', 'type' => 'divider', 'thickness' => 'thick', 'style' => 'dashed', 'color' => 'accent'];
+        $plain = ['id' => 'e', 'type' => 'divider'];
+
+        $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [
+            'title' => 'X', 'slug' => 'x',
+            'content' => [$full, $plain, ['id' => 'f', 'type' => 'divider', 'thickness' => 'thick', 'junk' => 'x', 'color' => null]],
+        ])->assertCreated();
+
+        $content = Page::first()->content;
+        expect($content[0])->toEqual($full)
+            ->and($content[1])->toEqual($plain)
+            ->and($content[2])->toEqual(['id' => 'f', 'type' => 'divider', 'thickness' => 'thick', 'color' => null]);
+    });
+
     it('a hat kártya még elfogadott, a hét nem', function () {
         $make = fn (int $n) => ['id' => 'k', 'type' => 'cards', 'cards' => array_map(
             fn ($i) => ['id' => "k$i", 'title' => "Kártya $i"], range(1, $n),
