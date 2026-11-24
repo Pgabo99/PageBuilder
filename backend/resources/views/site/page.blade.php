@@ -23,6 +23,14 @@
         .accordion summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
         .accordion details[open] summary { color: var(--accent); }
         .accordion details p { margin: 0; padding: 0 1rem 1rem; }
+        .heading--small, .heading--medium, .heading--large, .heading--xlarge { line-height: 1.25; overflow-wrap: anywhere; }
+        .heading--small { font-size: 1.25rem; }
+        .heading--medium { font-size: 1.75rem; }
+        .heading--large { font-size: clamp(1.75rem, 6vw, 2.5rem); }
+        .heading--xlarge { font-size: clamp(2rem, 9vw, 3.5rem); }
+        .heading--left { text-align: left; }
+        .heading--center { text-align: center; }
+        .heading--right { text-align: right; }
         .button { display: inline-block; padding: .5rem 1rem; color: var(--on-accent); background: var(--accent); border-radius: .5rem; text-decoration: none; font-weight: 600; }
     </style>
 </head>
@@ -38,8 +46,9 @@
 @foreach ($page->content as $component)
     @switch($component['type'] ?? null)
         @case('heading')
-            @php($level = min(3, max(1, (int) ($component['level'] ?? 2))))
-            <h{{ $level }}>{!! $site->icon($component['icon'] ?? null) !!}{{ $component['text'] ?? '' }}</h{{ $level }}>
+            @php($level = $site->headingLevel($component))
+            @php($class = $site->headingClass($component))
+            <h{{ $level }}@if ($class !== '') class="{{ $class }}"@endif>{!! $site->icon($component['icon'] ?? null) !!}{{ $component['text'] ?? '' }}</h{{ $level }}>
             @break
         @case('text')
             <p>{{ $component['text'] ?? '' }}</p>
