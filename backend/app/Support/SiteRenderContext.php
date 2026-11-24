@@ -99,6 +99,32 @@ class SiteRenderContext
         return implode(' ', $classes);
     }
 
+    /** A gomb megjelenési osztályai (`button` alap + módosítók); csak az engedélyezett értékekből. */
+    public function buttonClass(array $component): string
+    {
+        $classes = ['button'];
+        $options = [
+            'style' => PageContentRules::BUTTON_STYLES,
+            'size' => PageContentRules::BUTTON_SIZES,
+            'radius' => PageContentRules::BUTTON_RADII,
+        ];
+        foreach ($options as $key => $allowed) {
+            if (in_array($component[$key] ?? null, $allowed, true)) {
+                $classes[] = 'button--'.($key === 'radius' ? 'r-' : '').$component[$key];
+            }
+        }
+
+        return implode(' ', $classes);
+    }
+
+    /** A gombot tartalmazó bekezdés igazítási osztálya, vagy üres. */
+    public function buttonWrapClass(array $component): string
+    {
+        return in_array($component['align'] ?? null, PageContentRules::BUTTON_ALIGNS, true)
+            ? 'button-wrap--'.$component['align']
+            : '';
+    }
+
     /** Futáskor is ellenőrizzük a komponens URL-jét (a validációval azonos szabály). */
     public function isSafeUrl(mixed $url): bool
     {

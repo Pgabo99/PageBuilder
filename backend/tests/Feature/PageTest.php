@@ -96,6 +96,12 @@ describe('tartalom validálása', function () {
         'CSS címsorméretként' => [['id' => 'a', 'type' => 'heading', 'text' => 'X', 'level' => 2, 'size' => '3rem;color:red'], 'content.0.size'],
         'tömb címsorméretként' => [['id' => 'a', 'type' => 'heading', 'text' => 'X', 'level' => 2, 'size' => ['large']], 'content.0.size'],
         'ismeretlen címsorigazítás' => [['id' => 'a', 'type' => 'heading', 'text' => 'X', 'level' => 2, 'align' => 'justify'], 'content.0.align'],
+        'ismeretlen gombstílus' => [['id' => 'a', 'type' => 'button', 'label' => 'X', 'url' => '/x', 'style' => 'neon'], 'content.0.style'],
+        'CSS gombstílusként' => [['id' => 'a', 'type' => 'button', 'label' => 'X', 'url' => '/x', 'style' => 'red;x:y'], 'content.0.style'],
+        'ismeretlen gombméret' => [['id' => 'a', 'type' => 'button', 'label' => 'X', 'url' => '/x', 'size' => 'huge'], 'content.0.size'],
+        'ismeretlen gombigazítás' => [['id' => 'a', 'type' => 'button', 'label' => 'X', 'url' => '/x', 'align' => 'justify'], 'content.0.align'],
+        'ismeretlen gomblekerekítés' => [['id' => 'a', 'type' => 'button', 'label' => 'X', 'url' => '/x', 'radius' => 'round'], 'content.0.radius'],
+        'tömb gombstílusként' => [['id' => 'a', 'type' => 'button', 'label' => 'X', 'url' => '/x', 'style' => ['outline']], 'content.0.style'],
         'szöveg nélküli szövegblokk' => [['id' => 'a', 'type' => 'text'], 'content.0.text'],
         'gomb felirat nélkül' => [['id' => 'a', 'type' => 'button', 'url' => '/x'], 'content.0.label'],
         'javascript: URL' => [['id' => 'a', 'type' => 'button', 'label' => 'X', 'url' => 'javascript:alert(1)'], 'content.0.url'],
@@ -228,6 +234,32 @@ describe('tartalom validálása', function () {
         'H3 középre' => [3, 'medium', 'center'],
         'H4 alapmérettel' => [4, null, null],
     ]);
+
+    it('elfogadja a gomb stílusát, méretét, igazítását és lekerekítését', function (?string $style, ?string $size, ?string $align, ?string $radius) {
+        $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [
+            'title' => 'X', 'slug' => 'x',
+            'content' => [['id' => 'a', 'type' => 'button', 'label' => 'X', 'url' => '/x', 'style' => $style, 'size' => $size, 'align' => $align, 'radius' => $radius]],
+        ])->assertCreated()
+            ->assertJsonPath('data.content.0.style', $style)
+            ->assertJsonPath('data.content.0.size', $size)
+            ->assertJsonPath('data.content.0.align', $align)
+            ->assertJsonPath('data.content.0.radius', $radius);
+    })->with([
+        'körvonalas, kicsi' => ['outline', 'small', 'left', 'none'],
+        'halvány, nagy' => ['soft', 'large', 'center', 'full'],
+        'szöveges' => ['link', 'medium', 'right', 'medium'],
+        'alapértelmezett' => [null, null, null, null],
+    ]);
+
+    it('az alapbeállítású, régi gomb továbbra is érvényes és nem kap új mezőt', function () {
+        $button = ['id' => 'a', 'type' => 'button', 'label' => 'X', 'url' => '/x'];
+
+        $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [
+            'title' => 'X', 'slug' => 'x', 'content' => [$button],
+        ])->assertCreated();
+
+        expect(Page::first()->content[0])->toEqual($button);
+    });
 
     it('az ikon nélküli, régi címsor továbbra is érvényes és nem kap ikon mezőt', function () {
         $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [

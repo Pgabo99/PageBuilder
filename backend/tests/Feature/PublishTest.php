@@ -188,6 +188,39 @@ describe('job', function () {
             ->toContain('<h1>Kettő</h1>');
     });
 
+    it('a gomb stílusa, mérete, lekerekítése és igazítása osztályként jelenik meg', function () {
+        $this->index->update(['content' => [
+            ['id' => 'a', 'type' => 'button', 'label' => 'Egy', 'url' => '/x', 'style' => 'outline', 'size' => 'large', 'radius' => 'full', 'align' => 'center'],
+            ['id' => 'b', 'type' => 'button', 'label' => 'Kettő', 'url' => '/y', 'style' => 'link'],
+            ['id' => 'c', 'type' => 'button', 'label' => 'Három', 'url' => '/z', 'style' => null, 'size' => null, 'align' => null, 'radius' => null],
+            ['id' => 'd', 'type' => 'button', 'label' => 'Négy', 'url' => '/w'],
+        ]]);
+
+        runJob($this->website);
+
+        $html = file_get_contents("{$this->dir}/proba/index.html");
+        expect($html)
+            ->toContain('<p class="button-wrap--center"><a class="button button--outline button--large button--r-full" href="/x">Egy</a></p>')
+            ->toContain('<p><a class="button button--link" href="/y">Kettő</a></p>')
+            ->toContain('<p><a class="button" href="/z">Három</a></p>')
+            ->toContain('<p><a class="button" href="/w">Négy</a></p>')
+            ->toContain('.button--outline {')
+            ->toContain('.button-wrap--right {');
+    });
+
+    it('a hibás tárolt gombbeállítás nem kerül a HTML-be (a validációt megkerülve sem)', function () {
+        $this->index->update(['content' => [
+            ['id' => 'a', 'type' => 'button', 'label' => 'Egy', 'url' => '/x', 'style' => '"><script>alert(1)</script>', 'size' => ['x'], 'align' => 'justify', 'radius' => 'round'],
+        ]]);
+
+        runJob($this->website);
+
+        $html = file_get_contents("{$this->dir}/proba/index.html");
+        expect($html)
+            ->not->toContain('<script')
+            ->toContain('<p><a class="button" href="/x">Egy</a></p>');
+    });
+
     it('az ismeretlen vagy hibás tárolt ikon nem renderelődik (a validációt megkerülve sem)', function () {
         $this->index->update(['content' => [
             ['id' => 'a', 'type' => 'heading', 'text' => 'Egy', 'level' => 2, 'icon' => '<script>alert(1)</script>'],

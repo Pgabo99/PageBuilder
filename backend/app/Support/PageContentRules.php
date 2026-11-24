@@ -26,6 +26,15 @@ class PageContentRules
 
     public const HEADING_ALIGNS = ['left', 'center', 'right'];
 
+    /** A gomb megjelenése: előre definiált értékek; az üres érték a jelenlegi (kitöltött, közepes, balra igazított) megjelenés. */
+    public const BUTTON_STYLES = ['filled', 'outline', 'soft', 'link'];
+
+    public const BUTTON_SIZES = ['small', 'medium', 'large'];
+
+    public const BUTTON_ALIGNS = ['left', 'center', 'right'];
+
+    public const BUTTON_RADII = ['none', 'small', 'medium', 'full'];
+
     private const TYPES = ['heading', 'text', 'button', 'cards', 'accordion'];
 
     /**
@@ -75,6 +84,10 @@ class PageContentRules
             'button' => [
                 'label' => ['required', 'string', 'max:100'],
                 'url' => ['required', 'string', 'max:2048', 'regex:'.self::URL_PATTERN],
+                'style' => ['nullable', 'string', Rule::in(self::BUTTON_STYLES)],
+                'size' => ['nullable', 'string', Rule::in(self::BUTTON_SIZES)],
+                'align' => ['nullable', 'string', Rule::in(self::BUTTON_ALIGNS)],
+                'radius' => ['nullable', 'string', Rule::in(self::BUTTON_RADII)],
             ],
             // A gomb felirata és célja együtt kötelező, vagy mindkettő üres; a leírás és az ikon opcionális.
             'cards' => [
