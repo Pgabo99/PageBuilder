@@ -73,7 +73,21 @@ export interface CardItem {
   url?: string | null
 }
 
-export interface CardsComponent {
+/** A kártyacsoport elrendezése; az üres érték a jelenlegi megjelenés (`CARDS_OPTIONS` az értékekkel és címkékkel). */
+export interface CardsLayout {
+  columns?: 1 | 2 | 3 | 4 | null
+  icon_position?: 'top-left' | 'top-center' | 'left' | 'right' | null
+  icon_size?: 'small' | 'medium' | 'large' | null
+  text_align?: 'left' | 'center' | 'right' | null
+  border?: 'none' | 'thin' | 'thick' | null
+  shadow?: 'none' | 'small' | 'medium' | null
+  radius?: 'none' | 'small' | 'medium' | 'large' | null
+  button_position?: 'left' | 'center' | 'right' | null
+  gap?: 'small' | 'medium' | 'large' | null
+  padding?: 'small' | 'medium' | 'large' | null
+}
+
+export interface CardsComponent extends CardsLayout {
   id: string
   type: 'cards'
   cards: CardItem[]

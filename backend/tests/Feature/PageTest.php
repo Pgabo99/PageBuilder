@@ -130,6 +130,54 @@ describe('tartalom validálása', function () {
             ->and($stored[1])->toEqual(['id' => 'k2', 'title' => 'Csak cím']);
     });
 
+    it('hibás kártyacsoport-elrendezést elutasít', function (string $option, mixed $value) {
+        $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [
+            'title' => 'X', 'slug' => 'x',
+            'content' => [['id' => 'k', 'type' => 'cards', $option => $value, 'cards' => [['id' => 'a', 'title' => 'X']]]],
+        ])->assertUnprocessable()->assertJsonValidationErrors("content.0.$option");
+    })->with([
+        'oszlopszám nulla' => ['columns', 0],
+        'oszlopszám öt' => ['columns', 5],
+        'szöveges oszlopszám' => ['columns', 'sok'],
+        'ismeretlen ikonpozíció' => ['icon_position', 'bottom'],
+        'ismeretlen ikonméret' => ['icon_size', 'huge'],
+        'ismeretlen igazítás' => ['text_align', 'justify'],
+        'ismeretlen keret' => ['border', 'dashed'],
+        'ismeretlen árnyék' => ['shadow', 'glow'],
+        'ismeretlen lekerekítés' => ['radius', 'round'],
+        'ismeretlen gombpozíció' => ['button_position', 'top'],
+        'ismeretlen térköz' => ['gap', 'huge'],
+        'ismeretlen belső margó' => ['padding', 'huge'],
+        'CSS értékként' => ['gap', '1rem;color:red'],
+        'tömb értékként' => ['shadow', ['small']],
+    ]);
+
+    it('elfogadja és eltárolja a kártyacsoport elrendezését', function () {
+        $layout = [
+            'columns' => 3, 'icon_position' => 'right', 'icon_size' => 'large', 'text_align' => 'center',
+            'border' => 'thick', 'shadow' => 'medium', 'radius' => 'none', 'button_position' => 'center',
+            'gap' => 'large', 'padding' => 'small',
+        ];
+
+        $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [
+            'title' => 'X', 'slug' => 'x',
+            'content' => [['id' => 'k', 'type' => 'cards', 'cards' => [['id' => 'a', 'title' => 'X']], ...$layout]],
+        ])->assertCreated();
+
+        expect(Page::first()->content[0])->toMatchArray($layout);
+    });
+
+    it('az alapértelmezett (null) és a nélküli régi kártyacsoport érvényes, a régi nem kap új mezőt', function () {
+        $old = ['id' => 'k', 'type' => 'cards', 'cards' => [['id' => 'a', 'title' => 'X']]];
+
+        $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [
+            'title' => 'X', 'slug' => 'x',
+            'content' => [$old, [...$old, 'id' => 'l', 'columns' => null, 'gap' => null, 'shadow' => null]],
+        ])->assertCreated();
+
+        expect(Page::first()->content[0])->toEqual($old);
+    });
+
     it('a hat kártya még elfogadott, a hét nem', function () {
         $make = fn (int $n) => ['id' => 'k', 'type' => 'cards', 'cards' => array_map(
             fn ($i) => ['id' => "k$i", 'title' => "Kártya $i"], range(1, $n),

@@ -221,6 +221,38 @@ describe('job', function () {
             ->toContain('<p><a class="button" href="/x">Egy</a></p>');
     });
 
+    it('a kártyacsoport elrendezése osztályként jelenik meg, az alapértelmezett nem kap osztályt', function () {
+        $card = ['id' => 'a', 'title' => 'Első', 'label' => 'Tovább', 'url' => '/x'];
+        $this->index->update(['content' => [
+            ['id' => 'k', 'type' => 'cards', 'cards' => [$card], 'columns' => 3, 'icon_position' => 'top-center', 'shadow' => 'medium', 'button_position' => 'right', 'gap' => 'large'],
+            ['id' => 'l', 'type' => 'cards', 'cards' => [$card]],
+            ['id' => 'm', 'type' => 'cards', 'cards' => [$card], 'columns' => null, 'radius' => null],
+        ]]);
+
+        runJob($this->website);
+
+        $html = file_get_contents("{$this->dir}/proba/index.html");
+        expect($html)
+            ->toContain('<div class="cards cards--columns-3 cards--icon-position-top-center cards--shadow-medium cards--button-position-right cards--gap-large">')
+            ->toContain('<p class="card__action"><a class="button" href="/x">Tovább</a></p>')
+            ->and(substr_count($html, '<div class="cards">'))->toBe(2)
+            ->and($html)->toContain('.cards--columns-3 {')
+            ->toContain('.cards--icon-position-left .card');
+    });
+
+    it('a hibás tárolt kártyaelrendezés nem kerül a HTML-be (a validációt megkerülve sem)', function () {
+        $this->index->update(['content' => [
+            ['id' => 'k', 'type' => 'cards', 'cards' => [['id' => 'a', 'title' => 'X']], 'columns' => 9, 'gap' => '"><script>alert(1)</script>', 'shadow' => ['small'], 'radius' => 'round', 'icon_size' => true],
+        ]]);
+
+        runJob($this->website);
+
+        $html = file_get_contents("{$this->dir}/proba/index.html");
+        expect($html)
+            ->not->toContain('<script')
+            ->toContain('<div class="cards">');
+    });
+
     it('az ismeretlen vagy hibás tárolt ikon nem renderelődik (a validációt megkerülve sem)', function () {
         $this->index->update(['content' => [
             ['id' => 'a', 'type' => 'heading', 'text' => 'Egy', 'level' => 2, 'icon' => '<script>alert(1)</script>'],

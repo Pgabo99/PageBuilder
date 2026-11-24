@@ -6,6 +6,7 @@ import {
   componentSummary,
   componentTypes,
   buttonClasses,
+  cardsClasses,
   buttonWrapClasses,
   createAccordionItem,
   createCard,
@@ -261,5 +262,31 @@ describe('buttonClasses', () => {
     expect(buttonClasses({ style: 'neon', size: '"><x', radius: 'round' })).toEqual([])
     expect(buttonWrapClasses({ align: 'justify' })).toEqual([])
     expect(buttonWrapClasses({})).toEqual([])
+  })
+})
+
+describe('cardsClasses', () => {
+  it('csak az engedélyezett értékekből képez osztályt', () => {
+    expect(
+      cardsClasses({
+        columns: 2,
+        icon_position: 'top-center',
+        text_align: 'right',
+        radius: 'none',
+      }),
+    ).toEqual([
+      'preview__cards--columns-2',
+      'preview__cards--icon-position-top-center',
+      'preview__cards--text-align-right',
+      'preview__cards--radius-none',
+    ])
+  })
+
+  it('üres, hiányzó vagy ismeretlen értéknél nincs osztály', () => {
+    expect(cardsClasses({})).toEqual([])
+    expect(cardsClasses({ columns: null, gap: null })).toEqual([])
+    expect(
+      cardsClasses({ columns: 7 as 4, gap: '"><x' as 'small', shadow: ['small'] as never }),
+    ).toEqual([])
   })
 })

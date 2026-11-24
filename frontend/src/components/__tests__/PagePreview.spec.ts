@@ -170,6 +170,59 @@ describe('PagePreview', () => {
     })
   })
 
+  describe('kártyacsoport elrendezése', () => {
+    const base = { id: 'k', type: 'cards' as const, cards: [{ id: 'a', title: 'A' }] }
+
+    it('az elrendezési beállítások osztályként jelennek meg', () => {
+      const wrapper = mount(PagePreview, {
+        props: {
+          components: [
+            {
+              ...base,
+              columns: 3,
+              icon_position: 'right',
+              shadow: 'medium',
+              button_position: 'center',
+              gap: 'large',
+            },
+          ],
+        },
+      })
+
+      expect(wrapper.find('.preview__cards').classes()).toEqual(
+        expect.arrayContaining([
+          'preview__cards--columns-3',
+          'preview__cards--icon-position-right',
+          'preview__cards--shadow-medium',
+          'preview__cards--button-position-center',
+          'preview__cards--gap-large',
+        ]),
+      )
+    })
+
+    it('a régi, null értékű és hibás értékű csoport alapmegjelenést kap', () => {
+      const wrapper = mount(PagePreview, {
+        props: {
+          components: [
+            base,
+            { ...base, id: 'l', columns: null, gap: null },
+            {
+              ...base,
+              id: 'm',
+              columns: 9 as 4,
+              gap: 'huge' as 'small',
+              shadow: 'glow' as 'small',
+            },
+          ],
+        },
+      })
+
+      for (const group of wrapper.findAll('.preview__cards')) {
+        expect(group.classes().filter((c) => c.startsWith('preview__cards--'))).toEqual([])
+      }
+    })
+  })
+
   describe('kártyák', () => {
     const cards: PageComponent = {
       id: 'k',

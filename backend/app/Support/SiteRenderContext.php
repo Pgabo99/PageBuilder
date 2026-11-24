@@ -85,6 +85,20 @@ class SiteRenderContext
         return min(PageContentRules::HEADING_MAX_LEVEL, max(1, (int) ($component['level'] ?? 2)));
     }
 
+    /** A kártyacsoport osztályai (`cards` + elrendezési módosítók); csak az engedélyezett értékekből. */
+    public function cardsClass(array $component): string
+    {
+        $classes = ['cards'];
+        foreach (PageContentRules::CARDS_OPTIONS as $option => $allowed) {
+            $value = $component[$option] ?? null;
+            if ((is_int($value) || is_string($value)) && in_array($value, $allowed, true)) {
+                $classes[] = 'cards--'.str_replace('_', '-', $option).'-'.$value;
+            }
+        }
+
+        return implode(' ', $classes);
+    }
+
     /** A címsor megjelenési osztályai; csak az engedélyezett értékekből, így hibás adat nem kerülhet a HTML-be. */
     public function headingClass(array $component): string
     {

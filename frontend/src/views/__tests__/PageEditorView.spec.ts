@@ -515,6 +515,56 @@ describe('PageEditorView', () => {
     )
   })
 
+  it('a kártyacsoport elrendezése állítható, az előnézet követi, mentéskor elmegy (az oszlopszám szám)', async () => {
+    vi.mocked(pagesApi.get).mockResolvedValue(
+      structuredClone({
+        ...page,
+        content: [{ id: 'k', type: 'cards', cards: [{ id: 'a', title: 'A' }] }],
+      } as Page),
+    )
+    vi.mocked(pagesApi.update).mockImplementation(async (_id, payload) => ({ ...page, ...payload }))
+    const wrapper = await mountEditor()
+    await wrapper.find('.component__toggle').trigger('click')
+
+    expect((selectByLabel(wrapper, 'Ikon helye').element as HTMLSelectElement).value).toBe('')
+    await selectByLabel(wrapper, 'Oszlopok (legfeljebb)').setValue('3')
+    await selectByLabel(wrapper, 'Ikon helye').setValue('left')
+    await selectByLabel(wrapper, 'Árnyék').setValue('medium')
+
+    expect(wrapper.find('.preview__cards').classes()).toEqual(
+      expect.arrayContaining([
+        'preview__cards--columns-3',
+        'preview__cards--icon-position-left',
+        'preview__cards--shadow-medium',
+      ]),
+    )
+    await wrapper.find('button.btn:not(.btn--secondary)').trigger('click')
+    await flushPromises()
+
+    expect(vi.mocked(pagesApi.update).mock.calls[0]![1].content[0]).toMatchObject({
+      type: 'cards',
+      columns: 3,
+      icon_position: 'left',
+      shadow: 'medium',
+    })
+  })
+
+  it('a kártyacsoport alapbeállítása visszaállítható (null)', async () => {
+    vi.mocked(pagesApi.get).mockResolvedValue(
+      structuredClone({
+        ...page,
+        content: [{ id: 'k', type: 'cards', cards: [{ id: 'a', title: 'A' }], gap: 'large' }],
+      } as Page),
+    )
+    const wrapper = await mountEditor()
+    await wrapper.find('.component__toggle').trigger('click')
+    expect(wrapper.find('.preview__cards').classes()).toContain('preview__cards--gap-large')
+
+    await selectByLabel(wrapper, 'Kártyák közti térköz').setValue('')
+
+    expect(wrapper.find('.preview__cards').classes()).not.toContain('preview__cards--gap-large')
+  })
+
   it('a címsor ikonja kiválasztható, azonnal látszik az előnézetben, és mentéskor elmegy', async () => {
     const wrapper = await mountEditor()
     vi.mocked(pagesApi.update).mockImplementation(async (_id, payload) => ({ ...page, ...payload }))
