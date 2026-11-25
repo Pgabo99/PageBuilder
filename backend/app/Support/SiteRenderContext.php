@@ -91,6 +91,34 @@ class SiteRenderContext
         return $this->modifierClass('cards', $component, PageContentRules::CARDS_OPTIONS);
     }
 
+    /** @var array<string, array{label: string, marker: string}> típus => képernyőolvasós előtag és látható jel (ikon nélkül) */
+    private const ALERTS = [
+        'info' => ['label' => 'Információ', 'marker' => 'i'],
+        'success' => ['label' => 'Siker', 'marker' => '✓'],
+        'warning' => ['label' => 'Figyelmeztetés', 'marker' => '!'],
+        'error' => ['label' => 'Hiba', 'marker' => '✕'],
+    ];
+
+    /** Az értesítés típusa; ismeretlen vagy hibás érték esetén információ. */
+    public function alertVariant(array $component): string
+    {
+        $variant = $component['variant'] ?? null;
+
+        return is_string($variant) && isset(self::ALERTS[$variant]) ? $variant : 'info';
+    }
+
+    /** A típus szöveges neve (képernyőolvasónak: a típus ne csak színnel jelenjen meg). */
+    public function alertLabel(string $variant): string
+    {
+        return self::ALERTS[$variant]['label'];
+    }
+
+    /** A típus látható jele, ha nincs választott ikon (a színtől független jelzés). */
+    public function alertMarker(string $variant): string
+    {
+        return self::ALERTS[$variant]['marker'];
+    }
+
     /** A térköz magassága rem-ben, a megengedett tartományra szorítva (a validációt megkerülő adat ellen is). */
     public function spacerHeight(array $component): int
     {

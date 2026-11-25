@@ -66,7 +66,10 @@ class PageContentRules
 
     public const SPACER_DEFAULT_HEIGHT = 2;
 
-    private const TYPES = ['heading', 'text', 'button', 'cards', 'accordion', 'divider', 'spacer'];
+    /** Az értesítődoboz típusai. */
+    public const ALERT_VARIANTS = ['info', 'success', 'warning', 'error'];
+
+    private const TYPES = ['heading', 'text', 'button', 'cards', 'accordion', 'divider', 'spacer', 'alert'];
 
     /**
      * @return array<string, mixed>
@@ -157,6 +160,12 @@ class PageContentRules
                 'items.*.text' => ['required', 'string', 'max:2000'],
             ],
             'divider' => self::optionRules(self::DIVIDER_OPTIONS),
+            'alert' => [
+                'variant' => ['required', 'string', Rule::in(self::ALERT_VARIANTS)],
+                'title' => ['nullable', 'string', 'max:100'],
+                'text' => ['required', 'string', 'max:500'],
+                'icon' => ['nullable', 'string', Rule::in(Icons::names())],
+            ],
             'spacer' => [
                 'height' => ['required', 'integer', 'between:'.self::SPACER_MIN_HEIGHT.','.self::SPACER_MAX_HEIGHT],
             ],

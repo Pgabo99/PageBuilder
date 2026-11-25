@@ -253,6 +253,45 @@ describe('job', function () {
             ->toContain('<div class="cards">');
     });
 
+    it('az értesítés típusa szövegesen és látható jellel is megjelenik, a tartalom escape-elt', function () {
+        $this->index->update(['content' => [
+            ['id' => 'a', 'type' => 'alert', 'variant' => 'warning', 'title' => '<b>Figyelem</b>', 'text' => '"><img src=x onerror=1>', 'icon' => 'info'],
+            ['id' => 'b', 'type' => 'alert', 'variant' => 'error', 'text' => 'Csak szöveg'],
+        ]]);
+
+        runJob($this->website);
+
+        $html = file_get_contents("{$this->dir}/proba/index.html");
+        expect($html)
+            ->toContain('<div class="alert alert--warning" role="note">')
+            ->toContain('<span class="visually-hidden">Figyelmeztetés: </span>')
+            ->toContain('<strong class="alert__title">&lt;b&gt;Figyelem&lt;/b&gt;</strong>')
+            ->toContain('<p>&quot;&gt;&lt;img src=x onerror=1&gt;</p>')
+            ->toContain('<span class="alert__icon" aria-hidden="true"><svg class="icon"')
+            // Ikon nélkül a típus látható jele jelenik meg.
+            ->toContain('<div class="alert alert--error" role="note">')
+            ->toContain('<span class="alert__icon" aria-hidden="true">✕</span>')
+            ->toContain('<span class="visually-hidden">Hiba: </span>')
+            ->not->toContain('<img')
+            ->and(substr_count($html, 'alert__title'))->toBe(2); // egy elem + a CSS-szabály
+    });
+
+    it('a hibás tárolt értesítés biztonságosan, információként jelenik meg (a validációt megkerülve sem)', function () {
+        $this->index->update(['content' => [
+            ['id' => 'a', 'type' => 'alert', 'variant' => '"><script>alert(1)</script>', 'text' => 'Egy', 'icon' => '<script>alert(1)</script>'],
+            ['id' => 'b', 'type' => 'alert', 'variant' => ['x'], 'text' => 'Kettő'],
+            ['id' => 'c', 'type' => 'alert', 'text' => 'Három', 'icon' => ['star']],
+        ]]);
+
+        runJob($this->website);
+
+        $html = file_get_contents("{$this->dir}/proba/index.html");
+        expect($html)
+            ->not->toContain('<script')
+            ->and(substr_count($html, '<div class="alert alert--info" role="note">'))->toBe(3)
+            ->and(substr_count($html, '<span class="alert__icon" aria-hidden="true">i</span>'))->toBe(3);
+    });
+
     it('a térköz rem-ben megadott magasságú, a képernyőolvasók elől rejtett elemként jelenik meg', function () {
         $this->index->update(['content' => [
             ['id' => 'a', 'type' => 'spacer', 'height' => 5],
