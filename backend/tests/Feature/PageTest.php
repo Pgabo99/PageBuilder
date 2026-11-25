@@ -178,6 +178,56 @@ describe('tartalom validálása', function () {
         expect(Page::first()->content[0])->toEqual($old);
     });
 
+    it('hibás láblécet elutasít', function (array $footer, string $errorKey) {
+        $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [
+            'title' => 'X', 'slug' => 'x', 'content' => [['id' => 'f', 'type' => 'footer', ...$footer]],
+        ])->assertUnprocessable()->assertJsonValidationErrors($errorKey);
+    })->with([
+        'túl hosszú copyright' => [['copyright' => str_repeat('a', 151)], 'content.0.copyright'],
+        'kilenc link' => [['links' => array_map(fn ($i) => ['id' => "l$i", 'label' => 'L', 'url' => '/'], range(1, 9))], 'content.0.links'],
+        'link felirat nélkül' => [['links' => [['id' => 'l', 'url' => '/']]], 'content.0.links.0.label'],
+        'link cél nélkül' => [['links' => [['id' => 'l', 'label' => 'L']]], 'content.0.links.0.url'],
+        'javascript: link' => [['links' => [['id' => 'l', 'label' => 'L', 'url' => 'javascript:alert(1)']]], 'content.0.links.0.url'],
+        'data: link' => [['links' => [['id' => 'l', 'label' => 'L', 'url' => 'data:text/html,x']]], 'content.0.links.0.url'],
+        'link azonosító nélkül' => [['links' => [['label' => 'L', 'url' => '/']]], 'content.0.links.0.id'],
+        'hibás e-mail' => [['email' => 'nem-email'], 'content.0.email'],
+        'tömb e-mail' => [['email' => ['a@b.hu']], 'content.0.email'],
+        'betűk a telefonszámban' => [['phone' => '+36 abc'], 'content.0.phone'],
+        'telefonszám számjegy nélkül' => [['phone' => '+ - ()'], 'content.0.phone'],
+        'túl hosszú cím' => [['address' => str_repeat('a', 201)], 'content.0.address'],
+    ]);
+
+    it('oldalanként legfeljebb egy láblécet fogad el', function () {
+        $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [
+            'title' => 'X', 'slug' => 'x',
+            'content' => [['id' => 'a', 'type' => 'footer'], ['id' => 'b', 'type' => 'text', 'text' => 'T'], ['id' => 'c', 'type' => 'footer']],
+        ])->assertUnprocessable()->assertJsonValidationErrors('content');
+    });
+
+    it('elfogadja a láblécet teljes, üres és részleges formában, és csak a megengedett mezőket tárolja', function () {
+        $full = [
+            'id' => 'f', 'type' => 'footer', 'copyright' => '© Teszt', 'email' => 'info@example.com',
+            'phone' => '+36 (30) 123-4567', 'address' => '1051 Budapest, Fő utca 1.',
+            'links' => [['id' => 'l1', 'label' => 'Kapcsolat', 'url' => '/sites/proba/kapcsolat/'], ['id' => 'l2', 'label' => 'Külső', 'url' => 'https://example.com']],
+        ];
+        $empty = ['id' => 'g', 'type' => 'footer'];
+
+        $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [
+            'title' => 'X', 'slug' => 'x', 'content' => [[...$full, 'junk' => 'x']],
+        ])->assertCreated();
+        $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [
+            'title' => 'Y', 'slug' => 'y',
+            'content' => [[...$empty, 'copyright' => null, 'links' => [], 'email' => null, 'phone' => null, 'address' => null]],
+        ])->assertCreated();
+        $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [
+            'title' => 'Z', 'slug' => 'z', 'content' => [$empty],
+        ])->assertCreated();
+
+        $pages = Page::query()->orderBy('id')->get();
+        expect($pages[0]->content[0])->toEqual($full)
+            ->and($pages[2]->content[0])->toEqual($empty);
+    });
+
     it('hibás közösségi hivatkozást elutasít', function (array $items, string $errorKey) {
         $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [
             'title' => 'X', 'slug' => 'x', 'content' => [['id' => 's', 'type' => 'social', 'items' => $items]],

@@ -136,6 +136,61 @@ class SiteRenderContext
         return $links;
     }
 
+    /**
+     * Az oldal lábléce: az első `footer` komponens (az oldal végén jelenik meg, a tartalom sorrendjétől függetlenül).
+     *
+     * @param  array<int, mixed>  $content
+     * @return array<string, mixed>|null
+     */
+    public function footer(array $content): ?array
+    {
+        foreach ($content as $component) {
+            if (is_array($component) && ($component['type'] ?? null) === 'footer') {
+                return $component;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * A lábléc linkjei futáskor is szűrve: csak biztonságos URL és felirat, legfeljebb a megengedett darabszám.
+     *
+     * @param  array<string, mixed>  $footer
+     * @return list<array{label: string, url: string}>
+     */
+    public function footerLinks(array $footer): array
+    {
+        $links = is_array($footer['links'] ?? null) ? $footer['links'] : [];
+        $result = [];
+        foreach (array_slice(array_values(array_filter($links, 'is_array')), 0, PageContentRules::MAX_FOOTER_LINKS) as $link) {
+            if (filled($link['label'] ?? null) && is_string($link['label']) && $this->isSafeUrl($link['url'] ?? '')) {
+                $result[] = ['label' => $link['label'], 'url' => $link['url']];
+            }
+        }
+
+        return $result;
+    }
+
+    /** A lábléc e-mail-címe, ha érvényes (futáskor is ellenőrizve); egyébként null. */
+    public function footerEmail(array $footer): ?string
+    {
+        $email = $footer['email'] ?? null;
+
+        return is_string($email) && filter_var($email, FILTER_VALIDATE_EMAIL) !== false ? $email : null;
+    }
+
+    /** A telefonszám `tel:` hivatkozása (csak számjegyek és +); érvénytelen szám esetén null. */
+    public function footerPhoneHref(array $footer): ?string
+    {
+        $phone = $footer['phone'] ?? null;
+        if (! is_string($phone) || preg_match(PageContentRules::PHONE_PATTERN, $phone) !== 1) {
+            return null;
+        }
+
+        return 'tel:'.preg_replace('/[^0-9+]/', '', $phone);
+    }
+
     /** Az értesítés típusa; ismeretlen vagy hibás érték esetén információ. */
     public function alertVariant(array $component): string
     {
