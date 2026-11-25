@@ -1,5 +1,6 @@
 import type {
   AccordionItem,
+  AlertVariant,
   CardsLayout,
   ButtonRadius,
   ButtonSize,
@@ -296,6 +297,21 @@ export const BUTTON_OPTIONS: OptionSpec = [
 /** A hivatkozás-mezők súgója: engedélyezett célformák (a backend `URL_PATTERN`-jével azonos). */
 export const URL_FIELD_HINT = '(https://…, /útvonal vagy #horgony)'
 
+/** Az értesítés típusai; a jel az ikon nélküli doboz színtől független jelzése (mint a backend `SiteRenderContext::ALERTS`). */
+export const ALERT_VARIANTS: { value: AlertVariant; label: string; marker: string }[] = [
+  { value: 'info', label: 'Információ', marker: 'i' },
+  { value: 'success', label: 'Siker', marker: '✓' },
+  { value: 'warning', label: 'Figyelmeztetés', marker: '!' },
+  { value: 'error', label: 'Hiba', marker: '✕' },
+]
+
+/** Az értesítés ismert típusa; hibás érték esetén információ. */
+export const alertVariant = (value: unknown): AlertVariant =>
+  ALERT_VARIANTS.find((item) => item.value === value)?.value ?? 'info'
+
+export const alertMarker = (value: unknown): string =>
+  ALERT_VARIANTS.find((item) => item.value === alertVariant(value))!.marker
+
 export const componentTypes: { type: ComponentType; label: string }[] = [
   { type: 'heading', label: 'Címsor' },
   { type: 'text', label: 'Szöveg' },
@@ -304,6 +320,7 @@ export const componentTypes: { type: ComponentType; label: string }[] = [
   { type: 'accordion', label: 'Becsukható részek' },
   { type: 'divider', label: 'Elválasztó' },
   { type: 'spacer', label: 'Térköz' },
+  { type: 'alert', label: 'Értesítődoboz' },
 ]
 
 export function componentLabel(type: ComponentType): string {
@@ -344,6 +361,8 @@ export function createComponent(type: ComponentType): PageComponent {
       return { id, type }
     case 'spacer':
       return { id, type, height: DEFAULT_SPACER_HEIGHT }
+    case 'alert':
+      return { id, type, variant: 'info', text: 'Új értesítés' }
   }
 }
 
@@ -369,6 +388,8 @@ function summarySource(component: PageComponent): string {
       return 'Vízszintes vonal'
     case 'spacer':
       return `${component.height} rem térköz`
+    case 'alert':
+      return component.title || component.text
     case 'accordion': {
       const first = component.items[0]?.title ?? ''
       return `${component.items.length} rész${first ? `: ${first}` : ''}`

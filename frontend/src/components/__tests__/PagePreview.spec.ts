@@ -170,6 +170,58 @@ describe('PagePreview', () => {
     })
   })
 
+  describe('értesítődoboz', () => {
+    it('a típusnak megfelelő osztállyal, jellel, címmel és szöveggel jelenik meg', () => {
+      const wrapper = mount(PagePreview, {
+        props: {
+          components: [
+            { id: 'a', type: 'alert', variant: 'warning', title: 'Figyelem', text: 'Szöveg' },
+          ],
+        },
+      })
+
+      expect(wrapper.find('.preview__alert').classes()).toContain('preview__alert--warning')
+      expect(wrapper.find('.preview__alert-icon').text()).toBe('!')
+      expect(wrapper.find('.preview__alert-title').text()).toBe('Figyelem')
+      expect(wrapper.find('.preview__alert-body p').text()).toBe('Szöveg')
+    })
+
+    it('a választott ikon a jel helyett jelenik meg, a cím nélkül nincs címsor', () => {
+      const wrapper = mount(PagePreview, {
+        props: {
+          components: [
+            { id: 'a', type: 'alert', variant: 'success', text: 'Szöveg', icon: 'star' },
+          ],
+        },
+      })
+
+      expect(wrapper.find('.preview__alert-icon svg').exists()).toBe(true)
+      expect(wrapper.find('.preview__alert-icon').text()).toBe('')
+      expect(wrapper.find('.preview__alert-title').exists()).toBe(false)
+    })
+
+    it('a hibás típus és ikon biztonságos alapértéket kap, és kattintásra kijelöl', async () => {
+      const wrapper = mount(PagePreview, {
+        props: {
+          components: [
+            {
+              id: 'a',
+              type: 'alert',
+              variant: 'danger' as 'error',
+              text: 'Szöveg',
+              icon: 'nincs-ilyen',
+            },
+          ],
+        },
+      })
+
+      expect(wrapper.find('.preview__alert').classes()).toContain('preview__alert--info')
+      expect(wrapper.find('.preview__alert-icon').text()).toBe('i')
+      await wrapper.find('.preview__alert').trigger('click')
+      expect(wrapper.emitted('select')).toEqual([['a']])
+    })
+  })
+
   describe('térköz', () => {
     const heightOf = (wrapper: ReturnType<typeof mount>, index = 0) =>
       (wrapper.findAll('.preview__spacer')[index]!.element as HTMLElement).style.height

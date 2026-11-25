@@ -52,6 +52,14 @@
         @for ($rem = \App\Support\PageContentRules::SPACER_MIN_HEIGHT; $rem <= \App\Support\PageContentRules::SPACER_MAX_HEIGHT; $rem++)
         .spacer--{{ $rem }} { height: {{ $rem }}rem; }
         @endfor
+        .visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+        .alert { --alert-color: #2563eb; display: flex; gap: .75rem; align-items: flex-start; margin: 1rem 0; padding: .75rem 1rem; color: var(--text); background: color-mix(in srgb, var(--alert-color) 12%, var(--bg)); border: 1px solid color-mix(in srgb, var(--alert-color) 40%, var(--bg)); border-left: 4px solid var(--alert-color); border-radius: .5rem; }
+        .alert--success { --alert-color: #16a34a; } .alert--warning { --alert-color: #d97706; } .alert--error { --alert-color: #dc2626; }
+        .alert__icon { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 1.5rem; height: 1.5rem; font-weight: 700; line-height: 1; }
+        .alert__icon .icon { width: 1.25rem; height: 1.25rem; margin: 0; color: inherit; }
+        .alert__body { min-width: 0; overflow-wrap: anywhere; }
+        .alert__title { display: block; }
+        .alert__body p { margin: 0; }
         .divider { margin: 1.5rem 0; border: 0; border-top: var(--divider-width, 1px) var(--divider-style, solid) var(--divider-color, var(--border)); }
         .divider--thickness-thin { --divider-width: 1px; } .divider--thickness-medium { --divider-width: 2px; } .divider--thickness-thick { --divider-width: 4px; }
         .divider--style-solid { --divider-style: solid; } .divider--style-dashed { --divider-style: dashed; } .divider--style-dotted { --divider-style: dotted; }
@@ -107,6 +115,19 @@
                     @endif
                 </article>
             @endforeach
+            </div>
+            @break
+        @case('alert')
+            @php($variant = $site->alertVariant($component))
+            <div class="alert alert--{{ $variant }}" role="note">
+                <span class="alert__icon" aria-hidden="true">{!! $site->icon($component['icon'] ?? null) ?: e($site->alertMarker($variant)) !!}</span>
+                <div class="alert__body">
+                    <span class="visually-hidden">{{ $site->alertLabel($variant) }}: </span>
+                    @if (filled($component['title'] ?? null))
+                        <strong class="alert__title">{{ $component['title'] }}</strong>
+                    @endif
+                    <p>{{ $component['text'] ?? '' }}</p>
+                </div>
             </div>
             @break
         @case('spacer')

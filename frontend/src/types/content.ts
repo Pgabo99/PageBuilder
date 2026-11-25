@@ -116,6 +116,18 @@ export interface SpacerComponent {
   height: number
 }
 
+export type AlertVariant = 'info' | 'success' | 'warning' | 'error'
+
+/** Értesítődoboz: a típus és a szöveg kötelező, a cím és az ikon opcionális. */
+export interface AlertComponent {
+  id: string
+  type: 'alert'
+  variant: AlertVariant
+  title?: string | null
+  text: string
+  icon?: string | null
+}
+
 export interface AccordionComponent {
   id: string
   type: 'accordion'
@@ -130,6 +142,7 @@ export type PageComponent =
   | AccordionComponent
   | DividerComponent
   | SpacerComponent
+  | AlertComponent
 export type ComponentType = PageComponent['type']
 
 export interface Page {

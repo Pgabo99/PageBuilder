@@ -178,6 +178,38 @@ describe('tartalom validálása', function () {
         expect(Page::first()->content[0])->toEqual($old);
     });
 
+    it('hibás értesítést elutasít', function (array $alert, string $errorKey) {
+        $valid = ['id' => 'n', 'type' => 'alert', 'variant' => 'info', 'text' => 'Szöveg'];
+
+        $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [
+            'title' => 'X', 'slug' => 'x', 'content' => [[...$valid, ...$alert]],
+        ])->assertUnprocessable()->assertJsonValidationErrors($errorKey);
+    })->with([
+        'ismeretlen típus' => [['variant' => 'danger'], 'content.0.variant'],
+        'típus nélkül' => [['variant' => null], 'content.0.variant'],
+        'tömb típusként' => [['variant' => ['info']], 'content.0.variant'],
+        'szöveg nélkül' => [['text' => null], 'content.0.text'],
+        'túl hosszú szöveg' => [['text' => str_repeat('a', 501)], 'content.0.text'],
+        'túl hosszú cím' => [['title' => str_repeat('a', 101)], 'content.0.title'],
+        'ismeretlen ikon' => [['icon' => 'nincs-ilyen'], 'content.0.icon'],
+        'SVG-kód ikonként' => [['icon' => '<svg onload=alert(1)></svg>'], 'content.0.icon'],
+    ]);
+
+    it('elfogadja az értesítést minden típussal, címmel és ikonnal, címmel és ikon nélkül is', function (string $variant) {
+        $full = ['id' => 'n', 'type' => 'alert', 'variant' => $variant, 'title' => 'Cím', 'text' => 'Szöveg', 'icon' => 'info'];
+        $plain = ['id' => 'm', 'type' => 'alert', 'variant' => $variant, 'text' => 'Csak szöveg'];
+
+        $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [
+            'title' => 'X', 'slug' => 'x',
+            'content' => [$full, [...$plain, 'junk' => 'x'], [...$plain, 'id' => 'o', 'title' => null, 'icon' => null]],
+        ])->assertCreated();
+
+        $content = Page::first()->content;
+        expect($content[0])->toEqual($full)
+            ->and($content[1])->toEqual($plain)
+            ->and($content[2])->toEqual([...$plain, 'id' => 'o', 'title' => null, 'icon' => null]);
+    })->with(['info', 'success', 'warning', 'error']);
+
     it('hibás térközt elutasít', function (array $spacer) {
         $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [
             'title' => 'X', 'slug' => 'x', 'content' => [['id' => 's', 'type' => 'spacer', ...$spacer]],
