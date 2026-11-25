@@ -565,6 +565,30 @@ describe('PageEditorView', () => {
     expect(wrapper.find('.preview__cards').classes()).not.toContain('preview__cards--gap-large')
   })
 
+  it('a térköz felvehető, a magassága állítható, az előnézet követi, mentéskor elmegy', async () => {
+    vi.mocked(pagesApi.update).mockImplementation(async (_id, payload) => ({ ...page, ...payload }))
+    const wrapper = await mountEditor()
+    const before = wrapper.findAll('.component').length
+
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text() === '+ Térköz')!
+      .trigger('click')
+    expect(wrapper.findAll('.component')).toHaveLength(before + 1)
+    expect((wrapper.find('.preview__spacer').element as HTMLElement).style.height).toBe('2rem')
+
+    await wrapper.find('input[type="number"]').setValue(6)
+
+    expect((wrapper.find('.preview__spacer').element as HTMLElement).style.height).toBe('6rem')
+    await wrapper.find('button.btn:not(.btn--secondary)').trigger('click')
+    await flushPromises()
+
+    expect(vi.mocked(pagesApi.update).mock.calls[0]![1].content[before]).toMatchObject({
+      type: 'spacer',
+      height: 6,
+    })
+  })
+
   it('az elválasztó felvehető, beállítható, az előnézet követi, mentéskor elmegy', async () => {
     vi.mocked(pagesApi.update).mockImplementation(async (_id, payload) => ({ ...page, ...payload }))
     const wrapper = await mountEditor()

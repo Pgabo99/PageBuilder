@@ -109,6 +109,13 @@ export interface DividerComponent {
   color?: 'border' | 'text' | 'accent' | null
 }
 
+/** Függőleges térköz; a magasság rem-ben, egész szám (`MIN_SPACER_HEIGHT`–`MAX_SPACER_HEIGHT`). */
+export interface SpacerComponent {
+  id: string
+  type: 'spacer'
+  height: number
+}
+
 export interface AccordionComponent {
   id: string
   type: 'accordion'
@@ -122,6 +129,7 @@ export type PageComponent =
   | CardsComponent
   | AccordionComponent
   | DividerComponent
+  | SpacerComponent
 export type ComponentType = PageComponent['type']
 
 export interface Page {

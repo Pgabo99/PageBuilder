@@ -16,6 +16,8 @@ import {
   componentLabel,
   componentSummary,
   DIVIDER_OPTIONS,
+  MAX_SPACER_HEIGHT,
+  MIN_SPACER_HEIGHT,
   HEADING_ALIGNS,
   HEADING_LEVELS,
   HEADING_SIZES,
@@ -221,6 +223,20 @@ const uid = useId()
         </details>
         <CardsEditor v-model="model.cards" :errors="errors" :targets="targets" />
       </template>
+
+      <div v-else-if="model.type === 'spacer'" class="field">
+        <label :for="`${uid}-height`">Magasság (rem)</label>
+        <input
+          :id="`${uid}-height`"
+          v-model.number="model.height"
+          :aria-invalid="!!errors.height"
+          :min="MIN_SPACER_HEIGHT"
+          :max="MAX_SPACER_HEIGHT"
+          step="1"
+          type="number"
+        />
+        <p v-if="errors.height" class="field__error">{{ errors.height.join(' ') }}</p>
+      </div>
 
       <OptionFields
         v-else-if="model.type === 'divider'"
