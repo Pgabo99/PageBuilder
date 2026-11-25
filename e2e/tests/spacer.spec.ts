@@ -22,7 +22,7 @@ test('térköz: a magasság állítható, az előnézet egyezik a publikált old
 
   await savePage(page)
   await page.reload()
-  await page.locator('.component__toggle', { hasText: /^6 rem térköz/ }).click()
+  await page.locator('.component__toggle', { hasText: /^Térköz/ }).click()
   await expect(page.getByLabel('Magasság (rem)')).toHaveValue('6')
 
   await page.goto(websiteUrl)
