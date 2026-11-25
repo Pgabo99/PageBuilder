@@ -52,6 +52,13 @@
         @for ($rem = \App\Support\PageContentRules::SPACER_MIN_HEIGHT; $rem <= \App\Support\PageContentRules::SPACER_MAX_HEIGHT; $rem++)
         .spacer--{{ $rem }} { height: {{ $rem }}rem; }
         @endfor
+        .quote { margin: 1.5rem 0; padding: .25rem 1rem; border-left: 4px solid var(--accent); }
+        .quote blockquote { margin: 0; font-size: 1.125rem; font-style: italic; overflow-wrap: anywhere; }
+        .quote blockquote p { margin: 0; }
+        .quote figcaption { margin-top: .5rem; font-size: .9rem; overflow-wrap: anywhere; }
+        .quote figcaption::before { content: "— "; }
+        .quote cite { font-style: normal; }
+        .quote cite a { color: var(--accent); }
         .visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
         .alert { --alert-color: #2563eb; display: flex; gap: .75rem; align-items: flex-start; margin: 1rem 0; padding: .75rem 1rem; color: var(--text); background: color-mix(in srgb, var(--alert-color) 12%, var(--bg)); border: 1px solid color-mix(in srgb, var(--alert-color) 40%, var(--bg)); border-left: 4px solid var(--alert-color); border-radius: .5rem; }
         .alert--success { --alert-color: #16a34a; } .alert--warning { --alert-color: #d97706; } .alert--error { --alert-color: #dc2626; }
@@ -116,6 +123,26 @@
                 </article>
             @endforeach
             </div>
+            @break
+        @case('quote')
+            <figure class="quote">
+                <blockquote><p>{{ $component['text'] ?? '' }}</p></blockquote>
+                @if (filled($component['author'] ?? null) || filled($component['source'] ?? null))
+                    <figcaption>
+                        @if (filled($component['author'] ?? null)){{ $component['author'] }}@endif
+                        @if (filled($component['author'] ?? null) && filled($component['source'] ?? null)), @endif
+                        @if (filled($component['source'] ?? null))
+                            <cite>
+                                @if ($site->isSafeUrl($component['source_url'] ?? ''))
+                                    <a href="{{ $component['source_url'] }}">{{ $component['source'] }}</a>
+                                @else
+                                    {{ $component['source'] }}
+                                @endif
+                            </cite>
+                        @endif
+                    </figcaption>
+                @endif
+            </figure>
             @break
         @case('alert')
             @php($variant = $site->alertVariant($component))

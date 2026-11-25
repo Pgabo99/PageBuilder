@@ -253,6 +253,45 @@ describe('job', function () {
             ->toContain('<div class="cards">');
     });
 
+    it('az idézet blockquote és cite elemekkel, a forráslinkkel jelenik meg, a tartalom escape-elt', function () {
+        $this->index->update(['content' => [
+            ['id' => 'a', 'type' => 'quote', 'text' => '<b>Idézet</b>', 'author' => '"><img src=x onerror=1>', 'source' => 'Könyv', 'source_url' => 'https://example.com/?a=1&b=2'],
+            ['id' => 'b', 'type' => 'quote', 'text' => 'Csak szöveg'],
+            ['id' => 'c', 'type' => 'quote', 'text' => 'Link nélkül', 'source' => 'Forrás'],
+        ]]);
+
+        runJob($this->website);
+
+        $html = file_get_contents("{$this->dir}/proba/index.html");
+        expect($html)
+            ->toContain('<figure class="quote">')
+            ->toContain('<blockquote><p>&lt;b&gt;Idézet&lt;/b&gt;</p></blockquote>')
+            ->toContain('&quot;&gt;&lt;img src=x onerror=1&gt;')
+            ->toContain('<cite>')
+            ->toContain('<a href="https://example.com/?a=1&amp;b=2">Könyv</a>')
+            ->toContain('<blockquote><p>Csak szöveg</p></blockquote>')
+            ->not->toContain('<img')
+            ->and(substr_count($html, '<figcaption>'))->toBe(2)
+            ->and(substr_count($html, '<cite>'))->toBe(2)
+            ->and(substr_count($html, '<a href="https://example.com'))->toBe(1);
+    });
+
+    it('a nem biztonságos tárolt forráslink nem kerül a HTML-be (a validációt megkerülve sem)', function () {
+        $this->index->update(['content' => [
+            ['id' => 'a', 'type' => 'quote', 'text' => 'Egy', 'source' => 'Rossz', 'source_url' => 'javascript:alert(1)'],
+            ['id' => 'b', 'type' => 'quote', 'text' => 'Kettő', 'source' => 'Rossz2', 'source_url' => ['x']],
+        ]]);
+
+        runJob($this->website);
+
+        $html = file_get_contents("{$this->dir}/proba/index.html");
+        expect($html)
+            ->not->toContain('javascript:')
+            ->toContain('Rossz')
+            ->toContain('Rossz2')
+            ->and(preg_match('~<cite>\s*<a~', $html))->toBe(0);
+    });
+
     it('az értesítés típusa szövegesen és látható jellel is megjelenik, a tartalom escape-elt', function () {
         $this->index->update(['content' => [
             ['id' => 'a', 'type' => 'alert', 'variant' => 'warning', 'title' => '<b>Figyelem</b>', 'text' => '"><img src=x onerror=1>', 'icon' => 'info'],

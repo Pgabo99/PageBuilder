@@ -69,7 +69,7 @@ class PageContentRules
     /** Az értesítődoboz típusai. */
     public const ALERT_VARIANTS = ['info', 'success', 'warning', 'error'];
 
-    private const TYPES = ['heading', 'text', 'button', 'cards', 'accordion', 'divider', 'spacer', 'alert'];
+    private const TYPES = ['heading', 'text', 'button', 'cards', 'accordion', 'divider', 'spacer', 'alert', 'quote'];
 
     /**
      * @return array<string, mixed>
@@ -160,6 +160,13 @@ class PageContentRules
                 'items.*.text' => ['required', 'string', 'max:2000'],
             ],
             'divider' => self::optionRules(self::DIVIDER_OPTIONS),
+            // A forrás linkje csak a forrás szövegével együtt adható meg (a link a forrás szövegén jelenik meg).
+            'quote' => [
+                'text' => ['required', 'string', 'max:500'],
+                'author' => ['nullable', 'string', 'max:100'],
+                'source' => ['nullable', 'string', 'max:150', "required_with:content.$index.source_url"],
+                'source_url' => ['nullable', 'string', 'max:2048', 'regex:'.self::URL_PATTERN],
+            ],
             'alert' => [
                 'variant' => ['required', 'string', Rule::in(self::ALERT_VARIANTS)],
                 'title' => ['nullable', 'string', 'max:100'],
