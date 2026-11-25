@@ -1,5 +1,7 @@
 import type {
   AccordionItem,
+  SocialItem,
+  SocialPlatform,
   StatItem,
   AlertVariant,
   CardsLayout,
@@ -317,6 +319,22 @@ export const alertMarker = (value: unknown): string =>
 export const MIN_STATS = 1
 export const MAX_STATS = 6
 
+/** A közösségi hivatkozások megengedett száma (a backend `PageContentRules::MAX_SOCIAL`-jával azonos). */
+export const MIN_SOCIAL = 1
+export const MAX_SOCIAL = 10
+
+/** A választható platformok; az érték a márkaikon neve (`brandIcons`). */
+export const SOCIAL_PLATFORMS: { value: SocialPlatform; label: string }[] = [
+  { value: 'facebook', label: 'Facebook' },
+  { value: 'instagram', label: 'Instagram' },
+  { value: 'twitter', label: 'Twitter / X' },
+  { value: 'linkedin', label: 'LinkedIn' },
+  { value: 'youtube', label: 'YouTube' },
+  { value: 'github', label: 'GitHub' },
+  { value: 'twitch', label: 'Twitch' },
+  { value: 'gitlab', label: 'GitLab' },
+]
+
 export const componentTypes: { type: ComponentType; label: string }[] = [
   { type: 'heading', label: 'Címsor' },
   { type: 'text', label: 'Szöveg' },
@@ -328,6 +346,7 @@ export const componentTypes: { type: ComponentType; label: string }[] = [
   { type: 'alert', label: 'Értesítődoboz' },
   { type: 'quote', label: 'Idézet' },
   { type: 'stats', label: 'Statisztika' },
+  { type: 'social', label: 'Közösségi média' },
 ]
 
 export function componentLabel(type: ComponentType): string {
@@ -343,6 +362,11 @@ function newId(): string {
 /** Új kártya: a cím kötelező, a többi mező opcionális. */
 export function createCard(): CardItem {
   return { id: newId(), icon: null, title: 'Új kártya', text: '', label: '', url: '' }
+}
+
+/** Új közösségi hivatkozás: a platform és a link is kötelező. */
+export function createSocial(): SocialItem {
+  return { id: newId(), platform: 'facebook', url: 'https://www.facebook.com/' }
 }
 
 /** Új statisztika: az érték és a megnevezés kötelező, a többi opcionális. */
@@ -379,6 +403,8 @@ export function createComponent(type: ComponentType): PageComponent {
       return { id, type, text: 'Új idézet' }
     case 'stats':
       return { id, type, items: [createStat()] }
+    case 'social':
+      return { id, type, items: [createSocial()] }
   }
 }
 
@@ -406,6 +432,10 @@ function summarySource(component: PageComponent): string {
       return `${component.height} rem térköz`
     case 'alert':
       return component.title || component.text
+    case 'social': {
+      const first = SOCIAL_PLATFORMS.find((item) => item.value === component.items[0]?.platform)
+      return `${component.items.length} hivatkozás${first ? `: ${first.label}` : ''}`
+    }
     case 'stats': {
       const first = component.items[0]?.label ?? ''
       return `${component.items.length} statisztika${first ? `: ${first}` : ''}`
@@ -453,6 +483,13 @@ export function cloneComponent(component: PageComponent): PageComponent {
     }
   }
   if (component.type === 'stats') {
+    return {
+      ...component,
+      id: newId(),
+      items: component.items.map((item) => ({ ...item, id: newId() })),
+    }
+  }
+  if (component.type === 'social') {
     return {
       ...component,
       id: newId(),

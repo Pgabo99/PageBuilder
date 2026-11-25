@@ -71,7 +71,9 @@ class PageContentRules
 
     public const MAX_STATS = 6;
 
-    private const TYPES = ['heading', 'text', 'button', 'cards', 'accordion', 'divider', 'spacer', 'alert', 'quote', 'stats'];
+    public const MAX_SOCIAL = 10;
+
+    private const TYPES = ['heading', 'text', 'button', 'cards', 'accordion', 'divider', 'spacer', 'alert', 'quote', 'stats', 'social'];
 
     /**
      * @return array<string, mixed>
@@ -178,6 +180,13 @@ class PageContentRules
                 'items.*.icon' => ['nullable', 'string', Rule::in(Icons::names())],
                 'items.*.prefix' => ['nullable', 'string', 'max:10'],
                 'items.*.suffix' => ['nullable', 'string', 'max:10'],
+            ],
+            // A platform a márkaikonok készletéből (`Icons::brandNames()`) választható; a link a meglévő URL-szabályt követi.
+            'social' => [
+                'items' => ['required', 'array', 'min:1', 'max:'.self::MAX_SOCIAL],
+                'items.*.id' => ['required', 'string', 'max:64'],
+                'items.*.platform' => ['required', 'string', Rule::in(Icons::brandNames())],
+                'items.*.url' => ['required', 'string', 'max:2048', 'regex:'.self::URL_PATTERN],
             ],
             'alert' => [
                 'variant' => ['required', 'string', Rule::in(self::ALERT_VARIANTS)],

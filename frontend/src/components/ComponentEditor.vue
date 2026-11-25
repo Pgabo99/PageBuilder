@@ -7,6 +7,7 @@ import FormField from '@/components/FormField.vue'
 import IconPicker from '@/components/IconPicker.vue'
 import OptionFields from '@/components/OptionFields.vue'
 import SelectField from '@/components/SelectField.vue'
+import SocialEditor from '@/components/SocialEditor.vue'
 import StatsEditor from '@/components/StatsEditor.vue'
 import type { PageComponent } from '@/types/content'
 import {
@@ -159,6 +160,13 @@ const uid = useId()
       </template>
 
       <StatsEditor v-else-if="model.type === 'stats'" v-model="model.items" :errors="errors" />
+
+      <SocialEditor
+        v-else-if="model.type === 'social'"
+        v-model="model.items"
+        :errors="errors"
+        :targets="targets"
+      />
 
       <template v-else-if="model.type === 'quote'">
         <FormField
