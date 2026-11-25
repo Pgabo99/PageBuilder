@@ -253,6 +253,39 @@ describe('job', function () {
             ->toContain('<div class="cards">');
     });
 
+    it('a térköz rem-ben megadott magasságú, a képernyőolvasók elől rejtett elemként jelenik meg', function () {
+        $this->index->update(['content' => [
+            ['id' => 'a', 'type' => 'spacer', 'height' => 5],
+        ]]);
+
+        runJob($this->website);
+
+        $html = file_get_contents("{$this->dir}/proba/index.html");
+        expect($html)
+            ->toContain('<div class="spacer--5" aria-hidden="true"></div>')
+            ->toContain('.spacer--5 { height: 5rem; }')
+            ->toContain('.spacer--20 { height: 20rem; }');
+    });
+
+    it('a hibás tárolt térköz a megengedett tartományra szorul (a validációt megkerülve sem)', function () {
+        $this->index->update(['content' => [
+            ['id' => 'a', 'type' => 'spacer', 'height' => 999],
+            ['id' => 'b', 'type' => 'spacer', 'height' => -4],
+            ['id' => 'c', 'type' => 'spacer', 'height' => '"><script>alert(1)</script>'],
+            ['id' => 'd', 'type' => 'spacer'],
+        ]]);
+
+        runJob($this->website);
+
+        $html = file_get_contents("{$this->dir}/proba/index.html");
+        expect($html)
+            ->not->toContain('<script')
+            ->toContain('<div class="spacer--20" aria-hidden="true"></div>')
+            // A negatív és a nem szám érték a minimumra, a hiányzó az alapértékre szorul.
+            ->and(substr_count($html, '<div class="spacer--1" aria-hidden="true"></div>'))->toBe(2)
+            ->and(substr_count($html, '<div class="spacer--2" aria-hidden="true"></div>'))->toBe(1);
+    });
+
     it('az elválasztó vízszintes vonalként, osztályokkal jelenik meg; az alapértelmezett osztály nélkül', function () {
         $this->index->update(['content' => [
             ['id' => 'a', 'type' => 'divider', 'thickness' => 'thick', 'style' => 'dotted', 'color' => 'accent'],

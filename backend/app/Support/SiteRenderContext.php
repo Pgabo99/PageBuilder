@@ -91,6 +91,14 @@ class SiteRenderContext
         return $this->modifierClass('cards', $component, PageContentRules::CARDS_OPTIONS);
     }
 
+    /** A térköz magassága rem-ben, a megengedett tartományra szorítva (a validációt megkerülő adat ellen is). */
+    public function spacerHeight(array $component): int
+    {
+        $height = (int) ($component['height'] ?? PageContentRules::SPACER_DEFAULT_HEIGHT);
+
+        return min(PageContentRules::SPACER_MAX_HEIGHT, max(PageContentRules::SPACER_MIN_HEIGHT, $height));
+    }
+
     /** Az elválasztó osztályai (`divider` + módosítók); csak az engedélyezett értékekből. */
     public function dividerClass(array $component): string
     {

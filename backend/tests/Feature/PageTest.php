@@ -178,6 +178,29 @@ describe('tartalom validálása', function () {
         expect(Page::first()->content[0])->toEqual($old);
     });
 
+    it('hibás térközt elutasít', function (array $spacer) {
+        $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [
+            'title' => 'X', 'slug' => 'x', 'content' => [['id' => 's', 'type' => 'spacer', ...$spacer]],
+        ])->assertUnprocessable()->assertJsonValidationErrors('content.0.height');
+    })->with([
+        'magasság nélkül' => [[]],
+        'nulla' => [['height' => 0]],
+        'negatív' => [['height' => -3]],
+        'túl nagy' => [['height' => 21]],
+        'tört szám' => [['height' => 1.5]],
+        'szöveg' => [['height' => 'nagy']],
+        'CSS értékként' => [['height' => '2rem;color:red']],
+        'tömb' => [['height' => [2]]],
+    ]);
+
+    it('elfogadja a térközt a megengedett tartomány határain, és csak a magasságot tárolja', function (int $height) {
+        $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [
+            'title' => 'X', 'slug' => 'x', 'content' => [['id' => 's', 'type' => 'spacer', 'height' => $height, 'junk' => 'x']],
+        ])->assertCreated();
+
+        expect(Page::first()->content[0])->toEqual(['id' => 's', 'type' => 'spacer', 'height' => $height]);
+    })->with([1, 2, 20]);
+
     it('hibás elválasztót elutasít', function (string $option, mixed $value) {
         $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [
             'title' => 'X', 'slug' => 'x',
