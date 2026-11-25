@@ -314,6 +314,65 @@ describe('job', function () {
             ->and(substr_count($html, 'href="https://example.com"'))->toBe(6);
     });
 
+    it('az egyedi paletta felülírja a háttér- és szövegszínt, a keretszín ebből számolt, az elsődleges a hivatkozásoké', function () {
+        $this->website->update(['palette' => ['background' => '#101820', 'text' => '#F2F2F2', 'primary' => '#FF8800']]);
+
+        runJob($this->website);
+
+        $html = file_get_contents("{$this->dir}/proba/index.html");
+        expect($html)
+            ->toContain('--bg: #101820')
+            ->toContain('--text: #f2f2f2')
+            ->toContain('--border: color-mix(in srgb, #f2f2f2 20%, #101820)')
+            ->toContain('--primary: #ff8800')
+            ->toContain('nav a { color: var(--primary)');
+    });
+
+    it('a részleges paletta csak a megadott színt cseréli, az alap a téma és a kiemelőszín', function () {
+        $this->website->update(['page_theme' => 'dark', 'accent_color' => '#E11D48', 'palette' => ['text' => '#ffffff']]);
+
+        runJob($this->website);
+
+        $html = file_get_contents("{$this->dir}/proba/index.html");
+        expect($html)
+            ->toContain('--bg: #0f1115')
+            ->toContain('--text: #ffffff')
+            ->toContain('--border: color-mix(in srgb, #ffffff 20%, #0f1115)')
+            ->toContain('--accent: #e11d48')
+            ->toContain('--primary: #e11d48');
+    });
+
+    it('paletta nélkül a megjelenés a korábbival azonos: a téma keretszíne és az elsődleges a kiemelőszín', function () {
+        $this->website->update(['page_theme' => 'blue']);
+
+        runJob($this->website);
+
+        $html = file_get_contents("{$this->dir}/proba/index.html");
+        expect($html)
+            ->toContain('--bg: #eef4ff')
+            ->toContain('--border: #bcd0f2')
+            ->toContain('--primary: #1d5fd1')
+            ->not->toContain('color-mix(in srgb, #');
+    });
+
+    it('a hibás tárolt palettaszín nem kerül a CSS-be (a validációt megkerülve sem)', function () {
+        $this->website->update(['palette' => [
+            'background' => '#fff;}</style><script>alert(1)</script>',
+            'text' => ['x'],
+            'primary' => 'red',
+        ]]);
+
+        runJob($this->website);
+
+        $html = file_get_contents("{$this->dir}/proba/index.html");
+        expect($html)
+            ->not->toContain('<script')
+            ->toContain('--bg: #ffffff')
+            ->toContain('--text: #1f2328')
+            ->toContain('--border: #d1d9e0')
+            ->toContain('--primary: #2f5bea');
+    });
+
     it('a közösségi linkek márkaikonnal és olvasható névvel jelennek meg, rel=noopener noreferrer', function () {
         $this->index->update(['content' => [
             ['id' => 's', 'type' => 'social', 'items' => [

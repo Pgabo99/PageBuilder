@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest'
 
-import { isPageTheme, onAccent, pageStyle, pageThemes, resolveAccent, themeAccent } from '../themes'
+import {
+  isPageTheme,
+  onAccent,
+  pageStyle,
+  pageThemes,
+  resolveAccent,
+  resolveColors,
+  themeAccent,
+} from '../themes'
 
 describe('pageThemes', () => {
   it('a négy támogatott témát tartalmazza', () => {
@@ -44,5 +52,51 @@ describe('pageStyle', () => {
   it('a gomb szövegszíne olvasható: világos kiemelőn fekete, sötétén fehér', () => {
     expect(onAccent('#ffe600')).toBe('#000000')
     expect(onAccent('#112244')).toBe('#ffffff')
+  })
+})
+
+describe('egyedi paletta', () => {
+  it('paletta nélkül a téma színeit adja, az elsődleges a kiemelőszín', () => {
+    expect(resolveColors('blue')).toMatchObject({
+      bg: '#eef4ff',
+      text: '#10264a',
+      border: '#bcd0f2',
+      accent: '#1d5fd1',
+      primary: '#1d5fd1',
+    })
+    expect(pageStyle('blue', null, null)).toEqual(pageStyle('blue'))
+  })
+
+  it('az egyedi színek felülírják a témát, a keret ezekből számolt', () => {
+    const colors = resolveColors('dark', '#E11D48', {
+      background: '#101820',
+      text: '#F2F2F2',
+      primary: '#FF8800',
+    })
+
+    expect(colors).toEqual({
+      bg: '#101820',
+      text: '#f2f2f2',
+      border: 'color-mix(in srgb, #f2f2f2 20%, #101820)',
+      accent: '#e11d48',
+      primary: '#ff8800',
+    })
+    expect(pageStyle('dark', '#E11D48', { primary: '#FF8800' })).toMatchObject({
+      '--bg': '#0f1115',
+      '--border': '#2b313c',
+      '--primary': '#ff8800',
+      '--accent': '#e11d48',
+    })
+  })
+
+  it('a részleges paletta a hiányzó színt a témából veszi, a hibás értéket elhagyja', () => {
+    expect(resolveColors('light', null, { text: '#112233' })).toMatchObject({
+      bg: '#ffffff',
+      text: '#112233',
+      border: 'color-mix(in srgb, #112233 20%, #ffffff)',
+    })
+    expect(
+      resolveColors('light', null, { background: 'red', text: null, primary: '#fff;}' }),
+    ).toMatchObject({ bg: '#ffffff', text: '#1f2328', border: '#d1d9e0', primary: '#2f5bea' })
   })
 })

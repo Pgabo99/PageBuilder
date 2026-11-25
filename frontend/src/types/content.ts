@@ -1,4 +1,4 @@
-import type { PageTheme } from '@/utils/themes'
+import type { PageTheme, WebsitePalette } from '@/utils/themes'
 
 export type PublishStatus = 'queued' | 'running' | 'succeeded' | 'failed'
 
@@ -12,6 +12,7 @@ export interface Website {
   publish_error: string | null
   accent_color: string | null
   page_theme: PageTheme | null
+  palette: WebsitePalette | null
   created_at: string
   updated_at: string
 }
@@ -21,6 +22,7 @@ export interface WebsitePayload {
   slug: string
   accent_color: string | null
   page_theme: PageTheme | null
+  palette: WebsitePalette | null
 }
 
 /** A címsor megjelenési mérete; az üres érték a szemantikus szinthez igazodó alapméret. */

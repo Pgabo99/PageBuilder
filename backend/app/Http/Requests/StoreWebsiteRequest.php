@@ -15,6 +15,29 @@ class StoreWebsiteRequest extends FormRequest
 
     public const PAGE_THEMES = ['light', 'dark', 'blue', 'purple'];
 
+    /** Az egyedi színpaletta kulcsai (a kiemelőszín az `accent_color` mezőben van). */
+    public const PALETTE_COLORS = ['background', 'text', 'primary'];
+
+    /**
+     * A megjelenés mezői (kiemelőszín, téma, egyedi színek): a webhely létrehozásánál és módosításánál közös.
+     *
+     * @return array<string, mixed>
+     */
+    public static function appearanceRules(): array
+    {
+        $palette = [];
+        foreach (self::PALETTE_COLORS as $color) {
+            $palette["palette.$color"] = ['nullable', 'string', 'regex:'.self::COLOR_PATTERN];
+        }
+
+        return [
+            'accent_color' => ['nullable', 'string', 'regex:'.self::COLOR_PATTERN],
+            'page_theme' => ['nullable', 'string', Rule::in(self::PAGE_THEMES)],
+            'palette' => ['nullable', 'array'],
+            ...$palette,
+        ];
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -23,8 +46,7 @@ class StoreWebsiteRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['required', 'string', 'max:63', 'regex:'.self::SLUG_PATTERN, 'unique:websites,slug'],
-            'accent_color' => ['nullable', 'string', 'regex:'.self::COLOR_PATTERN],
-            'page_theme' => ['nullable', 'string', Rule::in(self::PAGE_THEMES)],
+            ...self::appearanceRules(),
         ];
     }
 }

@@ -24,6 +24,7 @@ const base: Website = {
   publish_error: null,
   accent_color: null,
   page_theme: null,
+  palette: null,
   created_at: '',
   updated_at: '',
 }
