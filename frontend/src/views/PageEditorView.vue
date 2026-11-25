@@ -370,6 +370,7 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', warnBeforeUnloa
             :components="form.content"
             :theme="website?.page_theme"
             :accent="website?.accent_color"
+            :palette="website?.palette"
             :active-id="activeId"
             @select="activate($event)"
           />

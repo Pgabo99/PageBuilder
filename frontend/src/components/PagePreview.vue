@@ -20,7 +20,7 @@ import {
 } from '@/utils/components'
 import { findBrandIcon, findIcon } from '@/utils/icons'
 import type { FooterLink, PageComponent } from '@/types/content'
-import { pageStyle, type PageTheme } from '@/utils/themes'
+import { pageStyle, type PageTheme, type WebsitePalette } from '@/utils/themes'
 
 // Az előnézet a szerkesztett (akár mentetlen) tartalomból renderel, a publikált oldal megjelenésével.
 // A gombok nem navigálnak; a kattintás csak az elemet jelöli ki a szerkesztőben (billentyűzettel a
@@ -29,12 +29,13 @@ const props = defineProps<{
   components: readonly PageComponent[]
   theme?: PageTheme | null
   accent?: string | null
+  palette?: WebsitePalette | null
   activeId?: string | null
 }>()
 
 defineEmits<{ select: [id: string] }>()
 
-const style = computed(() => pageStyle(props.theme, props.accent))
+const style = computed(() => pageStyle(props.theme, props.accent, props.palette))
 
 // A publikált oldalon a lábléc (legfeljebb egy) mindig a tartalom után áll, a szerkesztési sorrendtől függetlenül.
 const shown = computed(() => {
@@ -578,7 +579,7 @@ const level = (value: number): number => Math.min(6, Math.max(1, Math.trunc(valu
 }
 
 .preview__footer-link {
-  color: var(--accent);
+  color: var(--primary);
   text-decoration: underline;
 }
 
@@ -666,7 +667,7 @@ const level = (value: number): number => Math.min(6, Math.max(1, Math.trunc(valu
 }
 
 .preview__quote-link {
-  color: var(--accent);
+  color: var(--primary);
   text-decoration: underline;
 }
 

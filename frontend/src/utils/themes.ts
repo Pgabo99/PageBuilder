@@ -1,3 +1,5 @@
+import { relativeLuminance } from '@/utils/contrast'
+
 export type PageTheme = 'light' | 'dark' | 'blue' | 'purple'
 
 interface ThemeDefinition {
@@ -67,28 +69,64 @@ export function resolveAccent(theme: PageTheme | null | undefined, accent?: stri
 
 /** A kiemelőszínű felületen olvasható szövegszín (relatív fényesség, mint a backendben). */
 export function onAccent(accent: string): '#000000' | '#ffffff' {
-  const [r, g, b] = [1, 3, 5].map((i) => parseInt(accent.slice(i, i + 2), 16) / 255) as [
-    number,
-    number,
-    number,
-  ]
-  const linear = (c: number) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)
-  const luminance = 0.2126 * linear(r) + 0.7152 * linear(g) + 0.0722 * linear(b)
-  return luminance > 0.179 ? '#000000' : '#ffffff'
+  return relativeLuminance(accent) > 0.179 ? '#000000' : '#ffffff'
 }
 
-/** A publikált oldal CSS-változói (`--bg`, `--text`, `--border`, `--accent`, `--on-accent`). */
+/** Az egyedi színek (a kiemelőszín az `accent_color` mezőben van); az üres érték a téma alapértéke. */
+export interface WebsitePalette {
+  background?: string | null
+  text?: string | null
+  primary?: string | null
+}
+
+export interface ResolvedColors {
+  bg: string
+  text: string
+  border: string
+  accent: string
+  /** A navigáció és a hivatkozások színe; alapból a kiemelőszín. */
+  primary: string
+}
+
+const customColor = (value: unknown): string | null =>
+  typeof value === 'string' && COLOR_PATTERN.test(value) ? value.toLowerCase() : null
+
+/** A tényleges színek: téma, egyedi paletta és kiemelőszín összevonva (mint a backend `SiteRenderContext`). */
+export function resolveColors(
+  theme: PageTheme | null | undefined,
+  accent?: string | null,
+  palette?: WebsitePalette | null,
+): ResolvedColors {
+  const base = themeOf(theme)
+  const bg = customColor(palette?.background)
+  const text = customColor(palette?.text)
+  const resolvedAccent = resolveAccent(theme, accent)
+  return {
+    bg: bg ?? base.bg,
+    text: text ?? base.text,
+    // Egyedi háttér- vagy szövegszínnél a keret a szöveg 20%-a a háttéren.
+    border:
+      bg === null && text === null
+        ? base.border
+        : `color-mix(in srgb, ${text ?? base.text} 20%, ${bg ?? base.bg})`,
+    accent: resolvedAccent,
+    primary: customColor(palette?.primary) ?? resolvedAccent,
+  }
+}
+
+/** A publikált oldal CSS-változói (`--bg`, `--text`, `--border`, `--accent`, `--primary`, `--on-accent`). */
 export function pageStyle(
   theme: PageTheme | null | undefined,
   accent?: string | null,
+  palette?: WebsitePalette | null,
 ): Record<string, string> {
-  const { bg, text, border } = themeOf(theme)
-  const resolved = resolveAccent(theme, accent)
+  const colors = resolveColors(theme, accent, palette)
   return {
-    '--bg': bg,
-    '--text': text,
-    '--border': border,
-    '--accent': resolved,
-    '--on-accent': onAccent(resolved),
+    '--bg': colors.bg,
+    '--text': colors.text,
+    '--border': colors.border,
+    '--accent': colors.accent,
+    '--primary': colors.primary,
+    '--on-accent': onAccent(colors.accent),
   }
 }

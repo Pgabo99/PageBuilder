@@ -170,6 +170,25 @@ describe('PagePreview', () => {
     })
   })
 
+  describe('egyedi paletta', () => {
+    it('a CSS-változók az egyedi színekből készülnek, paletta nélkül a téma színeivel', () => {
+      const withPalette = mount(PagePreview, {
+        props: {
+          components,
+          theme: 'dark',
+          palette: { background: '#101820', text: '#f2f2f2', primary: '#ff8800' },
+        },
+      })
+      const plain = mount(PagePreview, { props: { components, theme: 'dark' } })
+
+      expect(withPalette.attributes('style')).toContain('--bg: #101820')
+      expect(withPalette.attributes('style')).toContain('--text: #f2f2f2')
+      expect(withPalette.attributes('style')).toContain('--primary: #ff8800')
+      expect(plain.attributes('style')).toContain('--bg: #0f1115')
+      expect(plain.attributes('style')).toContain('--primary: #2f5bea')
+    })
+  })
+
   describe('lábléc', () => {
     it('a tartalom után jelenik meg, a szerkesztési sorrendtől függetlenül, és csak az első', () => {
       const wrapper = mount(PagePreview, {
