@@ -565,6 +565,40 @@ describe('PageEditorView', () => {
     expect(wrapper.find('.preview__cards').classes()).not.toContain('preview__cards--gap-large')
   })
 
+  it('az értesítődoboz felvehető, szerkeszthető, az előnézet követi, mentéskor elmegy', async () => {
+    vi.mocked(pagesApi.update).mockImplementation(async (_id, payload) => ({ ...page, ...payload }))
+    const wrapper = await mountEditor()
+    const before = wrapper.findAll('.component').length
+
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text() === '+ Értesítődoboz')!
+      .trigger('click')
+    expect(wrapper.findAll('.component')).toHaveLength(before + 1)
+    expect(wrapper.find('.preview__alert').classes()).toContain('preview__alert--info')
+
+    await selectByLabel(wrapper, 'Típus').setValue('error')
+    await wrapper
+      .findAll('.field')
+      .find((f) => f.find('label').text() === 'Cím (opcionális)')!
+      .find('input')
+      .setValue('Hiba történt')
+    await wrapper.find('input[aria-label="Csillag"]').setValue(true)
+
+    expect(wrapper.find('.preview__alert').classes()).toContain('preview__alert--error')
+    expect(wrapper.find('.preview__alert-title').text()).toBe('Hiba történt')
+    expect(wrapper.find('.preview__alert-icon svg').exists()).toBe(true)
+    await wrapper.find('button.btn:not(.btn--secondary)').trigger('click')
+    await flushPromises()
+
+    expect(vi.mocked(pagesApi.update).mock.calls[0]![1].content[before]).toMatchObject({
+      type: 'alert',
+      variant: 'error',
+      title: 'Hiba történt',
+      icon: 'star',
+    })
+  })
+
   it('a térköz felvehető, a magassága állítható, az előnézet követi, mentéskor elmegy', async () => {
     vi.mocked(pagesApi.update).mockImplementation(async (_id, payload) => ({ ...page, ...payload }))
     const wrapper = await mountEditor()

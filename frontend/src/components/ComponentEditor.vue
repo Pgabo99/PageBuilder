@@ -9,6 +9,7 @@ import OptionFields from '@/components/OptionFields.vue'
 import SelectField from '@/components/SelectField.vue'
 import type { PageComponent } from '@/types/content'
 import {
+  ALERT_VARIANTS,
   BUTTON_OPTIONS,
   CARDS_OPTIONS,
   componentLabel,
@@ -154,6 +155,30 @@ const uid = useId()
           <OptionFields v-model="model" :spec="CARDS_OPTIONS" :errors="errors" />
         </details>
         <CardsEditor v-model="model.cards" :errors="errors" :targets="targets" />
+      </template>
+
+      <template v-else-if="model.type === 'alert'">
+        <SelectField
+          v-model="model.variant"
+          label="Típus"
+          :options="ALERT_VARIANTS"
+          :error="errors.variant"
+        />
+        <FormField
+          v-model="model.title"
+          label="Cím (opcionális)"
+          :required="false"
+          :error="errors.title"
+        />
+        <FormField
+          v-model="model.text"
+          label="Szöveg"
+          multiline
+          :rows="3"
+          :required="false"
+          :error="errors.text"
+        />
+        <IconPicker v-model="model.icon" :error="errors.icon" />
       </template>
 
       <FormField

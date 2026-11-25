@@ -7,6 +7,8 @@ import {
   buttonWrapClasses,
   cardsClasses,
   dividerClasses,
+  alertMarker,
+  alertVariant,
   headingClasses,
   spacerHeight,
   MAX_ACCORDION_ITEMS,
@@ -96,6 +98,25 @@ const level = (value: number): number => Math.min(6, Math.max(1, Math.trunc(valu
           <summary tabindex="-1">{{ item.title }}</summary>
           <p>{{ item.text }}</p>
         </details>
+      </div>
+      <div
+        v-else-if="component.type === 'alert'"
+        class="preview__item preview__alert"
+        :class="[
+          { 'preview__item--active': component.id === activeId },
+          `preview__alert--${alertVariant(component.variant)}`,
+        ]"
+        :data-component-id="component.id"
+        @click="$emit('select', component.id)"
+      >
+        <span class="preview__alert-icon">
+          <AppIcon v-if="findIcon(component.icon)" :name="component.icon" />
+          <template v-else>{{ alertMarker(component.variant) }}</template>
+        </span>
+        <div class="preview__alert-body">
+          <strong v-if="component.title" class="preview__alert-title">{{ component.title }}</strong>
+          <p>{{ component.text }}</p>
+        </div>
       </div>
       <!-- A szaggatott keret csak szerkesztői jelölés (hogy a térköz ne tűnjön üres elemnek); a publikált oldalon nincs. -->
       <div
@@ -431,6 +452,64 @@ const level = (value: number): number => Math.min(6, Math.max(1, Math.trunc(valu
 .preview__accordion details p {
   margin: 0;
   padding: 0 1rem 1rem;
+}
+
+/* Mint a publikált oldal `.alert` szabályai. */
+.preview__alert {
+  --alert-color: #2563eb;
+
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  padding: 0.75rem 1rem;
+  margin: 1rem 0;
+  color: var(--text);
+  background: color-mix(in srgb, var(--alert-color) 12%, var(--bg));
+  border: 1px solid color-mix(in srgb, var(--alert-color) 40%, var(--bg));
+  border-left: 4px solid var(--alert-color);
+  border-radius: 0.5rem;
+}
+
+.preview__alert--success {
+  --alert-color: #16a34a;
+}
+
+.preview__alert--warning {
+  --alert-color: #d97706;
+}
+
+.preview__alert--error {
+  --alert-color: #dc2626;
+}
+
+.preview__alert-icon {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.preview__alert-icon .icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin: 0;
+  color: inherit;
+}
+
+.preview__alert-body {
+  min-width: 0;
+}
+
+.preview__alert-title {
+  display: block;
+}
+
+.preview__alert-body p {
+  margin: 0;
 }
 
 .preview__spacer {

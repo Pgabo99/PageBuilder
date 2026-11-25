@@ -8,6 +8,8 @@ import {
   buttonClasses,
   cardsClasses,
   buttonWrapClasses,
+  alertMarker,
+  alertVariant,
   createAccordionItem,
   spacerHeight,
   dividerClasses,
@@ -329,5 +331,23 @@ describe('térköz', () => {
     expect(spacerHeight(3.9)).toBe(3)
     expect(spacerHeight('x')).toBe(2)
     expect(spacerHeight(undefined)).toBe(2)
+  })
+})
+
+describe('értesítődoboz', () => {
+  it('információ típussal vehető fel, és van összefoglalója', () => {
+    const alert = createComponent('alert')
+
+    expect(alert).toMatchObject({ type: 'alert', variant: 'info', text: 'Új értesítés' })
+    expect(componentSummary(alert)).toBe('Új értesítés')
+    expect(componentSummary({ ...(alert as object), title: 'Cím' } as typeof alert)).toBe('Cím')
+    expect(componentTypes.map((t) => t.type)).toContain('alert')
+  })
+
+  it('az ismeretlen típus információ, a jel típusonként különbözik', () => {
+    expect(alertVariant('error')).toBe('error')
+    expect(alertVariant('danger')).toBe('info')
+    expect(alertVariant(undefined)).toBe('info')
+    expect(['info', 'success', 'warning', 'error'].map(alertMarker)).toEqual(['i', '✓', '!', '✕'])
   })
 })
