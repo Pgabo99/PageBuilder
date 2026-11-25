@@ -139,6 +139,49 @@ describe('színbeállítások', function () {
         ])->assertOk()->assertJsonPath('data.accent_color', null)->assertJsonPath('data.page_theme', null);
     });
 
+    it('az egyedi színpalettát elmenti, visszaadja, és csak az ismert kulcsokat tárolja', function () {
+        $this->actingAs($this->user)->postJson('/api/v1/websites', [
+            'name' => 'Paletta', 'slug' => 'paletta',
+            'palette' => ['background' => '#112233', 'text' => '#FFFFFF', 'primary' => '#ff8800', 'junk' => '#000000'],
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.palette', ['background' => '#112233', 'text' => '#FFFFFF', 'primary' => '#ff8800']);
+
+        expect(Website::where('slug', 'paletta')->first()->palette)->not->toHaveKey('junk');
+    });
+
+    it('a paletta részleges, módosításkor törölhető, megadás nélkül üres', function () {
+        $website = Website::factory()->for($this->user)->create(['palette' => ['text' => '#112233']]);
+
+        $this->actingAs($this->user)->putJson("/api/v1/websites/{$website->id}", [
+            'name' => $website->name, 'slug' => $website->slug, 'palette' => ['primary' => '#ff0000'],
+        ])->assertOk()->assertJsonPath('data.palette', ['primary' => '#ff0000']);
+
+        $this->actingAs($this->user)->putJson("/api/v1/websites/{$website->id}", [
+            'name' => $website->name, 'slug' => $website->slug, 'palette' => null,
+        ])->assertOk()->assertJsonPath('data.palette', null);
+
+        $this->actingAs($this->user)->postJson('/api/v1/websites', ['name' => 'Új', 'slug' => 'uj'])
+            ->assertCreated()->assertJsonPath('data.palette', null);
+    });
+
+    it('hibás palettaszínt elutasít', function (string $key, mixed $value) {
+        $this->actingAs($this->user)->postJson('/api/v1/websites', [
+            'name' => 'X', 'slug' => 'x', 'palette' => [$key => $value],
+        ])->assertUnprocessable()->assertJsonValidationErrors("palette.$key");
+    })->with([
+        'rövid hex' => ['background', '#fff'],
+        'színnév' => ['text', 'red'],
+        'CSS-injekció' => ['primary', '#ffffff;}</style><script>alert(1)</script>'],
+        'tömb' => ['text', ['#ffffff']],
+    ]);
+
+    it('a paletta nem tömb értékét elutasítja', function () {
+        $this->actingAs($this->user)->postJson('/api/v1/websites', [
+            'name' => 'X', 'slug' => 'x', 'palette' => '#ffffff',
+        ])->assertUnprocessable()->assertJsonValidationErrors('palette');
+    });
+
     it('hibás színt és témát elutasít', function (string $field, string $value) {
         $this->actingAs($this->user)->postJson('/api/v1/websites', [
             'name' => 'X', 'slug' => 'x', $field => $value,

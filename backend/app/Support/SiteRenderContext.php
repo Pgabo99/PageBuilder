@@ -325,11 +325,41 @@ class SiteRenderContext
         return $luminance > 0.179 ? '#000000' : '#ffffff';
     }
 
+    /** Az egyedi szín (`palette.background|text|primary`), ha érvényes #RRGGBB; egyébként null (a téma alapértéke). */
+    private function customColor(string $key): ?string
+    {
+        $palette = $this->website->palette;
+        $color = is_array($palette) ? ($palette[$key] ?? null) : null;
+
+        return is_string($color) && preg_match(StoreWebsiteRequest::COLOR_PATTERN, $color) === 1
+            ? strtolower($color)
+            : null;
+    }
+
     /**
+     * A téma színei, felülírva az egyedi háttér- és szövegszínnel; a keretszín az egyedi színekből számolt
+     * (a szöveg 20%-a a háttéren), ha bármelyik egyedi.
+     *
      * @return array{bg: string, text: string, border: string}
      */
     public function palette(): array
     {
-        return self::PALETTES[$this->website->page_theme] ?? self::PALETTES['light'];
+        $theme = self::PALETTES[$this->website->page_theme] ?? self::PALETTES['light'];
+        $bg = $this->customColor('background');
+        $text = $this->customColor('text');
+
+        return [
+            'bg' => $bg ?? $theme['bg'],
+            'text' => $text ?? $theme['text'],
+            'border' => $bg === null && $text === null
+                ? $theme['border']
+                : 'color-mix(in srgb, '.($text ?? $theme['text']).' 20%, '.($bg ?? $theme['bg']).')',
+        ];
+    }
+
+    /** Az elsődleges szín (navigáció és hivatkozások): az egyedi, különben a kiemelőszín (a korábbi megjelenés). */
+    public function primary(): string
+    {
+        return $this->customColor('primary') ?? $this->accent();
     }
 }

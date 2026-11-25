@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 // A user_id szándékosan nem fillable: mindig a bejelentkezett felhasználóból kerül beállításra.
-#[Fillable(['name', 'slug', 'accent_color', 'page_theme'])]
+#[Fillable(['name', 'slug', 'accent_color', 'page_theme', 'palette'])]
 class Website extends Model
 {
     /** @use HasFactory<WebsiteFactory> */
@@ -25,6 +25,7 @@ class Website extends Model
         return [
             'publish_status' => PublishStatus::class,
             'published_at' => 'datetime',
+            'palette' => 'array',
         ];
     }
 

@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $page->title }} – {{ $website->name }}</title>
     <style>
-        :root { --bg: {{ $site->palette()['bg'] }}; --text: {{ $site->palette()['text'] }}; --border: {{ $site->palette()['border'] }}; --accent: {{ $site->accent() }}; --on-accent: {{ $site->onAccent() }}; }
+        :root { --bg: {{ $site->palette()['bg'] }}; --text: {{ $site->palette()['text'] }}; --border: {{ $site->palette()['border'] }}; --accent: {{ $site->accent() }}; --primary: {{ $site->primary() }}; --on-accent: {{ $site->onAccent() }}; }
         body { margin: 0; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: var(--text); background: var(--bg); }
         nav { padding: .75rem 1rem; border-bottom: 1px solid var(--border); display: flex; gap: 1rem; flex-wrap: wrap; }
-        nav a { color: var(--accent); text-decoration: none; }
+        nav a { color: var(--primary); text-decoration: none; }
         nav a[aria-current="page"] { font-weight: 700; color: var(--text); }
         main { max-width: 42rem; margin: 2rem auto; padding: 0 1rem; }
         .icon { width: 1.1em; height: 1.1em; margin-right: .4em; vertical-align: -.15em; color: var(--accent); }
@@ -53,7 +53,7 @@
         .spacer--{{ $rem }} { height: {{ $rem }}rem; }
         @endfor
         .site-footer { max-width: 42rem; margin: 2rem auto 0; padding: 1rem; font-size: .9rem; border-top: 1px solid var(--border); overflow-wrap: anywhere; }
-        .site-footer a { color: var(--accent); }
+        .site-footer a { color: var(--primary); }
         .site-footer__links { display: flex; flex-wrap: wrap; gap: .5rem 1rem; margin: 0 0 .75rem; padding: 0; list-style: none; }
         .site-footer address { margin: 0 0 .75rem; font-style: normal; }
         .site-footer address > * { display: block; }
@@ -73,7 +73,7 @@
         .quote figcaption { margin-top: .5rem; font-size: .9rem; overflow-wrap: anywhere; }
         .quote figcaption::before { content: "— "; }
         .quote cite { font-style: normal; }
-        .quote cite a { color: var(--accent); }
+        .quote cite a { color: var(--primary); }
         .visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
         .alert { --alert-color: #2563eb; display: flex; gap: .75rem; align-items: flex-start; margin: 1rem 0; padding: .75rem 1rem; color: var(--text); background: color-mix(in srgb, var(--alert-color) 12%, var(--bg)); border: 1px solid color-mix(in srgb, var(--alert-color) 40%, var(--bg)); border-left: 4px solid var(--alert-color); border-radius: .5rem; }
         .alert--success { --alert-color: #16a34a; } .alert--warning { --alert-color: #d97706; } .alert--error { --alert-color: #dc2626; }
