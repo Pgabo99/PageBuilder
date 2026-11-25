@@ -19,9 +19,9 @@ test('lábléc: copyright, link és elérhetőségek; a publikált oldal végén
   const link = page.getByRole('group', { name: 'Link 1' })
   await link.getByLabel('Felirat').fill(`Adatvédelem ${id}`)
   await link.getByLabel(/^Cél/).fill('https://example.com/adatvedelem')
-  await page.getByLabel('E-mail-cím (opcionális)').fill('info@example.com')
+  await page.getByLabel('E-mail-cím (opcionális)', { exact: true }).fill('info@example.com')
   await page.getByLabel('Telefonszám (opcionális)').fill('+36 30 123 4567')
-  await page.getByLabel('Cím (opcionális)').fill('1051 Budapest, Fő utca 1.')
+  await page.getByLabel('Cím (opcionális)', { exact: true }).fill('1051 Budapest, Fő utca 1.')
 
   // Egy oldalon csak egy lábléc lehet.
   await expect(page.getByRole('button', { name: '+ Lábléc' })).toBeDisabled()
