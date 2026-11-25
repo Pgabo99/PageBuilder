@@ -170,6 +170,47 @@ describe('PagePreview', () => {
     })
   })
 
+  describe('formázott szöveg', () => {
+    it('a markdown szöveg formázva, a régi sima szöveg változatlanul jelenik meg', () => {
+      const wrapper = mount(PagePreview, {
+        props: {
+          components: [
+            { id: 'a', type: 'text', format: 'markdown', text: '**Fontos** [link](/x)\n- egy' },
+            { id: 'b', type: 'text', text: '**nem félkövér** [nem link](/x)' },
+          ],
+        },
+      })
+
+      expect(wrapper.find('.preview__rich strong').text()).toBe('Fontos')
+      expect(wrapper.find('.preview__rich a').attributes('href')).toBe('/x')
+      expect(wrapper.find('.preview__rich li').text()).toBe('egy')
+      const plain = wrapper.findAll('p').find((p) => p.text().includes('nem félkövér'))!
+      expect(plain.text()).toBe('**nem félkövér** [nem link](/x)')
+      expect(plain.find('strong').exists()).toBe(false)
+    })
+
+    it('a nyers HTML és a veszélyes link nem jut az előnézetbe, a kattintás kijelöl', async () => {
+      const wrapper = mount(PagePreview, {
+        props: {
+          components: [
+            {
+              id: 'a',
+              type: 'text',
+              format: 'markdown',
+              text: '<img src=x onerror=alert(1)> [x](javascript:alert(1))',
+            },
+          ],
+        },
+      })
+
+      expect(wrapper.find('img').exists()).toBe(false)
+      expect(wrapper.find('a').exists()).toBe(false)
+      expect(wrapper.text()).toContain('<img src=x onerror=alert(1)>')
+      await wrapper.find('.preview__rich').trigger('click')
+      expect(wrapper.emitted('select')).toEqual([['a']])
+    })
+  })
+
   describe('egyedi paletta', () => {
     it('a CSS-változók az egyedi színekből készülnek, paletta nélkül a téma színeivel', () => {
       const withPalette = mount(PagePreview, {

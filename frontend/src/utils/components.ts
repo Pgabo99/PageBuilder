@@ -1,5 +1,6 @@
 import type {
   AccordionItem,
+  TextFormat,
   FooterLink,
   SocialItem,
   SocialPlatform,
@@ -350,6 +351,16 @@ export function phoneHref(phone: unknown): string | null {
     : null
 }
 
+/** A biztonságos hivatkozás: a backend `PageContentRules::URL_PATTERN`-jével azonos szabály (javascript: és data: tiltott). */
+export const SAFE_URL = /^(?:https?:\/\/\S+|\/(?!\/)\S*|#\S*)$/i
+
+/** A szöveg formátumai (az üres érték a sima szöveg) és a formázás súgója. */
+export const TEXT_FORMATS: { value: TextFormat; label: string }[] = [
+  { value: 'markdown', label: 'Formázott (félkövér, dőlt, lista, link)' },
+]
+export const MARKDOWN_HINT =
+  '**félkövér**, *dőlt*, „- elem” felsorolás, „1. elem” számozott lista, [szöveg](cím) hivatkozás; üres sor új bekezdés.'
+
 export const componentTypes: { type: ComponentType; label: string }[] = [
   { type: 'heading', label: 'Címsor' },
   { type: 'text', label: 'Szöveg' },
@@ -407,7 +418,7 @@ export function createComponent(type: ComponentType): PageComponent {
     case 'heading':
       return { id, type, text: 'Új címsor', level: 2 }
     case 'text':
-      return { id, type, text: 'Új bekezdés' }
+      return { id, type, text: 'Új bekezdés', format: 'markdown' }
     case 'button':
       return { id, type, label: 'Gomb', url: '/' }
     case 'cards':

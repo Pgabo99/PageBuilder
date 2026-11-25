@@ -178,6 +178,30 @@ describe('tartalom validálása', function () {
         expect(Page::first()->content[0])->toEqual($old);
     });
 
+    it('hibás szövegformátumot elutasít, a markdown és az üres (sima szöveg) érvényes', function () {
+        $url = "/api/v1/websites/{$this->website->id}/pages";
+
+        foreach (['html', 'MARKDOWN', ['markdown']] as $format) {
+            $this->actingAs($this->user)->postJson($url, [
+                'title' => 'X', 'slug' => 'x', 'content' => [['id' => 'a', 'type' => 'text', 'text' => 'T', 'format' => $format]],
+            ])->assertUnprocessable()->assertJsonValidationErrors('content.0.format');
+        }
+
+        $this->actingAs($this->user)->postJson($url, [
+            'title' => 'Y', 'slug' => 'y',
+            'content' => [
+                ['id' => 'a', 'type' => 'text', 'text' => '**T**', 'format' => 'markdown'],
+                ['id' => 'b', 'type' => 'text', 'text' => 'sima', 'format' => null],
+                ['id' => 'c', 'type' => 'text', 'text' => 'régi'],
+            ],
+        ])->assertCreated();
+
+        $content = Page::first()->content;
+        expect($content[0]['format'])->toBe('markdown')
+            ->and($content[1]['format'])->toBeNull()
+            ->and($content[2])->toEqual(['id' => 'c', 'type' => 'text', 'text' => 'régi']);
+    });
+
     it('hibás láblécet elutasít', function (array $footer, string $errorKey) {
         $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [
             'title' => 'X', 'slug' => 'x', 'content' => [['id' => 'f', 'type' => 'footer', ...$footer]],

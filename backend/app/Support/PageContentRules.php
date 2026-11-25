@@ -72,6 +72,9 @@ class PageContentRules
 
     public const MAX_STATS = 6;
 
+    /** A szöveg formátuma: az üres érték a sima szöveg (a régi komponensek), a `markdown` a formázott szöveg. */
+    public const TEXT_FORMATS = ['markdown'];
+
     public const MAX_SOCIAL = 10;
 
     public const MAX_FOOTER_LINKS = 8;
@@ -154,6 +157,7 @@ class PageContentRules
             ],
             'text' => [
                 'text' => ['required', 'string', 'max:5000'],
+                'format' => ['nullable', 'string', Rule::in(self::TEXT_FORMATS)],
             ],
             'button' => [
                 'label' => ['required', 'string', 'max:100'],

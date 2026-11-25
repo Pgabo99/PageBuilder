@@ -191,6 +191,18 @@ class SiteRenderContext
         return 'tel:'.preg_replace('/[^0-9+]/', '', $phone);
     }
 
+    /** A szöveg komponens formázott (Markdown) szövegének HTML-je; a kimenet csak engedélyezett elemekből épül. */
+    public function richText(mixed $text): string
+    {
+        return Markdown::toHtml(is_string($text) ? $text : '');
+    }
+
+    /** A szöveg komponens formázott-e (csak a kifejezetten `markdown` formátumú; a régi szövegek sima szövegek). */
+    public function isRichText(array $component): bool
+    {
+        return in_array($component['format'] ?? null, PageContentRules::TEXT_FORMATS, true);
+    }
+
     /** Az értesítés típusa; ismeretlen vagy hibás érték esetén információ. */
     public function alertVariant(array $component): string
     {

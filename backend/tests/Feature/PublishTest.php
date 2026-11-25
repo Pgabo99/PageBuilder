@@ -253,6 +253,42 @@ describe('job', function () {
             ->toContain('<div class="cards">');
     });
 
+    it('a formázott szöveg a megengedett elemekkel jelenik meg, a régi sima szöveg változatlan', function () {
+        $this->index->update(['content' => [
+            ['id' => 'a', 'type' => 'text', 'format' => 'markdown', 'text' => "**Fontos** *dőlt* [link](https://example.com/?a=1&b=2)\n- egy\n- kettő\n\n<script>alert(1)</script>"],
+            // A régi, formátum nélküli szöveg sima marad: a csillag és a szögletes zárójel nem alakul át.
+            ['id' => 'b', 'type' => 'text', 'text' => '**nem félkövér** [nem link](/x)'],
+            ['id' => 'c', 'type' => 'text', 'format' => null, 'text' => '*sima*'],
+        ]]);
+
+        runJob($this->website);
+
+        $html = file_get_contents("{$this->dir}/proba/index.html");
+        expect($html)
+            ->toContain('<div class="rich"><p><strong>Fontos</strong> <em>dőlt</em> <a href="https://example.com/?a=1&amp;b=2" rel="noopener noreferrer">link</a></p><ul><li>egy</li><li>kettő</li></ul><p>&lt;script&gt;alert(1)&lt;/script&gt;</p></div>')
+            ->toContain('<p>**nem félkövér** [nem link](/x)</p>')
+            ->toContain('<p>*sima*</p>')
+            ->not->toContain('<script')
+            ->and(substr_count($html, '<div class="rich">'))->toBe(1);
+    });
+
+    it('a hibás tárolt formátum és szöveg biztonságosan, sima szövegként jelenik meg', function () {
+        $this->index->update(['content' => [
+            ['id' => 'a', 'type' => 'text', 'format' => '"><script>alert(1)</script>', 'text' => '**x**'],
+            ['id' => 'b', 'type' => 'text', 'format' => ['markdown'], 'text' => '**y**'],
+            ['id' => 'c', 'type' => 'text', 'format' => 'markdown', 'text' => ['nem szöveg']],
+        ]]);
+
+        runJob($this->website);
+
+        $html = file_get_contents("{$this->dir}/proba/index.html");
+        expect($html)
+            ->not->toContain('<script')
+            ->toContain('<p>**x**</p>')
+            ->toContain('<p>**y**</p>')
+            ->toContain('<div class="rich"></div>');
+    });
+
     it('a lábléc az oldal végén, a tartalom után jelenik meg, hivatkozásokkal és escape-elt szöveggel', function () {
         $this->index->update(['content' => [
             ['id' => 'f', 'type' => 'footer', 'copyright' => '© <b>Teszt</b>', 'email' => 'info@example.com', 'phone' => '+36 (30) 123-4567', 'address' => '"><img src=x onerror=1>',
