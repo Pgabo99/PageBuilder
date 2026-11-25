@@ -125,22 +125,13 @@
             </div>
             @break
         @case('quote')
+            @php($author = filled($component['author'] ?? null) ? $component['author'] : null)
+            @php($source = filled($component['source'] ?? null) ? $component['source'] : null)
             <figure class="quote">
                 <blockquote><p>{{ $component['text'] ?? '' }}</p></blockquote>
-                @if (filled($component['author'] ?? null) || filled($component['source'] ?? null))
-                    <figcaption>
-                        @if (filled($component['author'] ?? null)){{ $component['author'] }}@endif
-                        @if (filled($component['author'] ?? null) && filled($component['source'] ?? null)), @endif
-                        @if (filled($component['source'] ?? null))
-                            <cite>
-                                @if ($site->isSafeUrl($component['source_url'] ?? ''))
-                                    <a href="{{ $component['source_url'] }}">{{ $component['source'] }}</a>
-                                @else
-                                    {{ $component['source'] }}
-                                @endif
-                            </cite>
-                        @endif
-                    </figcaption>
+                @if ($author || $source)
+                    {{-- Egy sorban, hogy a szerző és a vessző közé ne kerüljön szóköz. --}}
+                    <figcaption>{{ $author }}{{ $author && $source ? ', ' : '' }}@if ($source)<cite>@if ($site->isSafeUrl($component['source_url'] ?? ''))<a href="{{ $component['source_url'] }}">{{ $source }}</a>@else{{ $source }}@endif</cite>@endif</figcaption>
                 @endif
             </figure>
             @break

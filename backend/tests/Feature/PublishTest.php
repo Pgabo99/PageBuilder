@@ -268,6 +268,8 @@ describe('job', function () {
             ->toContain('<blockquote><p>&lt;b&gt;Idézet&lt;/b&gt;</p></blockquote>')
             ->toContain('&quot;&gt;&lt;img src=x onerror=1&gt;')
             ->toContain('<cite>')
+            ->toMatch('~, <cite><a href="https://example.com/\?a=1&amp;b=2">Könyv</a></cite></figcaption>~')
+            ->toContain('&quot;&gt;&lt;img src=x onerror=1&gt;, <cite>')
             ->toContain('<a href="https://example.com/?a=1&amp;b=2">Könyv</a>')
             ->toContain('<blockquote><p>Csak szöveg</p></blockquote>')
             ->not->toContain('<img')
