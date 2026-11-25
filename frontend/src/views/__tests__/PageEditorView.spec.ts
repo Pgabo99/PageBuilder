@@ -565,6 +565,42 @@ describe('PageEditorView', () => {
     expect(wrapper.find('.preview__cards').classes()).not.toContain('preview__cards--gap-large')
   })
 
+  it('az idézet felvehető, a mezői szerkeszthetők, az előnézet követi, mentéskor elmegy', async () => {
+    vi.mocked(pagesApi.update).mockImplementation(async (_id, payload) => ({ ...page, ...payload }))
+    const wrapper = await mountEditor()
+    const before = wrapper.findAll('.component').length
+    const field = (label: string) =>
+      wrapper
+        .findAll('.field')
+        .find((f) => f.find('label').text().startsWith(label))!
+        .find('input, textarea')
+
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text() === '+ Idézet')!
+      .trigger('click')
+    expect(wrapper.findAll('.component')).toHaveLength(before + 1)
+
+    await field('Idézet').setValue('Az élet szép')
+    await field('Szerző').setValue('Egy bölcs')
+    await field('Forrás (').setValue('Bölcs könyv')
+    await field('Forrás linkje').setValue('https://example.com/b')
+
+    expect(wrapper.find('.preview__quote blockquote').text()).toBe('Az élet szép')
+    expect(wrapper.find('.preview__quote figcaption').text()).toBe('Egy bölcs, Bölcs könyv')
+    expect(wrapper.find('.preview__quote-link').exists()).toBe(true)
+    await wrapper.find('button.btn:not(.btn--secondary)').trigger('click')
+    await flushPromises()
+
+    expect(vi.mocked(pagesApi.update).mock.calls[0]![1].content[before]).toMatchObject({
+      type: 'quote',
+      text: 'Az élet szép',
+      author: 'Egy bölcs',
+      source: 'Bölcs könyv',
+      source_url: 'https://example.com/b',
+    })
+  })
+
   it('az értesítődoboz felvehető, szerkeszthető, az előnézet követi, mentéskor elmegy', async () => {
     vi.mocked(pagesApi.update).mockImplementation(async (_id, payload) => ({ ...page, ...payload }))
     const wrapper = await mountEditor()

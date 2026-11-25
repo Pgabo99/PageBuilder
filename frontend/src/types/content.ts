@@ -128,6 +128,16 @@ export interface AlertComponent {
   icon?: string | null
 }
 
+/** Idézet: a szöveg kötelező; a szerző és a forrás opcionális, a forrás linkje csak a forrás szövegével együtt adható meg. */
+export interface QuoteComponent {
+  id: string
+  type: 'quote'
+  text: string
+  author?: string | null
+  source?: string | null
+  source_url?: string | null
+}
+
 export interface AccordionComponent {
   id: string
   type: 'accordion'
@@ -143,6 +153,7 @@ export type PageComponent =
   | DividerComponent
   | SpacerComponent
   | AlertComponent
+  | QuoteComponent
 export type ComponentType = PageComponent['type']
 
 export interface Page {

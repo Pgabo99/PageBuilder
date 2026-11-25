@@ -351,3 +351,14 @@ describe('értesítődoboz', () => {
     expect(['info', 'success', 'warning', 'error'].map(alertMarker)).toEqual(['i', '✓', '!', '✕'])
   })
 })
+
+describe('idézet', () => {
+  it('szöveggel vehető fel, és van összefoglalója', () => {
+    const quote = createComponent('quote')
+
+    expect(quote).toMatchObject({ type: 'quote', text: 'Új idézet' })
+    expect(Object.keys(quote).sort()).toEqual(['id', 'text', 'type'])
+    expect(componentSummary(quote)).toBe('Új idézet')
+    expect(componentTypes.map((t) => t.type)).toContain('quote')
+  })
+})

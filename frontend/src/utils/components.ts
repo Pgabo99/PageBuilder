@@ -321,6 +321,7 @@ export const componentTypes: { type: ComponentType; label: string }[] = [
   { type: 'divider', label: 'Elválasztó' },
   { type: 'spacer', label: 'Térköz' },
   { type: 'alert', label: 'Értesítődoboz' },
+  { type: 'quote', label: 'Idézet' },
 ]
 
 export function componentLabel(type: ComponentType): string {
@@ -363,6 +364,8 @@ export function createComponent(type: ComponentType): PageComponent {
       return { id, type, height: DEFAULT_SPACER_HEIGHT }
     case 'alert':
       return { id, type, variant: 'info', text: 'Új értesítés' }
+    case 'quote':
+      return { id, type, text: 'Új idézet' }
   }
 }
 

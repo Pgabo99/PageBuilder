@@ -157,6 +157,41 @@ const uid = useId()
         <CardsEditor v-model="model.cards" :errors="errors" :targets="targets" />
       </template>
 
+      <template v-else-if="model.type === 'quote'">
+        <FormField
+          v-model="model.text"
+          label="Idézet"
+          multiline
+          :rows="3"
+          :required="false"
+          :error="errors.text"
+        />
+        <FormField
+          v-model="model.author"
+          label="Szerző (opcionális)"
+          :required="false"
+          :error="errors.author"
+        />
+        <FormField
+          v-model="model.source"
+          label="Forrás (opcionális)"
+          :required="false"
+          :error="errors.source"
+        />
+        <FormField
+          v-model="model.source_url"
+          :label="`Forrás linkje (opcionális) ${URL_FIELD_HINT}`"
+          :required="false"
+          :list="targets?.length ? `${uid}-targets` : undefined"
+          :error="errors.source_url"
+        />
+        <datalist v-if="targets?.length" :id="`${uid}-targets`">
+          <option v-for="target in targets" :key="target.url" :value="target.url">
+            {{ target.label }}
+          </option>
+        </datalist>
+      </template>
+
       <template v-else-if="model.type === 'alert'">
         <SelectField
           v-model="model.variant"

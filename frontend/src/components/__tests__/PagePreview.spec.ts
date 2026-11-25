@@ -170,6 +170,52 @@ describe('PagePreview', () => {
     })
   })
 
+  describe('idézet', () => {
+    it('szöveggel, szerzővel és a forrás szövegével jelenik meg, a link nem navigál', () => {
+      const wrapper = mount(PagePreview, {
+        props: {
+          components: [
+            {
+              id: 'q',
+              type: 'quote',
+              text: 'Szöveg',
+              author: 'Szerző',
+              source: 'Könyv',
+              source_url: 'https://example.com',
+            },
+          ],
+        },
+      })
+
+      expect(wrapper.find('blockquote p').text()).toBe('Szöveg')
+      expect(wrapper.find('figcaption').text()).toBe('Szerző, Könyv')
+      expect(wrapper.find('cite .preview__quote-link').text()).toBe('Könyv')
+      expect(wrapper.find('a').exists()).toBe(false)
+    })
+
+    it('a szerző és a forrás nélkül nincs aláírás, a nem biztonságos link nem látszik linknek', async () => {
+      const wrapper = mount(PagePreview, {
+        props: {
+          components: [
+            { id: 'a', type: 'quote', text: 'Csak szöveg' },
+            {
+              id: 'b',
+              type: 'quote',
+              text: 'Rossz',
+              source: 'S',
+              source_url: 'javascript:alert(1)',
+            },
+          ],
+        },
+      })
+
+      expect(wrapper.findAll('figcaption')).toHaveLength(1)
+      expect(wrapper.find('.preview__quote-link').exists()).toBe(false)
+      await wrapper.find('.preview__quote').trigger('click')
+      expect(wrapper.emitted('select')).toEqual([['a']])
+    })
+  })
+
   describe('értesítődoboz', () => {
     it('a típusnak megfelelő osztállyal, jellel, címmel és szöveggel jelenik meg', () => {
       const wrapper = mount(PagePreview, {
