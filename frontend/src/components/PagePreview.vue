@@ -99,6 +99,27 @@ const level = (value: number): number => Math.min(6, Math.max(1, Math.trunc(valu
           <p>{{ item.text }}</p>
         </details>
       </div>
+      <figure
+        v-else-if="component.type === 'quote'"
+        class="preview__item preview__quote"
+        :class="{ 'preview__item--active': component.id === activeId }"
+        :data-component-id="component.id"
+        @click="$emit('select', component.id)"
+      >
+        <blockquote>
+          <p>{{ component.text }}</p>
+        </blockquote>
+        <figcaption v-if="component.author || component.source">
+          {{ component.author }}<template v-if="component.author && component.source">, </template
+          ><cite v-if="component.source"
+            ><span
+              v-if="component.source_url && SAFE_URL.test(component.source_url)"
+              class="preview__quote-link"
+              >{{ component.source }}</span
+            ><template v-else>{{ component.source }}</template></cite
+          >
+        </figcaption>
+      </figure>
       <div
         v-else-if="component.type === 'alert'"
         class="preview__item preview__alert"
@@ -452,6 +473,41 @@ const level = (value: number): number => Math.min(6, Math.max(1, Math.trunc(valu
 .preview__accordion details p {
   margin: 0;
   padding: 0 1rem 1rem;
+}
+
+/* Mint a publikált oldal `.quote` szabályai; a forráslink az előnézetben nem navigál. */
+.preview__quote {
+  padding: 0.25rem 1rem;
+  margin: 1.5rem 0;
+  border-left: 4px solid var(--accent);
+}
+
+.preview__quote blockquote {
+  margin: 0;
+  font-size: 1.125rem;
+  font-style: italic;
+}
+
+.preview__quote blockquote p {
+  margin: 0;
+}
+
+.preview__quote figcaption {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.preview__quote figcaption::before {
+  content: '— ';
+}
+
+.preview__quote cite {
+  font-style: normal;
+}
+
+.preview__quote-link {
+  color: var(--accent);
+  text-decoration: underline;
 }
 
 /* Mint a publikált oldal `.alert` szabályai. */

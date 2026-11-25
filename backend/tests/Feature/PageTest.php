@@ -178,6 +178,40 @@ describe('tartalom validálása', function () {
         expect(Page::first()->content[0])->toEqual($old);
     });
 
+    it('hibás idézetet elutasít', function (array $quote, string $errorKey) {
+        $valid = ['id' => 'q', 'type' => 'quote', 'text' => 'Szöveg'];
+
+        $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [
+            'title' => 'X', 'slug' => 'x', 'content' => [[...$valid, ...$quote]],
+        ])->assertUnprocessable()->assertJsonValidationErrors($errorKey);
+    })->with([
+        'szöveg nélkül' => [['text' => null], 'content.0.text'],
+        'túl hosszú szöveg' => [['text' => str_repeat('a', 501)], 'content.0.text'],
+        'túl hosszú szerző' => [['author' => str_repeat('a', 101)], 'content.0.author'],
+        'túl hosszú forrás' => [['source' => str_repeat('a', 151)], 'content.0.source'],
+        'javascript: forráslink' => [['source' => 'S', 'source_url' => 'javascript:alert(1)'], 'content.0.source_url'],
+        'data: forráslink' => [['source' => 'S', 'source_url' => 'data:text/html,x'], 'content.0.source_url'],
+        'forráslink forrás nélkül' => [['source_url' => 'https://example.com'], 'content.0.source'],
+        'tömb szerzőként' => [['author' => ['x']], 'content.0.author'],
+    ]);
+
+    it('elfogadja az idézetet szerzővel és forrással, link nélkül és csak szöveggel is', function () {
+        $full = ['id' => 'a', 'type' => 'quote', 'text' => 'Szöveg', 'author' => 'Szerző', 'source' => 'Forrás', 'source_url' => 'https://example.com/x'];
+        $noLink = ['id' => 'b', 'type' => 'quote', 'text' => 'Szöveg', 'author' => 'Szerző', 'source' => 'Forrás'];
+        $plain = ['id' => 'c', 'type' => 'quote', 'text' => 'Csak szöveg'];
+
+        $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [
+            'title' => 'X', 'slug' => 'x',
+            'content' => [$full, $noLink, [...$plain, 'junk' => 'x'], ['id' => 'd', 'type' => 'quote', 'text' => 'T', 'author' => null, 'source' => null, 'source_url' => null]],
+        ])->assertCreated();
+
+        $content = Page::first()->content;
+        expect($content[0])->toEqual($full)
+            ->and($content[1])->toEqual($noLink)
+            ->and($content[2])->toEqual($plain)
+            ->and($content[3])->toEqual(['id' => 'd', 'type' => 'quote', 'text' => 'T', 'author' => null, 'source' => null, 'source_url' => null]);
+    });
+
     it('hibás értesítést elutasít', function (array $alert, string $errorKey) {
         $valid = ['id' => 'n', 'type' => 'alert', 'variant' => 'info', 'text' => 'Szöveg'];
 
