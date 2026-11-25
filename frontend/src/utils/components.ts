@@ -21,7 +21,9 @@ export const MIN_ACCORDION_ITEMS = 1
 export const MAX_ACCORDION_ITEMS = 20
 
 /** A címsor választható szintjei, mérete és igazítása (a backend `PageContentRules` értékeivel azonos). */
-export const HEADING_LEVELS: readonly HeadingLevel[] = [1, 2, 3, 4, 5, 6]
+export const HEADING_LEVEL_OPTIONS: { value: HeadingLevel; label: string }[] = [
+  1, 2, 3, 4, 5, 6,
+].map((level) => ({ value: level as HeadingLevel, label: `H${level}` }))
 
 export const HEADING_SIZES: { value: HeadingSize; label: string }[] = [
   { value: 'small', label: 'Kicsi' },
@@ -252,6 +254,47 @@ export const spacerHeight = (value: unknown): number => {
     ? Math.min(MAX_SPACER_HEIGHT, Math.max(MIN_SPACER_HEIGHT, height))
     : DEFAULT_SPACER_HEIGHT
 }
+
+/** A címsor és a gomb megjelenési beállításai (a backend `PageContentRules` értékeivel azonos). */
+export const HEADING_OPTIONS: OptionSpec = [
+  {
+    key: 'size',
+    label: 'Megjelenési méret',
+    defaultLabel: 'Alapértelmezett (a szinthez igazodik)',
+    options: HEADING_SIZES,
+  },
+  {
+    key: 'align',
+    label: 'Igazítás',
+    defaultLabel: 'Alapértelmezett (balra)',
+    options: HEADING_ALIGNS,
+  },
+]
+
+export const BUTTON_OPTIONS: OptionSpec = [
+  {
+    key: 'style',
+    label: 'Stílus',
+    defaultLabel: 'Alapértelmezett (kitöltött)',
+    options: BUTTON_STYLES,
+  },
+  { key: 'size', label: 'Méret', defaultLabel: 'Alapértelmezett (közepes)', options: BUTTON_SIZES },
+  {
+    key: 'align',
+    label: 'Igazítás',
+    defaultLabel: 'Alapértelmezett (balra)',
+    options: BUTTON_ALIGNS,
+  },
+  {
+    key: 'radius',
+    label: 'Lekerekítés',
+    defaultLabel: 'Alapértelmezett (közepes)',
+    options: BUTTON_RADII,
+  },
+]
+
+/** A hivatkozás-mezők súgója: engedélyezett célformák (a backend `URL_PATTERN`-jével azonos). */
+export const URL_FIELD_HINT = '(https://…, /útvonal vagy #horgony)'
 
 export const componentTypes: { type: ComponentType; label: string }[] = [
   { type: 'heading', label: 'Címsor' },

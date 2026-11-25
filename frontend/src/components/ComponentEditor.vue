@@ -3,25 +3,23 @@ import { useId } from 'vue'
 
 import AccordionEditor from '@/components/AccordionEditor.vue'
 import CardsEditor from '@/components/CardsEditor.vue'
-import ChoiceSelect from '@/components/ChoiceSelect.vue'
+import FormField from '@/components/FormField.vue'
 import IconPicker from '@/components/IconPicker.vue'
 import OptionFields from '@/components/OptionFields.vue'
+import SelectField from '@/components/SelectField.vue'
 import type { PageComponent } from '@/types/content'
 import {
-  BUTTON_ALIGNS,
-  BUTTON_RADII,
-  BUTTON_SIZES,
-  BUTTON_STYLES,
+  BUTTON_OPTIONS,
   CARDS_OPTIONS,
   componentLabel,
   componentSummary,
   DIVIDER_OPTIONS,
+  HEADING_LEVEL_OPTIONS,
+  HEADING_OPTIONS,
   MAX_SPACER_HEIGHT,
   MIN_SPACER_HEIGHT,
-  HEADING_ALIGNS,
-  HEADING_LEVELS,
-  HEADING_SIZES,
   type PageTarget,
+  URL_FIELD_HINT,
 } from '@/utils/components'
 
 // Egy komponens szerkesztője: a mezők típusonként változnak, a hibák mezőnként jelennek meg.
@@ -112,108 +110,42 @@ const uid = useId()
 
     <div v-if="active" :id="`${uid}-fields`" class="component__fields">
       <template v-if="model.type === 'heading'">
-        <div class="field">
-          <label :for="`${uid}-text`">Szöveg</label>
-          <input
-            :id="`${uid}-text`"
-            v-model="model.text"
-            :aria-invalid="!!errors.text"
-            type="text"
-          />
-          <p v-if="errors.text" class="field__error">{{ errors.text.join(' ') }}</p>
-        </div>
-        <div class="field">
-          <label :for="`${uid}-level`">Szint</label>
-          <select :id="`${uid}-level`" v-model.number="model.level">
-            <option v-for="level in HEADING_LEVELS" :key="level" :value="level">
-              H{{ level }}
-            </option>
-          </select>
-          <p v-if="errors.level" class="field__error">{{ errors.level.join(' ') }}</p>
-        </div>
-        <ChoiceSelect
-          v-model="model.size"
-          label="Megjelenési méret"
-          default-label="Alapértelmezett (a szinthez igazodik)"
-          :options="HEADING_SIZES"
-          :error="errors.size"
+        <FormField v-model="model.text" label="Szöveg" :required="false" :error="errors.text" />
+        <SelectField
+          v-model="model.level"
+          label="Szint"
+          :options="HEADING_LEVEL_OPTIONS"
+          :error="errors.level"
         />
-        <ChoiceSelect
-          v-model="model.align"
-          label="Igazítás"
-          default-label="Alapértelmezett (balra)"
-          :options="HEADING_ALIGNS"
-          :error="errors.align"
-        />
+        <OptionFields v-model="model" :spec="HEADING_OPTIONS" :errors="errors" />
         <IconPicker v-model="model.icon" :error="errors.icon" />
       </template>
 
-      <div v-else-if="model.type === 'text'" class="field">
-        <label :for="`${uid}-text`">Szöveg</label>
-        <textarea
-          :id="`${uid}-text`"
-          v-model="model.text"
-          :aria-invalid="!!errors.text"
-          rows="4"
-        ></textarea>
-        <p v-if="errors.text" class="field__error">{{ errors.text.join(' ') }}</p>
-      </div>
+      <FormField
+        v-else-if="model.type === 'text'"
+        v-model="model.text"
+        label="Szöveg"
+        multiline
+        :rows="4"
+        :required="false"
+        :error="errors.text"
+      />
 
       <template v-else-if="model.type === 'button'">
-        <div class="field">
-          <label :for="`${uid}-label`">Felirat</label>
-          <input
-            :id="`${uid}-label`"
-            v-model="model.label"
-            :aria-invalid="!!errors.label"
-            type="text"
-          />
-          <p v-if="errors.label" class="field__error">{{ errors.label.join(' ') }}</p>
-        </div>
-        <div class="field">
-          <label :for="`${uid}-url`">Cél (https://…, /útvonal vagy #horgony)</label>
-          <input
-            :id="`${uid}-url`"
-            v-model="model.url"
-            :aria-invalid="!!errors.url"
-            :list="targets?.length ? `${uid}-targets` : undefined"
-            type="text"
-          />
-          <datalist v-if="targets?.length" :id="`${uid}-targets`">
-            <option v-for="target in targets" :key="target.url" :value="target.url">
-              {{ target.label }}
-            </option>
-          </datalist>
-          <p v-if="errors.url" class="field__error">{{ errors.url.join(' ') }}</p>
-        </div>
-        <ChoiceSelect
-          v-model="model.style"
-          label="Stílus"
-          default-label="Alapértelmezett (kitöltött)"
-          :options="BUTTON_STYLES"
-          :error="errors.style"
+        <FormField v-model="model.label" label="Felirat" :required="false" :error="errors.label" />
+        <FormField
+          v-model="model.url"
+          :label="`Cél ${URL_FIELD_HINT}`"
+          :required="false"
+          :list="targets?.length ? `${uid}-targets` : undefined"
+          :error="errors.url"
         />
-        <ChoiceSelect
-          v-model="model.size"
-          label="Méret"
-          default-label="Alapértelmezett (közepes)"
-          :options="BUTTON_SIZES"
-          :error="errors.size"
-        />
-        <ChoiceSelect
-          v-model="model.align"
-          label="Igazítás"
-          default-label="Alapértelmezett (balra)"
-          :options="BUTTON_ALIGNS"
-          :error="errors.align"
-        />
-        <ChoiceSelect
-          v-model="model.radius"
-          label="Lekerekítés"
-          default-label="Alapértelmezett (közepes)"
-          :options="BUTTON_RADII"
-          :error="errors.radius"
-        />
+        <datalist v-if="targets?.length" :id="`${uid}-targets`">
+          <option v-for="target in targets" :key="target.url" :value="target.url">
+            {{ target.label }}
+          </option>
+        </datalist>
+        <OptionFields v-model="model" :spec="BUTTON_OPTIONS" :errors="errors" />
       </template>
 
       <template v-else-if="model.type === 'cards'">
@@ -224,19 +156,17 @@ const uid = useId()
         <CardsEditor v-model="model.cards" :errors="errors" :targets="targets" />
       </template>
 
-      <div v-else-if="model.type === 'spacer'" class="field">
-        <label :for="`${uid}-height`">Magasság (rem)</label>
-        <input
-          :id="`${uid}-height`"
-          v-model.number="model.height"
-          :aria-invalid="!!errors.height"
-          :min="MIN_SPACER_HEIGHT"
-          :max="MAX_SPACER_HEIGHT"
-          step="1"
-          type="number"
-        />
-        <p v-if="errors.height" class="field__error">{{ errors.height.join(' ') }}</p>
-      </div>
+      <FormField
+        v-else-if="model.type === 'spacer'"
+        v-model="model.height"
+        label="Magasság (rem)"
+        type="number"
+        :min="MIN_SPACER_HEIGHT"
+        :max="MAX_SPACER_HEIGHT"
+        :step="1"
+        :required="false"
+        :error="errors.height"
+      />
 
       <OptionFields
         v-else-if="model.type === 'divider'"
@@ -333,32 +263,7 @@ const uid = useId()
   }
 }
 
-.field {
-  display: grid;
-  gap: var(--space-1);
-}
-
-label {
-  font-weight: 600;
-}
-
-input,
-select,
-textarea {
-  min-width: 0;
-  padding: var(--space-2) var(--space-3);
-  font: inherit;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-}
-
 [aria-invalid='true'] {
   border-color: var(--color-danger);
-}
-
-.field__error {
-  margin: 0;
-  font-size: 0.875rem;
-  color: var(--color-danger);
 }
 </style>

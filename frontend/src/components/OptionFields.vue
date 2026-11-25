@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ChoiceSelect from '@/components/ChoiceSelect.vue'
+import SelectField from '@/components/SelectField.vue'
 import type { OptionSpec } from '@/utils/components'
 
 // Előre definiált beállítások (legördülő listák) egy komponens mezőihez; az üres választás `null`,
@@ -25,12 +25,12 @@ function set(key: string, value: string | null | undefined): void {
 </script>
 
 <template>
-  <ChoiceSelect
+  <SelectField
     v-for="option in spec"
     :key="option.key"
     :model-value="get(option.key)"
     :label="option.label"
-    :default-label="option.defaultLabel"
+    :empty-label="option.defaultLabel"
     :options="option.options"
     :error="errors[option.key]"
     @update:model-value="set(option.key, $event)"

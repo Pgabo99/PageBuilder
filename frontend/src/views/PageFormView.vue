@@ -24,8 +24,9 @@ watch(
   },
 )
 
-function onSlugInput(value: string): void {
-  form.slug = value
+function onSlugInput(value: unknown): void {
+  const text = String(value ?? '')
+  form.slug = text
   slugTouched.value = true
 }
 

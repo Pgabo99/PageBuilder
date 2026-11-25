@@ -3,7 +3,9 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import { websitesApi } from '@/api/websites'
+import ColorField from '@/components/ColorField.vue'
 import FormField from '@/components/FormField.vue'
+import SelectField from '@/components/SelectField.vue'
 import { useForm } from '@/composables/useForm'
 import { errorMessage } from '@/api/client'
 import { useToast } from '@/composables/useToast'
@@ -35,8 +37,9 @@ watch(
   },
 )
 
-function onSlugInput(value: string): void {
-  form.slug = value
+function onSlugInput(value: unknown): void {
+  const text = String(value ?? '')
+  form.slug = text
   slugTouched.value = true
 }
 
@@ -95,36 +98,19 @@ async function onSubmit(): Promise<void> {
       />
       <fieldset class="appearance">
         <legend>A publikált oldal megjelenése</legend>
-        <div class="field">
-          <label for="accent-color">Kiemelőszín</label>
-          <div class="actions">
-            <input
-              id="accent-color"
-              type="color"
-              :value="form.accent_color || defaultAccent"
-              @input="form.accent_color = ($event.target as HTMLInputElement).value"
-            />
-            <button
-              v-if="form.accent_color"
-              class="btn btn--secondary btn--small"
-              type="button"
-              @click="form.accent_color = ''"
-            >
-              Alapértelmezett
-            </button>
-          </div>
-          <p v-if="errors.accent_color" class="field__error">{{ errors.accent_color.join(' ') }}</p>
-        </div>
-        <div class="field">
-          <label for="page-theme">Oldaltéma</label>
-          <select id="page-theme" v-model="form.page_theme">
-            <option value="">Világos</option>
-            <option v-for="theme in pageThemes.slice(1)" :key="theme.value" :value="theme.value">
-              {{ theme.label }}
-            </option>
-          </select>
-          <p v-if="errors.page_theme" class="field__error">{{ errors.page_theme.join(' ') }}</p>
-        </div>
+        <ColorField
+          v-model="form.accent_color"
+          label="Kiemelőszín"
+          :fallback="defaultAccent"
+          :error="errors.accent_color"
+        />
+        <SelectField
+          v-model="form.page_theme"
+          label="Oldaltéma"
+          empty-label="Világos"
+          :options="pageThemes.slice(1)"
+          :error="errors.page_theme"
+        />
         <p class="muted field__hint">A változás a következő publikálástól látszik.</p>
       </fieldset>
       <div class="actions">
@@ -155,41 +141,5 @@ async function onSubmit(): Promise<void> {
 .appearance legend {
   padding: 0 var(--space-2);
   font-weight: 600;
-}
-
-.field {
-  display: grid;
-  gap: var(--space-1);
-}
-
-label {
-  font-weight: 600;
-}
-
-select {
-  padding: var(--space-2) var(--space-3);
-  font: inherit;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-}
-
-input[type='color'] {
-  width: 3rem;
-  height: 2.25rem;
-  padding: 0;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  cursor: pointer;
-}
-
-.field__hint {
-  margin: 0;
-  font-size: 0.875rem;
-}
-
-.field__error {
-  margin: 0;
-  font-size: 0.875rem;
-  color: var(--color-danger);
 }
 </style>
