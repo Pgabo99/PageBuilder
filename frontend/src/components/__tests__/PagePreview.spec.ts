@@ -170,6 +170,64 @@ describe('PagePreview', () => {
     })
   })
 
+  describe('lábléc', () => {
+    it('a tartalom után jelenik meg, a szerkesztési sorrendtől függetlenül, és csak az első', () => {
+      const wrapper = mount(PagePreview, {
+        props: {
+          components: [
+            { id: 'f', type: 'footer', copyright: '© Első' },
+            { id: 't', type: 'text', text: 'Tartalom' },
+            { id: 'g', type: 'footer', copyright: '© Második' },
+          ],
+        },
+      })
+      const html = wrapper.html()
+
+      expect(wrapper.findAll('footer')).toHaveLength(1)
+      expect(wrapper.find('footer').text()).toContain('© Első')
+      expect(wrapper.text()).not.toContain('Második')
+      expect(html.indexOf('Tartalom')).toBeLessThan(html.indexOf('<footer'))
+    })
+
+    it('a linkeket, az elérhetőségeket és a copyrightot mutatja, a hibás linket és telefonszámot elhagyja', () => {
+      const wrapper = mount(PagePreview, {
+        props: {
+          components: [
+            {
+              id: 'f',
+              type: 'footer',
+              copyright: '© Teszt',
+              email: 'info@example.com',
+              phone: 'nem szám',
+              address: 'Budapest',
+              links: [
+                { id: 'a', label: 'Kapcsolat', url: '/kapcsolat/' },
+                { id: 'b', label: 'Rossz', url: 'javascript:alert(1)' },
+              ],
+            },
+          ],
+        },
+      })
+
+      expect(wrapper.findAll('.preview__footer-links li')).toHaveLength(1)
+      expect(wrapper.find('address').text()).toContain('info@example.com')
+      expect(wrapper.find('address').text()).toContain('Budapest')
+      expect(wrapper.find('address').text()).not.toContain('nem szám')
+      expect(wrapper.find('.preview__footer-copyright').text()).toBe('© Teszt')
+      expect(wrapper.find('a').exists()).toBe(false)
+    })
+
+    it('az üres, régi (mező nélküli) lábléc hiba nélkül jelenik meg, és kattintásra kijelöl', async () => {
+      const wrapper = mount(PagePreview, {
+        props: { components: [{ id: 'f', type: 'footer' }] },
+      })
+
+      expect(wrapper.find('address').exists()).toBe(false)
+      await wrapper.find('footer').trigger('click')
+      expect(wrapper.emitted('select')).toEqual([['f']])
+    })
+  })
+
   describe('közösségi média', () => {
     it('minden érvényes hivatkozás márkaikonnal jelenik meg, a link nem navigál', async () => {
       const wrapper = mount(PagePreview, {

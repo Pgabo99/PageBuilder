@@ -170,6 +170,24 @@ export interface SocialComponent {
   items: SocialItem[]
 }
 
+/** A lábléc linkje: a felirat és a cél is kötelező. */
+export interface FooterLink {
+  id: string
+  label: string
+  url: string
+}
+
+/** Oldalszintű lábléc (oldalanként legfeljebb egy); a publikált oldalon mindig a tartalom után jelenik meg. */
+export interface FooterComponent {
+  id: string
+  type: 'footer'
+  copyright?: string | null
+  links?: FooterLink[] | null
+  email?: string | null
+  phone?: string | null
+  address?: string | null
+}
+
 export interface AccordionComponent {
   id: string
   type: 'accordion'
@@ -188,6 +206,7 @@ export type PageComponent =
   | QuoteComponent
   | StatsComponent
   | SocialComponent
+  | FooterComponent
 export type ComponentType = PageComponent['type']
 
 export interface Page {
