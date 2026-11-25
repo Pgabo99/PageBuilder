@@ -50,3 +50,35 @@ it('az engedélyezett ikon dekoratív, a kiemelőszínt átvevő SVG', function 
         ->toContain('focusable="false"')
         ->toEndWith('</svg>');
 });
+
+// A márkaikonok külön készlete (a `social` komponensé); a frontend `utils/icons.ts` ugyanezt az összeget várja.
+const BRAND_ICONS_CHECKSUM = 'f50e8da545ab3242b89c4f01b55728b0';
+
+it('nyolc márkaikont ad, és nem keverednek az ikonválasztó készletével', function () {
+    expect(Icons::brandNames())->toHaveCount(8)
+        ->and(array_intersect(Icons::brandNames(), Icons::names()))->toBe([]);
+    expect(Icons::markup('facebook'))->toBe('')->and(Icons::brandMarkup('star'))->toBe('');
+});
+
+it('a márkaikonok ellenőrző összege egyezik a frontendével', function () {
+    $names = Icons::brandNames();
+    sort($names);
+    $canonical = implode('', array_map(fn (string $name) => $name."\n".Icons::brandMarkup($name)."\n", $names));
+
+    expect(md5($canonical))->toBe(BRAND_ICONS_CHECKSUM);
+});
+
+it('a márkaikonok is csak rajzelemeket és biztonságos attribútumokat tartalmaznak', function () {
+    foreach (Icons::brandNames() as $name) {
+        $markup = Icons::brandMarkup($name);
+
+        preg_match_all('/<(\w+)/', $markup, $tags);
+        expect(array_diff(array_unique($tags[1]), ['path', 'polygon', 'polyline', 'circle', 'line', 'rect']))->toBe([]);
+        expect($markup)->not->toMatch('/\bon\w+\s*=|script|href|style/i');
+        expect(Icons::brandSvg($name))->toStartWith('<svg class="icon"')->toContain('aria-hidden="true"');
+    }
+});
+
+it('a márkaikon ismeretlen névre és nem szöveges értékre üres', function (mixed $name) {
+    expect(Icons::brandMarkup($name))->toBe('')->and(Icons::brandSvg($name))->toBe('');
+})->with([null, 'nincs-ilyen', '<svg onload=x>', [['facebook']], 42, '']);

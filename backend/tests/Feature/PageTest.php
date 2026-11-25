@@ -178,6 +178,46 @@ describe('tartalom validálása', function () {
         expect(Page::first()->content[0])->toEqual($old);
     });
 
+    it('hibás közösségi hivatkozást elutasít', function (array $items, string $errorKey) {
+        $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [
+            'title' => 'X', 'slug' => 'x', 'content' => [['id' => 's', 'type' => 'social', 'items' => $items]],
+        ])->assertUnprocessable()->assertJsonValidationErrors($errorKey);
+    })->with([
+        'nincs elem' => [[], 'content.0.items'],
+        'tizenegy elem' => [array_map(fn ($i) => ['id' => "i$i", 'platform' => 'github', 'url' => 'https://github.com/x'], range(1, 11)), 'content.0.items'],
+        'platform nélkül' => [[['id' => 'i', 'url' => 'https://example.com']], 'content.0.items.0.platform'],
+        'ismeretlen platform' => [[['id' => 'i', 'platform' => 'myspace', 'url' => 'https://example.com']], 'content.0.items.0.platform'],
+        'ikonnév platformként' => [[['id' => 'i', 'platform' => 'star', 'url' => 'https://example.com']], 'content.0.items.0.platform'],
+        'tömb platformként' => [[['id' => 'i', 'platform' => ['github'], 'url' => 'https://example.com']], 'content.0.items.0.platform'],
+        'link nélkül' => [[['id' => 'i', 'platform' => 'github']], 'content.0.items.0.url'],
+        'javascript: link' => [[['id' => 'i', 'platform' => 'github', 'url' => 'javascript:alert(1)']], 'content.0.items.0.url'],
+        'data: link' => [[['id' => 'i', 'platform' => 'github', 'url' => 'data:text/html,x']], 'content.0.items.0.url'],
+        'azonosító nélkül' => [[['platform' => 'github', 'url' => 'https://example.com']], 'content.0.items.0.id'],
+        'második elem hibás' => [[['id' => 'a', 'platform' => 'github', 'url' => 'https://example.com'], ['id' => 'b', 'platform' => 'github', 'url' => 'x']], 'content.0.items.1.url'],
+    ]);
+
+    it('elfogadja a közösségi hivatkozásokat minden platformmal, a határokon is', function () {
+        $all = array_map(
+            fn ($p) => ['id' => "p-$p", 'platform' => $p, 'url' => "https://example.com/$p"],
+            ['facebook', 'instagram', 'twitter', 'linkedin', 'youtube', 'github', 'twitch', 'gitlab'],
+        );
+        $ten = array_map(fn ($i) => ['id' => "t$i", 'platform' => 'github', 'url' => '/helyi/oldal'], range(1, 10));
+
+        $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [
+            'title' => 'X', 'slug' => 'x',
+            'content' => [
+                ['id' => 's', 'type' => 'social', 'items' => $all],
+                ['id' => 't', 'type' => 'social', 'items' => $ten],
+                ['id' => 'u', 'type' => 'social', 'items' => [[...$all[0], 'junk' => 'x']]],
+            ],
+        ])->assertCreated();
+
+        $content = Page::first()->content;
+        expect($content[0]['items'])->toEqual($all)
+            ->and($content[1]['items'])->toHaveCount(10)
+            ->and($content[2]['items'][0])->toEqual($all[0]);
+    });
+
     it('hibás statisztikát elutasít', function (array $items, string $errorKey) {
         $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [
             'title' => 'X', 'slug' => 'x', 'content' => [['id' => 's', 'type' => 'stats', 'items' => $items]],

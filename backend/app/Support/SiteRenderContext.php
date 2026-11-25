@@ -99,6 +99,43 @@ class SiteRenderContext
         'error' => ['label' => 'Hiba', 'marker' => '✕'],
     ];
 
+    /** @var array<string, string> platform => a link olvasható neve (a márkaikon neve szerint, lásd `Icons`) */
+    private const PLATFORMS = [
+        'facebook' => 'Facebook',
+        'instagram' => 'Instagram',
+        'twitter' => 'Twitter / X',
+        'linkedin' => 'LinkedIn',
+        'youtube' => 'YouTube',
+        'github' => 'GitHub',
+        'twitch' => 'Twitch',
+        'gitlab' => 'GitLab',
+    ];
+
+    /**
+     * A közösségi linkek futáskor is szűrve: csak ismert platform és biztonságos URL, legfeljebb a megengedett darabszám.
+     *
+     * @param  array<string, mixed>  $component
+     * @return list<array{platform: string, label: string, url: string, svg: string}>
+     */
+    public function socialLinks(array $component): array
+    {
+        $items = is_array($component['items'] ?? null) ? $component['items'] : [];
+        $links = [];
+        foreach (array_slice(array_values(array_filter($items, 'is_array')), 0, PageContentRules::MAX_SOCIAL) as $item) {
+            $platform = $item['platform'] ?? null;
+            if (is_string($platform) && isset(self::PLATFORMS[$platform]) && $this->isSafeUrl($item['url'] ?? '')) {
+                $links[] = [
+                    'platform' => $platform,
+                    'label' => self::PLATFORMS[$platform],
+                    'url' => $item['url'],
+                    'svg' => Icons::brandSvg($platform),
+                ];
+            }
+        }
+
+        return $links;
+    }
+
     /** Az értesítés típusa; ismeretlen vagy hibás érték esetén információ. */
     public function alertVariant(array $component): string
     {

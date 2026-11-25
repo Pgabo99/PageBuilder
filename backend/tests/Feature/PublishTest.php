@@ -253,6 +253,52 @@ describe('job', function () {
             ->toContain('<div class="cards">');
     });
 
+    it('a közösségi linkek márkaikonnal és olvasható névvel jelennek meg, rel=noopener noreferrer', function () {
+        $this->index->update(['content' => [
+            ['id' => 's', 'type' => 'social', 'items' => [
+                ['id' => 'a', 'platform' => 'github', 'url' => 'https://github.com/pagebuilder?a=1&b=2'],
+                ['id' => 'b', 'platform' => 'twitter', 'url' => '/kapcsolat/'],
+            ]],
+        ]]);
+
+        runJob($this->website);
+
+        $html = file_get_contents("{$this->dir}/proba/index.html");
+        expect($html)
+            ->toContain('<ul class="social">')
+            ->toContain('<a class="social__link" href="https://github.com/pagebuilder?a=1&amp;b=2" rel="noopener noreferrer"><svg class="icon"')
+            ->toContain('<span class="visually-hidden">GitHub</span>')
+            ->toContain('<span class="visually-hidden">Twitter / X</span>')
+            ->toContain(Icons::brandMarkup('github'))
+            ->and(substr_count($html, 'class="social__link"'))->toBe(2);
+    });
+
+    it('a hibás tárolt közösségi link kimarad (a validációt megkerülve sem)', function () {
+        $many = array_map(fn ($i) => ['id' => "i$i", 'platform' => 'github', 'url' => 'https://example.com'], range(1, 15));
+        $this->index->update(['content' => [
+            ['id' => 'a', 'type' => 'social', 'items' => [
+                ['id' => '1', 'platform' => 'github', 'url' => 'javascript:alert(1)'],
+                ['id' => '2', 'platform' => '"><script>alert(1)</script>', 'url' => 'https://example.com'],
+                ['id' => '3', 'platform' => ['x'], 'url' => 'https://example.com'],
+                ['id' => '4', 'platform' => 'star', 'url' => 'https://example.com'],
+                'szöveg',
+                ['id' => '5', 'platform' => 'gitlab', 'url' => 'https://gitlab.com/x'],
+            ]],
+            ['id' => 'b', 'type' => 'social', 'items' => $many],
+            ['id' => 'c', 'type' => 'social', 'items' => 'nem tömb'],
+            ['id' => 'd', 'type' => 'social'],
+        ]]);
+
+        runJob($this->website);
+
+        $html = file_get_contents("{$this->dir}/proba/index.html");
+        expect($html)
+            ->not->toContain('<script')
+            ->not->toContain('javascript:')
+            ->and(substr_count($html, '<ul class="social">'))->toBe(4)
+            ->and(substr_count($html, 'class="social__link"'))->toBe(11);
+    });
+
     it('a statisztikák rácsban, ikonnal, előtaggal és utótaggal, escape-elt szöveggel jelennek meg', function () {
         $this->index->update(['content' => [
             ['id' => 's', 'type' => 'stats', 'items' => [

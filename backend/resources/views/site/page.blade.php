@@ -52,6 +52,11 @@
         @for ($rem = \App\Support\PageContentRules::SPACER_MIN_HEIGHT; $rem <= \App\Support\PageContentRules::SPACER_MAX_HEIGHT; $rem++)
         .spacer--{{ $rem }} { height: {{ $rem }}rem; }
         @endfor
+        .social { display: flex; flex-wrap: wrap; gap: .75rem; margin: 1rem 0; padding: 0; list-style: none; }
+        .social__link { display: inline-flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; color: var(--accent); border: 1px solid var(--border); border-radius: 50%; }
+        .social__link:hover { background: color-mix(in srgb, var(--accent) 12%, var(--bg)); }
+        .social__link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+        .social__link .icon { width: 1.25rem; height: 1.25rem; margin: 0; }
         .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: 1rem; margin: 1.5rem 0; text-align: center; }
         .stat__icon .icon { width: 1.75rem; height: 1.75rem; margin: 0 0 .25rem; }
         .stat__value { margin: 0; font-size: 2rem; font-weight: 700; line-height: 1.2; overflow-wrap: anywhere; }
@@ -127,6 +132,13 @@
                 </article>
             @endforeach
             </div>
+            @break
+        @case('social')
+            <ul class="social">
+            @foreach ($site->socialLinks($component) as $link)
+                <li><a class="social__link" href="{{ $link['url'] }}" rel="noopener noreferrer">{!! $link['svg'] !!}<span class="visually-hidden">{{ $link['label'] }}</span></a></li>
+            @endforeach
+            </ul>
             @break
         @case('stats')
             <div class="stats">
