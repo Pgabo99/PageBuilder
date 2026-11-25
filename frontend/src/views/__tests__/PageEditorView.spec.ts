@@ -565,6 +565,42 @@ describe('PageEditorView', () => {
     expect(wrapper.find('.preview__cards').classes()).not.toContain('preview__cards--gap-large')
   })
 
+  it('a közösségi média felvehető, a platform és a link szerkeszthető, az előnézet követi, mentéskor elmegy', async () => {
+    vi.mocked(pagesApi.update).mockImplementation(async (_id, payload) => ({ ...page, ...payload }))
+    const wrapper = await mountEditor()
+    const before = wrapper.findAll('.component').length
+
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text() === '+ Közösségi média')!
+      .trigger('click')
+    expect(wrapper.findAll('.component')).toHaveLength(before + 1)
+    expect(wrapper.findAll('.preview__social li')).toHaveLength(1)
+
+    await selectByLabel(wrapper, 'Platform').setValue('github')
+    await wrapper
+      .findAll('.field')
+      .find((f) => f.find('label').text().startsWith('Link'))!
+      .find('input')
+      .setValue('https://github.com/x')
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text().includes('Profil hozzáadása'))!
+      .trigger('click')
+
+    expect(wrapper.findAll('.preview__social li')).toHaveLength(2)
+    await wrapper.find('button.btn:not(.btn--secondary)').trigger('click')
+    await flushPromises()
+
+    const saved = vi.mocked(pagesApi.update).mock.calls[0]![1].content[before] as {
+      type: string
+      items: { platform: string; url: string }[]
+    }
+    expect(saved.type).toBe('social')
+    expect(saved.items[0]).toMatchObject({ platform: 'github', url: 'https://github.com/x' })
+    expect(saved.items).toHaveLength(2)
+  })
+
   it('a statisztika felvehető, az elemei szerkeszthetők, az előnézet követi, mentéskor elmegy', async () => {
     vi.mocked(pagesApi.update).mockImplementation(async (_id, payload) => ({ ...page, ...payload }))
     const wrapper = await mountEditor()

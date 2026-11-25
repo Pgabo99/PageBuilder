@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
+import { brandIconNames } from '../icons'
+
 import {
   cloneComponent,
   componentLabel,
@@ -11,7 +13,11 @@ import {
   alertMarker,
   alertVariant,
   createAccordionItem,
+  createSocial,
   createStat,
+  MAX_SOCIAL,
+  MIN_SOCIAL,
+  SOCIAL_PLATFORMS,
   MAX_STATS,
   MIN_STATS,
   spacerHeight,
@@ -388,5 +394,29 @@ describe('statisztika', () => {
     expect(copy.id).not.toBe(source.id)
     expect(copy.items[0]!.id).not.toBe(source.items[0]!.id)
     expect(copy.items).not.toBe(source.items)
+  })
+})
+
+describe('közösségi média', () => {
+  it('egy hivatkozással vehető fel, és van összefoglalója', () => {
+    const social = createComponent('social')
+
+    expect(social).toMatchObject({ type: 'social' })
+    expect((social as { items: unknown[] }).items).toHaveLength(MIN_SOCIAL)
+    expect(componentSummary(social)).toBe('1 hivatkozás: Facebook')
+    expect(componentTypes.map((t) => t.type)).toContain('social')
+    expect(MAX_SOCIAL).toBe(10)
+  })
+
+  it('az új elem érvényes, a platformok megegyeznek a márkaikonokkal, a másolat nem osztozik', () => {
+    expect(createSocial()).toMatchObject({ platform: 'facebook' })
+    expect(SOCIAL_PLATFORMS.map((p) => p.value).sort()).toEqual([...brandIconNames].sort())
+
+    const original = createComponent('social') as unknown as { id: string; items: { id: string }[] }
+    const copy = cloneComponent(original as never) as unknown as typeof original
+
+    expect(copy.id).not.toBe(original.id)
+    expect(copy.items[0]!.id).not.toBe(original.items[0]!.id)
+    expect(copy.items).not.toBe(original.items)
   })
 })

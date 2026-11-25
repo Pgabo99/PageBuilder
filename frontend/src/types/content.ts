@@ -154,6 +154,22 @@ export interface StatsComponent {
   items: StatItem[]
 }
 
+export type SocialPlatform =
+  'facebook' | 'instagram' | 'twitter' | 'linkedin' | 'youtube' | 'github' | 'twitch' | 'gitlab'
+
+/** Egy közösségi hivatkozás: a platform (márkaikon) és a link is kötelező. */
+export interface SocialItem {
+  id: string
+  platform: SocialPlatform
+  url: string
+}
+
+export interface SocialComponent {
+  id: string
+  type: 'social'
+  items: SocialItem[]
+}
+
 export interface AccordionComponent {
   id: string
   type: 'accordion'
@@ -171,6 +187,7 @@ export type PageComponent =
   | AlertComponent
   | QuoteComponent
   | StatsComponent
+  | SocialComponent
 export type ComponentType = PageComponent['type']
 
 export interface Page {

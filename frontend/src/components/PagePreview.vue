@@ -13,9 +13,10 @@ import {
   spacerHeight,
   MAX_ACCORDION_ITEMS,
   MAX_CARDS,
+  MAX_SOCIAL,
   MAX_STATS,
 } from '@/utils/components'
-import { findIcon } from '@/utils/icons'
+import { findBrandIcon, findIcon } from '@/utils/icons'
 import type { PageComponent } from '@/types/content'
 import { pageStyle, type PageTheme } from '@/utils/themes'
 
@@ -100,6 +101,19 @@ const level = (value: number): number => Math.min(6, Math.max(1, Math.trunc(valu
           <p>{{ item.text }}</p>
         </details>
       </div>
+      <ul
+        v-else-if="component.type === 'social'"
+        class="preview__item preview__social"
+        :class="{ 'preview__item--active': component.id === activeId }"
+        :data-component-id="component.id"
+        @click="$emit('select', component.id)"
+      >
+        <template v-for="link in component.items.slice(0, MAX_SOCIAL)" :key="link.id">
+          <li v-if="findBrandIcon(link.platform) && SAFE_URL.test(link.url)">
+            <span class="preview__social-link"><AppIcon :name="link.platform" brand /></span>
+          </li>
+        </template>
+      </ul>
       <div
         v-else-if="component.type === 'stats'"
         class="preview__item preview__stats"
@@ -493,6 +507,32 @@ const level = (value: number): number => Math.min(6, Math.max(1, Math.trunc(valu
 .preview__accordion details p {
   margin: 0;
   padding: 0 1rem 1rem;
+}
+
+/* Mint a publikált oldal `.social` szabályai; a hivatkozás az előnézetben nem navigál. */
+.preview__social {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 0;
+  margin: 1rem 0;
+  list-style: none;
+}
+
+.preview__social-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  color: var(--accent);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+}
+
+.preview__social-link .icon {
+  width: 1.25rem;
+  height: 1.25rem;
 }
 
 /* Mint a publikált oldal `.stats` szabályai. */

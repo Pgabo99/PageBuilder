@@ -170,6 +170,59 @@ describe('PagePreview', () => {
     })
   })
 
+  describe('közösségi média', () => {
+    it('minden érvényes hivatkozás márkaikonnal jelenik meg, a link nem navigál', async () => {
+      const wrapper = mount(PagePreview, {
+        props: {
+          components: [
+            {
+              id: 's',
+              type: 'social',
+              items: [
+                { id: 'a', platform: 'github', url: 'https://github.com/x' },
+                { id: 'b', platform: 'youtube', url: '/helyi' },
+              ],
+            },
+          ],
+        },
+      })
+
+      expect(wrapper.findAll('.preview__social li')).toHaveLength(2)
+      expect(wrapper.findAll('.preview__social svg')).toHaveLength(2)
+      expect(wrapper.find('a').exists()).toBe(false)
+      await wrapper.find('.preview__social').trigger('click')
+      expect(wrapper.emitted('select')).toEqual([['s']])
+    })
+
+    it('az ismeretlen platformot és a nem biztonságos linket kihagyja, a darabszámot korlátozza', () => {
+      const many = Array.from({ length: 15 }, (_, i) => ({
+        id: `m${i}`,
+        platform: 'github' as const,
+        url: 'https://example.com',
+      }))
+      const wrapper = mount(PagePreview, {
+        props: {
+          components: [
+            {
+              id: 's',
+              type: 'social',
+              items: [
+                { id: 'a', platform: 'myspace' as 'github', url: 'https://example.com' },
+                { id: 'b', platform: 'github', url: 'javascript:alert(1)' },
+                { id: 'c', platform: 'star' as 'github', url: 'https://example.com' },
+              ],
+            },
+            { id: 't', type: 'social', items: many },
+          ],
+        },
+      })
+      const groups = wrapper.findAll('.preview__social')
+
+      expect(groups[0]!.findAll('li')).toHaveLength(0)
+      expect(groups[1]!.findAll('li')).toHaveLength(10)
+    })
+  })
+
   describe('statisztikák', () => {
     it('érték, előtag, utótag, megnevezés és ikon szerint jelennek meg', () => {
       const wrapper = mount(PagePreview, {
