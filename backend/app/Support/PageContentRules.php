@@ -69,7 +69,9 @@ class PageContentRules
     /** Az értesítődoboz típusai. */
     public const ALERT_VARIANTS = ['info', 'success', 'warning', 'error'];
 
-    private const TYPES = ['heading', 'text', 'button', 'cards', 'accordion', 'divider', 'spacer', 'alert', 'quote'];
+    public const MAX_STATS = 6;
+
+    private const TYPES = ['heading', 'text', 'button', 'cards', 'accordion', 'divider', 'spacer', 'alert', 'quote', 'stats'];
 
     /**
      * @return array<string, mixed>
@@ -166,6 +168,16 @@ class PageContentRules
                 'author' => ['nullable', 'string', 'max:100'],
                 'source' => ['nullable', 'string', 'max:150', "required_with:content.$index.source_url"],
                 'source_url' => ['nullable', 'string', 'max:2048', 'regex:'.self::URL_PATTERN],
+            ],
+            // Az érték szövegként tárolt (pl. „120+”), így formázható; az előtag és az utótag opcionális.
+            'stats' => [
+                'items' => ['required', 'array', 'min:1', 'max:'.self::MAX_STATS],
+                'items.*.id' => ['required', 'string', 'max:64'],
+                'items.*.value' => ['required', 'string', 'max:20'],
+                'items.*.label' => ['required', 'string', 'max:60'],
+                'items.*.icon' => ['nullable', 'string', Rule::in(Icons::names())],
+                'items.*.prefix' => ['nullable', 'string', 'max:10'],
+                'items.*.suffix' => ['nullable', 'string', 'max:10'],
             ],
             'alert' => [
                 'variant' => ['required', 'string', Rule::in(self::ALERT_VARIANTS)],

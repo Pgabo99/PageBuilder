@@ -253,6 +253,47 @@ describe('job', function () {
             ->toContain('<div class="cards">');
     });
 
+    it('a statisztikák rácsban, ikonnal, előtaggal és utótaggal, escape-elt szöveggel jelennek meg', function () {
+        $this->index->update(['content' => [
+            ['id' => 's', 'type' => 'stats', 'items' => [
+                ['id' => 'a', 'icon' => 'users', 'value' => '120', 'label' => '<b>Ügyfél</b>', 'prefix' => '~', 'suffix' => '+'],
+                ['id' => 'b', 'value' => '"><img src=x onerror=1>', 'label' => 'Másik'],
+            ]],
+        ]]);
+
+        runJob($this->website);
+
+        $html = file_get_contents("{$this->dir}/proba/index.html");
+        expect($html)
+            ->toContain('<div class="stats">')
+            ->toContain('<p class="stat__value">~120+</p>')
+            ->toContain('<p class="stat__label">&lt;b&gt;Ügyfél&lt;/b&gt;</p>')
+            ->toContain('<p class="stat__value">&quot;&gt;&lt;img src=x onerror=1&gt;</p>')
+            ->not->toContain('<img')
+            ->and(substr_count($html, 'class="stat__icon"'))->toBe(1)
+            ->and(substr_count($html, '<div class="stat">'))->toBe(2)
+            ->and($html)->toContain('grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr))');
+    });
+
+    it('a hibás tárolt statisztika biztonságosan jelenik meg, a darabszám korlátos (a validációt megkerülve sem)', function () {
+        $many = array_map(fn ($i) => ['id' => "i$i", 'value' => (string) $i, 'label' => 'L'], range(1, 10));
+        $this->index->update(['content' => [
+            ['id' => 'a', 'type' => 'stats', 'items' => $many],
+            ['id' => 'b', 'type' => 'stats', 'items' => 'nem tömb'],
+            ['id' => 'c', 'type' => 'stats', 'items' => ['szöveg', 7, ['id' => 'x', 'value' => '1', 'label' => 'Jó', 'icon' => '<script>alert(1)</script>']]],
+            ['id' => 'd', 'type' => 'stats'],
+        ]]);
+
+        runJob($this->website);
+
+        $html = file_get_contents("{$this->dir}/proba/index.html");
+        expect($html)
+            ->not->toContain('<script')
+            ->not->toContain('<svg')
+            ->and(substr_count($html, '<div class="stats">'))->toBe(4)
+            ->and(substr_count($html, '<div class="stat">'))->toBe(7);
+    });
+
     it('az idézet blockquote és cite elemekkel, a forráslinkkel jelenik meg, a tartalom escape-elt', function () {
         $this->index->update(['content' => [
             ['id' => 'a', 'type' => 'quote', 'text' => '<b>Idézet</b>', 'author' => '"><img src=x onerror=1>', 'source' => 'Könyv', 'source_url' => 'https://example.com/?a=1&b=2'],

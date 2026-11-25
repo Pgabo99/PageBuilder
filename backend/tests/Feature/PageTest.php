@@ -178,6 +178,44 @@ describe('tartalom validálása', function () {
         expect(Page::first()->content[0])->toEqual($old);
     });
 
+    it('hibás statisztikát elutasít', function (array $items, string $errorKey) {
+        $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [
+            'title' => 'X', 'slug' => 'x', 'content' => [['id' => 's', 'type' => 'stats', 'items' => $items]],
+        ])->assertUnprocessable()->assertJsonValidationErrors($errorKey);
+    })->with([
+        'nincs elem' => [[], 'content.0.items'],
+        'hét elem' => [array_map(fn ($i) => ['id' => "i$i", 'value' => '1', 'label' => 'L'], range(1, 7)), 'content.0.items'],
+        'érték nélkül' => [[['id' => 'i', 'label' => 'L']], 'content.0.items.0.value'],
+        'megnevezés nélkül' => [[['id' => 'i', 'value' => '1']], 'content.0.items.0.label'],
+        'túl hosszú érték' => [[['id' => 'i', 'value' => str_repeat('1', 21), 'label' => 'L']], 'content.0.items.0.value'],
+        'túl hosszú megnevezés' => [[['id' => 'i', 'value' => '1', 'label' => str_repeat('a', 61)]], 'content.0.items.0.label'],
+        'túl hosszú előtag' => [[['id' => 'i', 'value' => '1', 'label' => 'L', 'prefix' => str_repeat('a', 11)]], 'content.0.items.0.prefix'],
+        'túl hosszú utótag' => [[['id' => 'i', 'value' => '1', 'label' => 'L', 'suffix' => str_repeat('a', 11)]], 'content.0.items.0.suffix'],
+        'ismeretlen ikon' => [[['id' => 'i', 'value' => '1', 'label' => 'L', 'icon' => 'nincs-ilyen']], 'content.0.items.0.icon'],
+        'azonosító nélkül' => [[['value' => '1', 'label' => 'L']], 'content.0.items.0.id'],
+        'második elem hibás' => [[['id' => 'a', 'value' => '1', 'label' => 'L'], ['id' => 'b', 'value' => '2']], 'content.0.items.1.label'],
+    ]);
+
+    it('elfogadja a statisztikát, az opcionális mezőkkel és nélkülük is, a határokon is', function () {
+        $full = ['id' => 'a', 'icon' => 'users', 'value' => '120', 'label' => 'Ügyfél', 'prefix' => '~', 'suffix' => '+'];
+        $plain = ['id' => 'b', 'value' => '99%', 'label' => 'Elégedett'];
+        $six = array_map(fn ($i) => ['id' => "s$i", 'value' => (string) $i, 'label' => 'L'], range(1, 6));
+
+        $this->actingAs($this->user)->postJson("/api/v1/websites/{$this->website->id}/pages", [
+            'title' => 'X', 'slug' => 'x',
+            'content' => [
+                ['id' => 's', 'type' => 'stats', 'items' => [$full, [...$plain, 'junk' => 'x']]],
+                ['id' => 't', 'type' => 'stats', 'items' => $six],
+                ['id' => 'u', 'type' => 'stats', 'items' => [[...$plain, 'icon' => null, 'prefix' => null, 'suffix' => null, 'value' => str_repeat('1', 20)]]],
+            ],
+        ])->assertCreated();
+
+        $content = Page::first()->content;
+        expect($content[0]['items'])->toEqual([$full, $plain])
+            ->and($content[1]['items'])->toHaveCount(6)
+            ->and($content[2]['items'][0]['value'])->toHaveLength(20);
+    });
+
     it('hibás idézetet elutasít', function (array $quote, string $errorKey) {
         $valid = ['id' => 'q', 'type' => 'quote', 'text' => 'Szöveg'];
 
