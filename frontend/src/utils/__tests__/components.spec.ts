@@ -13,7 +13,9 @@ import {
   alertMarker,
   alertVariant,
   createAccordionItem,
+  createFooterLink,
   createSocial,
+  phoneHref,
   createStat,
   MAX_SOCIAL,
   MIN_SOCIAL,
@@ -418,5 +420,38 @@ describe('közösségi média', () => {
     expect(copy.id).not.toBe(original.id)
     expect(copy.items[0]!.id).not.toBe(original.items[0]!.id)
     expect(copy.items).not.toBe(original.items)
+  })
+})
+
+describe('lábléc', () => {
+  it('copyright-szöveggel, link nélkül vehető fel, és van összefoglalója', () => {
+    const footer = createComponent('footer')
+
+    expect(footer).toMatchObject({ type: 'footer', copyright: '© Weboldal', links: [] })
+    expect(componentSummary(footer)).toBe('© Weboldal')
+    expect(componentSummary({ id: 'x', type: 'footer' })).toBe('Lábléc')
+    expect(componentTypes.map((t) => t.type)).toContain('footer')
+    expect(createFooterLink()).toMatchObject({ label: 'Új link', url: '/' })
+  })
+
+  it('a másolat új azonosítókat kap, és a régi (link nélküli) lábléc is másolható', () => {
+    const original = {
+      id: 'f',
+      type: 'footer' as const,
+      links: [{ id: 'l', label: 'L', url: '/' }],
+    }
+    const copy = cloneComponent(original) as typeof original
+
+    expect(copy.id).not.toBe('f')
+    expect(copy.links[0]!.id).not.toBe('l')
+    expect(cloneComponent({ id: 'g', type: 'footer' })).toMatchObject({ type: 'footer' })
+  })
+
+  it('a telefonszámból csak érvényes számnál készít tel: hivatkozást', () => {
+    expect(phoneHref('+36 (30) 123-4567')).toBe('tel:+36301234567')
+    expect(phoneHref('06.30.123.4567')).toBe('tel:06301234567')
+    for (const bad of ['nem szám', '+ - ()', '', null, undefined, 42, 'javascript:alert(1)']) {
+      expect(phoneHref(bad)).toBeNull()
+    }
   })
 })

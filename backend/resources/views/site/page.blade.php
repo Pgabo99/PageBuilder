@@ -52,6 +52,12 @@
         @for ($rem = \App\Support\PageContentRules::SPACER_MIN_HEIGHT; $rem <= \App\Support\PageContentRules::SPACER_MAX_HEIGHT; $rem++)
         .spacer--{{ $rem }} { height: {{ $rem }}rem; }
         @endfor
+        .site-footer { max-width: 42rem; margin: 2rem auto 0; padding: 1rem; font-size: .9rem; border-top: 1px solid var(--border); overflow-wrap: anywhere; }
+        .site-footer a { color: var(--accent); }
+        .site-footer__links { display: flex; flex-wrap: wrap; gap: .5rem 1rem; margin: 0 0 .75rem; padding: 0; list-style: none; }
+        .site-footer address { margin: 0 0 .75rem; font-style: normal; }
+        .site-footer address > * { display: block; }
+        .site-footer p { margin: 0; }
         .social { display: flex; flex-wrap: wrap; gap: .75rem; margin: 1rem 0; padding: 0; list-style: none; }
         .social__link { display: inline-flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; color: var(--accent); border: 1px solid var(--border); border-radius: 50%; }
         .social__link:hover { background: color-mix(in srgb, var(--accent) 12%, var(--bg)); }
@@ -133,6 +139,9 @@
             @endforeach
             </div>
             @break
+        @case('footer')
+            {{-- A lábléc az oldal végén jelenik meg (a </main> után). --}}
+            @break
         @case('social')
             <ul class="social">
             @foreach ($site->socialLinks($component) as $link)
@@ -202,5 +211,36 @@
     @endswitch
 @endforeach
 </main>
+@php($footer = $site->footer($page->content))
+@if ($footer)
+    @php($links = $site->footerLinks($footer))
+    @php($email = $site->footerEmail($footer))
+    @php($phone = $site->footerPhoneHref($footer))
+    <footer class="site-footer">
+    @if ($links)
+        <nav aria-label="Lábléc"><ul class="site-footer__links">
+        @foreach ($links as $link)
+            <li><a href="{{ $link['url'] }}">{{ $link['label'] }}</a></li>
+        @endforeach
+        </ul></nav>
+    @endif
+    @if ($email || $phone || filled($footer['address'] ?? null))
+        <address>
+        @if ($email)
+            <a href="mailto:{{ $email }}">{{ $email }}</a>
+        @endif
+        @if ($phone)
+            <a href="{{ $phone }}">{{ $footer['phone'] }}</a>
+        @endif
+        @if (filled($footer['address'] ?? null))
+            <span>{{ $footer['address'] }}</span>
+        @endif
+        </address>
+    @endif
+    @if (filled($footer['copyright'] ?? null))
+        <p class="site-footer__copyright">{{ $footer['copyright'] }}</p>
+    @endif
+    </footer>
+@endif
 </body>
 </html>

@@ -1,5 +1,6 @@
 import type {
   AccordionItem,
+  FooterLink,
   SocialItem,
   SocialPlatform,
   StatItem,
@@ -335,6 +336,20 @@ export const SOCIAL_PLATFORMS: { value: SocialPlatform; label: string }[] = [
   { value: 'gitlab', label: 'GitLab' },
 ]
 
+/** A lábléc linkjeinek megengedett száma (a backend `PageContentRules::MAX_FOOTER_LINKS`-ével azonos). */
+export const MIN_FOOTER_LINKS = 0
+export const MAX_FOOTER_LINKS = 8
+
+/** A lábléc telefonszáma (a backend `PageContentRules::PHONE_PATTERN`-jével azonos szabály). */
+export const PHONE_PATTERN = /^[0-9+()\-\s.]*[0-9][0-9+()\-\s.]*$/
+
+/** A telefonszám `tel:` hivatkozása (csak számjegyek és +); érvénytelen szám esetén null. */
+export function phoneHref(phone: unknown): string | null {
+  return typeof phone === 'string' && PHONE_PATTERN.test(phone)
+    ? `tel:${phone.replace(/[^0-9+]/g, '')}`
+    : null
+}
+
 export const componentTypes: { type: ComponentType; label: string }[] = [
   { type: 'heading', label: 'Címsor' },
   { type: 'text', label: 'Szöveg' },
@@ -347,6 +362,7 @@ export const componentTypes: { type: ComponentType; label: string }[] = [
   { type: 'quote', label: 'Idézet' },
   { type: 'stats', label: 'Statisztika' },
   { type: 'social', label: 'Közösségi média' },
+  { type: 'footer', label: 'Lábléc' },
 ]
 
 export function componentLabel(type: ComponentType): string {
@@ -362,6 +378,11 @@ function newId(): string {
 /** Új kártya: a cím kötelező, a többi mező opcionális. */
 export function createCard(): CardItem {
   return { id: newId(), icon: null, title: 'Új kártya', text: '', label: '', url: '' }
+}
+
+/** Új lábléc-link: a felirat és a cél is kötelező. */
+export function createFooterLink(): FooterLink {
+  return { id: newId(), label: 'Új link', url: '/' }
 }
 
 /** Új közösségi hivatkozás: a platform és a link is kötelező. */
@@ -405,6 +426,8 @@ export function createComponent(type: ComponentType): PageComponent {
       return { id, type, items: [createStat()] }
     case 'social':
       return { id, type, items: [createSocial()] }
+    case 'footer':
+      return { id, type, copyright: '© Weboldal', links: [] }
   }
 }
 
@@ -432,6 +455,8 @@ function summarySource(component: PageComponent): string {
       return `${component.height} rem térköz`
     case 'alert':
       return component.title || component.text
+    case 'footer':
+      return component.copyright || 'Lábléc'
     case 'social': {
       const first = SOCIAL_PLATFORMS.find((item) => item.value === component.items[0]?.platform)
       return `${component.items.length} hivatkozás${first ? `: ${first.label}` : ''}`
@@ -487,6 +512,13 @@ export function cloneComponent(component: PageComponent): PageComponent {
       ...component,
       id: newId(),
       items: component.items.map((item) => ({ ...item, id: newId() })),
+    }
+  }
+  if (component.type === 'footer') {
+    return {
+      ...component,
+      id: newId(),
+      links: component.links?.map((link) => ({ ...link, id: newId() })) ?? null,
     }
   }
   if (component.type === 'social') {

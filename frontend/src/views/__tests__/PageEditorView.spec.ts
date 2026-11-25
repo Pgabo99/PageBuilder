@@ -565,6 +565,67 @@ describe('PageEditorView', () => {
     expect(wrapper.find('.preview__cards').classes()).not.toContain('preview__cards--gap-large')
   })
 
+  it('a lábléc felvehető, szerkeszthető, az előnézetben a tartalom után áll, és csak egy lehet', async () => {
+    vi.mocked(pagesApi.update).mockImplementation(async (_id, payload) => ({ ...page, ...payload }))
+    const wrapper = await mountEditor()
+    const before = wrapper.findAll('.component').length
+    const addButton = () => wrapper.findAll('button').find((b) => b.text() === '+ Lábléc')!
+    const field = (label: string) =>
+      wrapper
+        .findAll('.field')
+        .find((f) => f.find('label').text().startsWith(label))!
+        .find('input')
+
+    await addButton().trigger('click')
+    expect(wrapper.findAll('.component')).toHaveLength(before + 1)
+    expect(addButton().attributes('disabled')).toBeDefined()
+
+    await field('Copyright').setValue('© Tesztcég')
+    await field('E-mail').setValue('info@example.com')
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text().includes('Link hozzáadása'))!
+      .trigger('click')
+
+    expect(wrapper.find('.preview__footer-copyright').text()).toBe('© Tesztcég')
+    expect(wrapper.findAll('.preview__footer-links li')).toHaveLength(1)
+    // A másolás gombja a láblécnél nincs.
+    expect(wrapper.findAll('[aria-label="Komponens másolása"]')).toHaveLength(before)
+    await wrapper.find('button.btn:not(.btn--secondary)').trigger('click')
+    await flushPromises()
+
+    const saved = vi.mocked(pagesApi.update).mock.calls[0]![1].content[before] as {
+      type: string
+      copyright: string
+      email: string
+      links: { label: string; url: string }[]
+    }
+    expect(saved).toMatchObject({
+      type: 'footer',
+      copyright: '© Tesztcég',
+      email: 'info@example.com',
+    })
+    expect(saved.links).toHaveLength(1)
+  })
+
+  it('a régi, link nélküli lábléc megnyitható, és az első link hozzáadása létrehozza a listát', async () => {
+    vi.mocked(pagesApi.get).mockResolvedValue(
+      structuredClone({
+        ...page,
+        content: [{ id: 'f', type: 'footer', copyright: '© Régi' }],
+      } as Page),
+    )
+    const wrapper = await mountEditor()
+    await wrapper.find('.component__toggle').trigger('click')
+
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text().includes('Link hozzáadása'))!
+      .trigger('click')
+
+    expect(wrapper.findAll('.preview__footer-links li')).toHaveLength(1)
+  })
+
   it('a közösségi média felvehető, a platform és a link szerkeszthető, az előnézet követi, mentéskor elmegy', async () => {
     vi.mocked(pagesApi.update).mockImplementation(async (_id, payload) => ({ ...page, ...payload }))
     const wrapper = await mountEditor()

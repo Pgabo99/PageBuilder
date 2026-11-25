@@ -253,6 +253,67 @@ describe('job', function () {
             ->toContain('<div class="cards">');
     });
 
+    it('a lábléc az oldal végén, a tartalom után jelenik meg, hivatkozásokkal és escape-elt szöveggel', function () {
+        $this->index->update(['content' => [
+            ['id' => 'f', 'type' => 'footer', 'copyright' => '© <b>Teszt</b>', 'email' => 'info@example.com', 'phone' => '+36 (30) 123-4567', 'address' => '"><img src=x onerror=1>',
+                'links' => [['id' => 'a', 'label' => 'Kapcsolat', 'url' => '/sites/proba/kapcsolat/'], ['id' => 'b', 'label' => 'Külső', 'url' => 'https://example.com/?a=1&b=2']]],
+            ['id' => 't', 'type' => 'text', 'text' => 'Tartalom'],
+        ]]);
+
+        runJob($this->website);
+
+        $html = file_get_contents("{$this->dir}/proba/index.html");
+        expect($html)
+            ->toContain('<footer class="site-footer">')
+            ->toContain('<nav aria-label="Lábléc">')
+            ->toContain('<a href="/sites/proba/kapcsolat/">Kapcsolat</a>')
+            ->toContain('<a href="https://example.com/?a=1&amp;b=2">Külső</a>')
+            ->toContain('<a href="mailto:info@example.com">info@example.com</a>')
+            ->toContain('<a href="tel:+36301234567">+36 (30) 123-4567</a>')
+            ->toContain('&lt;b&gt;Teszt&lt;/b&gt;')
+            ->toContain('&quot;&gt;&lt;img src=x onerror=1&gt;')
+            ->not->toContain('<img')
+            ->and(substr_count($html, '<footer'))->toBe(1)
+            // A lábléc a </main> után van, a tartalom sorrendjétől függetlenül.
+            ->and(strpos($html, '<footer'))->toBeGreaterThan(strpos($html, '</main>'))
+            ->and(strpos($html, 'Tartalom'))->toBeLessThan(strpos($html, '</main>'));
+    });
+
+    it('lábléc nélküli oldal változatlan: nincs footer elem, az üres lábléc sem jelenik meg', function () {
+        $this->contact->update(['content' => [['id' => 'f', 'type' => 'footer']]]);
+
+        runJob($this->website);
+
+        expect(file_get_contents("{$this->dir}/proba/index.html"))->not->toContain('<footer');
+        $contact = file_get_contents("{$this->dir}/proba/kapcsolat/index.html");
+        expect($contact)->toContain('<footer class="site-footer">')
+            ->not->toContain('<nav aria-label="Lábléc">')
+            ->not->toContain('<address>')
+            ->not->toContain('site-footer__copyright">');
+    });
+
+    it('a hibás tárolt lábléc biztonságosan jelenik meg (a validációt megkerülve sem)', function () {
+        $many = array_map(fn ($i) => ['id' => "l$i", 'label' => "Link$i", 'url' => 'https://example.com'], range(1, 12));
+        $this->index->update(['content' => [
+            ['id' => 'f', 'type' => 'footer', 'email' => '"><script>alert(1)</script>', 'phone' => 'javascript:alert(1)',
+                'links' => [['id' => '1', 'label' => 'Rossz', 'url' => 'javascript:alert(1)'], ['id' => '2', 'label' => ['x'], 'url' => 'https://example.com'], 'szöveg', ...$many]],
+            ['id' => 'g', 'type' => 'footer', 'copyright' => 'Második', 'links' => 'nem tömb'],
+        ]]);
+
+        runJob($this->website);
+
+        $html = file_get_contents("{$this->dir}/proba/index.html");
+        expect($html)
+            ->not->toContain('<script')
+            ->not->toContain('javascript:')
+            ->not->toContain('mailto:')
+            ->not->toContain('tel:')
+            ->not->toContain('Második')
+            ->and(substr_count($html, '<footer'))->toBe(1)
+            // Előbb a darabszám-korlát (8 elem), aztán a szűrés: a két hibás elem miatt 6 érvényes link marad.
+            ->and(substr_count($html, 'href="https://example.com"'))->toBe(6);
+    });
+
     it('a közösségi linkek márkaikonnal és olvasható névvel jelennek meg, rel=noopener noreferrer', function () {
         $this->index->update(['content' => [
             ['id' => 's', 'type' => 'social', 'items' => [

@@ -10,6 +10,8 @@ import {
   alertMarker,
   alertVariant,
   headingClasses,
+  MAX_FOOTER_LINKS,
+  phoneHref,
   spacerHeight,
   MAX_ACCORDION_ITEMS,
   MAX_CARDS,
@@ -17,7 +19,7 @@ import {
   MAX_STATS,
 } from '@/utils/components'
 import { findBrandIcon, findIcon } from '@/utils/icons'
-import type { PageComponent } from '@/types/content'
+import type { FooterLink, PageComponent } from '@/types/content'
 import { pageStyle, type PageTheme } from '@/utils/themes'
 
 // Az előnézet a szerkesztett (akár mentetlen) tartalomból renderel, a publikált oldal megjelenésével.
@@ -34,8 +36,21 @@ defineEmits<{ select: [id: string] }>()
 
 const style = computed(() => pageStyle(props.theme, props.accent))
 
+// A publikált oldalon a lábléc (legfeljebb egy) mindig a tartalom után áll, a szerkesztési sorrendtől függetlenül.
+const shown = computed(() => {
+  const footer = props.components.find((component) => component.type === 'footer')
+  return [
+    ...props.components.filter((component) => component.type !== 'footer'),
+    ...(footer ? [footer] : []),
+  ]
+})
+
 // A backend `PageContentRules::URL_PATTERN`-jével azonos szabály: a publikált oldal a nem biztonságos URL-ű gombot elhagyja.
 const SAFE_URL = /^(?:https?:\/\/\S+|\/(?!\/)\S*|#\S*)$/i
+
+/** A lábléc megjeleníthető linkjei: felirattal és biztonságos céllal, legfeljebb a megengedett számban (mint a publikált oldalon). */
+const footerLinks = (links: readonly FooterLink[] | null | undefined): FooterLink[] =>
+  (links ?? []).filter((link) => link.label && SAFE_URL.test(link.url)).slice(0, MAX_FOOTER_LINKS)
 
 const level = (value: number): number => Math.min(6, Math.max(1, Math.trunc(value) || 2))
 </script>
@@ -43,7 +58,7 @@ const level = (value: number): number => Math.min(6, Math.max(1, Math.trunc(valu
 <template>
   <div class="preview" :style="style" aria-hidden="true">
     <p v-if="components.length === 0" class="preview__empty">Az oldal még üres.</p>
-    <template v-for="component in components" :key="component.id">
+    <template v-for="component in shown" :key="component.id">
       <component
         :is="`h${level(component.level)}`"
         v-if="component.type === 'heading'"
@@ -101,6 +116,29 @@ const level = (value: number): number => Math.min(6, Math.max(1, Math.trunc(valu
           <p>{{ item.text }}</p>
         </details>
       </div>
+      <footer
+        v-else-if="component.type === 'footer'"
+        class="preview__item preview__footer"
+        :class="{ 'preview__item--active': component.id === activeId }"
+        :data-component-id="component.id"
+        @click="$emit('select', component.id)"
+      >
+        <ul v-if="footerLinks(component.links).length" class="preview__footer-links">
+          <li v-for="link in footerLinks(component.links)" :key="link.id">
+            <span class="preview__footer-link">{{ link.label }}</span>
+          </li>
+        </ul>
+        <address v-if="component.email || phoneHref(component.phone) || component.address">
+          <span v-if="component.email" class="preview__footer-link">{{ component.email }}</span>
+          <span v-if="phoneHref(component.phone)" class="preview__footer-link">{{
+            component.phone
+          }}</span>
+          <span v-if="component.address">{{ component.address }}</span>
+        </address>
+        <p v-if="component.copyright" class="preview__footer-copyright">
+          {{ component.copyright }}
+        </p>
+      </footer>
       <ul
         v-else-if="component.type === 'social'"
         class="preview__item preview__social"
@@ -507,6 +545,41 @@ const level = (value: number): number => Math.min(6, Math.max(1, Math.trunc(valu
 .preview__accordion details p {
   margin: 0;
   padding: 0 1rem 1rem;
+}
+
+/* Mint a publikált oldal `.site-footer` szabályai; a linkek az előnézetben nem navigálnak. */
+.preview__footer {
+  padding: 1rem 0 0;
+  margin-top: 2rem;
+  font-size: 0.9rem;
+  border-top: 1px solid var(--border);
+}
+
+.preview__footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  padding: 0;
+  margin: 0 0 0.75rem;
+  list-style: none;
+}
+
+.preview__footer address {
+  margin: 0 0 0.75rem;
+  font-style: normal;
+}
+
+.preview__footer address > * {
+  display: block;
+}
+
+.preview__footer p {
+  margin: 0;
+}
+
+.preview__footer-link {
+  color: var(--accent);
+  text-decoration: underline;
 }
 
 /* Mint a publikált oldal `.social` szabályai; a hivatkozás az előnézetben nem navigál. */

@@ -132,6 +132,9 @@ async function activate(id: string, focusField = false): Promise<void> {
   if (focusField) item?.querySelector<HTMLElement>('input, textarea, select')?.focus()
 }
 
+// Oldalanként legfeljebb egy lábléc lehet (a szerver is ellenőrzi).
+const hasFooter = computed(() => form.content.some((component) => component.type === 'footer'))
+
 function add(type: ComponentType): void {
   const component = createComponent(type)
   form.content.push(component)
@@ -353,6 +356,7 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', warnBeforeUnloa
               :key="item.type"
               class="btn btn--secondary"
               type="button"
+              :disabled="item.type === 'footer' && hasFooter"
               @click="add(item.type)"
             >
               + {{ item.label }}

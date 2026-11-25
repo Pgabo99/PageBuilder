@@ -3,6 +3,7 @@ import { useId } from 'vue'
 
 import AccordionEditor from '@/components/AccordionEditor.vue'
 import CardsEditor from '@/components/CardsEditor.vue'
+import FooterEditor from '@/components/FooterEditor.vue'
 import FormField from '@/components/FormField.vue'
 import IconPicker from '@/components/IconPicker.vue'
 import OptionFields from '@/components/OptionFields.vue'
@@ -93,6 +94,7 @@ const uid = useId()
           ↓
         </button>
         <button
+          v-if="model.type !== 'footer'"
           class="btn btn--secondary btn--small"
           type="button"
           aria-label="Komponens másolása"
@@ -158,6 +160,13 @@ const uid = useId()
         </details>
         <CardsEditor v-model="model.cards" :errors="errors" :targets="targets" />
       </template>
+
+      <FooterEditor
+        v-else-if="model.type === 'footer'"
+        v-model="model"
+        :errors="errors"
+        :targets="targets"
+      />
 
       <StatsEditor v-else-if="model.type === 'stats'" v-model="model.items" :errors="errors" />
 

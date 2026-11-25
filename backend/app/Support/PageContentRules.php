@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use Closure;
 use Illuminate\Validation\Rule;
 
 /**
@@ -73,7 +74,12 @@ class PageContentRules
 
     public const MAX_SOCIAL = 10;
 
-    private const TYPES = ['heading', 'text', 'button', 'cards', 'accordion', 'divider', 'spacer', 'alert', 'quote', 'stats', 'social'];
+    public const MAX_FOOTER_LINKS = 8;
+
+    /** A lábléc telefonszáma: számjegyek, +, szóköz, zárójel, kötőjel és pont. */
+    public const PHONE_PATTERN = '~^[0-9+()\-\s.]*[0-9][0-9+()\-\s.]*$~';
+
+    private const TYPES = ['heading', 'text', 'button', 'cards', 'accordion', 'divider', 'spacer', 'alert', 'quote', 'stats', 'social', 'footer'];
 
     /**
      * @return array<string, mixed>
@@ -81,7 +87,7 @@ class PageContentRules
     public static function rules(mixed $content): array
     {
         $rules = [
-            'content' => ['present', 'array', 'max:'.self::MAX_COMPONENTS],
+            'content' => ['present', 'array', 'max:'.self::MAX_COMPONENTS, self::singleFooter(...)],
             'content.*.id' => ['required', 'string', 'max:64'],
             'content.*.type' => ['required', Rule::in(self::TYPES)],
         ];
@@ -99,6 +105,18 @@ class PageContentRules
         }
 
         return $rules;
+    }
+
+    /** Egy oldalon legfeljebb egy lábléc lehet (a lábléc az oldal végén jelenik meg). */
+    private static function singleFooter(string $attribute, mixed $value, Closure $fail): void
+    {
+        $footers = is_array($value)
+            ? count(array_filter($value, fn ($component) => is_array($component) && ($component['type'] ?? null) === 'footer'))
+            : 0;
+
+        if ($footers > 1) {
+            $fail('Egy oldalon legfeljebb egy lábléc lehet.');
+        }
     }
 
     /**
@@ -187,6 +205,17 @@ class PageContentRules
                 'items.*.id' => ['required', 'string', 'max:64'],
                 'items.*.platform' => ['required', 'string', Rule::in(Icons::brandNames())],
                 'items.*.url' => ['required', 'string', 'max:2048', 'regex:'.self::URL_PATTERN],
+            ],
+            // A lábléc oldalszintű komponens (nincs migráció): a linkek a gombokkal azonos URL-szabályt követik.
+            'footer' => [
+                'copyright' => ['nullable', 'string', 'max:150'],
+                'links' => ['nullable', 'array', 'max:'.self::MAX_FOOTER_LINKS],
+                'links.*.id' => ['required', 'string', 'max:64'],
+                'links.*.label' => ['required', 'string', 'max:60'],
+                'links.*.url' => ['required', 'string', 'max:2048', 'regex:'.self::URL_PATTERN],
+                'email' => ['nullable', 'string', 'max:254', 'email'],
+                'phone' => ['nullable', 'string', 'max:30', 'regex:'.self::PHONE_PATTERN],
+                'address' => ['nullable', 'string', 'max:200'],
             ],
             'alert' => [
                 'variant' => ['required', 'string', Rule::in(self::ALERT_VARIANTS)],
