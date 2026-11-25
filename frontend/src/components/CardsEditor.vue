@@ -1,9 +1,17 @@
 <script setup lang="ts">
 import { useId } from 'vue'
 
+import FormField from '@/components/FormField.vue'
 import IconPicker from '@/components/IconPicker.vue'
 import type { CardItem } from '@/types/content'
-import { createCard, MAX_CARDS, MIN_CARDS, moveItem, type PageTarget } from '@/utils/components'
+import {
+  createCard,
+  MAX_CARDS,
+  MIN_CARDS,
+  moveItem,
+  type PageTarget,
+  URL_FIELD_HINT,
+} from '@/utils/components'
 
 // A kártyacsoport szerkesztője: 1–6 kártya, kártyánként ikon, cím, leírás és opcionális gomb.
 // A hibák kulcsa a komponensen belüli út (`cards.0.title`), a csoportra vonatkozó hibáé `cards`.
@@ -68,60 +76,33 @@ function move(from: number, to: number): void {
 
       <IconPicker v-model="card.icon" :error="errors[`cards.${index}.icon`]" />
 
-      <div class="field">
-        <label :for="`${uid}-${card.id}-title`">Cím</label>
-        <input
-          :id="`${uid}-${card.id}-title`"
-          v-model="card.title"
-          :aria-invalid="!!errors[`cards.${index}.title`]"
-          type="text"
-        />
-        <p v-if="errors[`cards.${index}.title`]" class="field__error">
-          {{ errors[`cards.${index}.title`]!.join(' ') }}
-        </p>
-      </div>
-
-      <div class="field">
-        <label :for="`${uid}-${card.id}-text`">Leírás (opcionális)</label>
-        <textarea
-          :id="`${uid}-${card.id}-text`"
-          v-model="card.text"
-          :aria-invalid="!!errors[`cards.${index}.text`]"
-          rows="2"
-        ></textarea>
-        <p v-if="errors[`cards.${index}.text`]" class="field__error">
-          {{ errors[`cards.${index}.text`]!.join(' ') }}
-        </p>
-      </div>
-
-      <div class="field">
-        <label :for="`${uid}-${card.id}-label`">Gomb felirata (opcionális)</label>
-        <input
-          :id="`${uid}-${card.id}-label`"
-          v-model="card.label"
-          :aria-invalid="!!errors[`cards.${index}.label`]"
-          type="text"
-        />
-        <p v-if="errors[`cards.${index}.label`]" class="field__error">
-          {{ errors[`cards.${index}.label`]!.join(' ') }}
-        </p>
-      </div>
-
-      <div class="field">
-        <label :for="`${uid}-${card.id}-url`"
-          >Gomb célja (https://…, /útvonal vagy #horgony; a felirattal együtt)</label
-        >
-        <input
-          :id="`${uid}-${card.id}-url`"
-          v-model="card.url"
-          :aria-invalid="!!errors[`cards.${index}.url`]"
-          :list="targets?.length ? `${uid}-targets` : undefined"
-          type="text"
-        />
-        <p v-if="errors[`cards.${index}.url`]" class="field__error">
-          {{ errors[`cards.${index}.url`]!.join(' ') }}
-        </p>
-      </div>
+      <FormField
+        v-model="card.title"
+        label="Cím"
+        :required="false"
+        :error="errors[`cards.${index}.title`]"
+      />
+      <FormField
+        v-model="card.text"
+        label="Leírás (opcionális)"
+        multiline
+        :rows="2"
+        :required="false"
+        :error="errors[`cards.${index}.text`]"
+      />
+      <FormField
+        v-model="card.label"
+        label="Gomb felirata (opcionális)"
+        :required="false"
+        :error="errors[`cards.${index}.label`]"
+      />
+      <FormField
+        v-model="card.url"
+        :label="`Gomb célja ${URL_FIELD_HINT.slice(0, -1)}; a felirattal együtt)`"
+        :required="false"
+        :list="targets?.length ? `${uid}-targets` : undefined"
+        :error="errors[`cards.${index}.url`]"
+      />
     </fieldset>
 
     <datalist v-if="targets?.length" :id="`${uid}-targets`">
@@ -169,32 +150,8 @@ function move(from: number, to: number): void {
   justify-self: end;
 }
 
-.field {
-  display: grid;
-  gap: var(--space-1);
-}
-
-label {
-  font-weight: 600;
-}
-
-input,
-textarea {
-  min-width: 0;
-  padding: var(--space-2) var(--space-3);
-  font: inherit;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-}
-
 [aria-invalid='true'] {
   border-color: var(--color-danger);
-}
-
-.field__error {
-  margin: 0;
-  font-size: 0.875rem;
-  color: var(--color-danger);
 }
 
 @media (pointer: coarse) {

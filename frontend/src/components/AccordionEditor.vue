@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { useId } from 'vue'
-
+import FormField from '@/components/FormField.vue'
 import type { AccordionItem } from '@/types/content'
 import {
   createAccordionItem,
@@ -14,8 +13,6 @@ import {
 defineProps<{ errors: Record<string, string[]> }>()
 
 const items = defineModel<AccordionItem[]>({ required: true })
-
-const uid = useId()
 
 function add(): void {
   if (items.value.length < MAX_ACCORDION_ITEMS) {
@@ -71,31 +68,20 @@ function move(from: number, to: number): void {
         </button>
       </span>
 
-      <div class="field">
-        <label :for="`${uid}-${item.id}-title`">Cím</label>
-        <input
-          :id="`${uid}-${item.id}-title`"
-          v-model="item.title"
-          :aria-invalid="!!errors[`items.${index}.title`]"
-          type="text"
-        />
-        <p v-if="errors[`items.${index}.title`]" class="field__error">
-          {{ errors[`items.${index}.title`]!.join(' ') }}
-        </p>
-      </div>
-
-      <div class="field">
-        <label :for="`${uid}-${item.id}-text`">Szöveg</label>
-        <textarea
-          :id="`${uid}-${item.id}-text`"
-          v-model="item.text"
-          :aria-invalid="!!errors[`items.${index}.text`]"
-          rows="3"
-        ></textarea>
-        <p v-if="errors[`items.${index}.text`]" class="field__error">
-          {{ errors[`items.${index}.text`]!.join(' ') }}
-        </p>
-      </div>
+      <FormField
+        v-model="item.title"
+        label="Cím"
+        :required="false"
+        :error="errors[`items.${index}.title`]"
+      />
+      <FormField
+        v-model="item.text"
+        label="Szöveg"
+        multiline
+        :rows="3"
+        :required="false"
+        :error="errors[`items.${index}.text`]"
+      />
     </fieldset>
 
     <div class="actions">
@@ -137,32 +123,8 @@ function move(from: number, to: number): void {
   justify-self: end;
 }
 
-.field {
-  display: grid;
-  gap: var(--space-1);
-}
-
-label {
-  font-weight: 600;
-}
-
-input,
-textarea {
-  min-width: 0;
-  padding: var(--space-2) var(--space-3);
-  font: inherit;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-}
-
 [aria-invalid='true'] {
   border-color: var(--color-danger);
-}
-
-.field__error {
-  margin: 0;
-  font-size: 0.875rem;
-  color: var(--color-danger);
 }
 
 @media (pointer: coarse) {
