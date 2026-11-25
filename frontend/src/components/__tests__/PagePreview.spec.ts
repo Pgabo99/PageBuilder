@@ -170,6 +170,53 @@ describe('PagePreview', () => {
     })
   })
 
+  describe('elválasztó', () => {
+    it('vízszintes vonalként jelenik meg, a beállítások osztályként', () => {
+      const wrapper = mount(PagePreview, {
+        props: {
+          components: [
+            { id: 'a', type: 'divider', thickness: 'thick', style: 'dashed', color: 'accent' },
+          ],
+        },
+      })
+
+      expect(wrapper.find('hr').classes()).toEqual(
+        expect.arrayContaining([
+          'preview__divider--thickness-thick',
+          'preview__divider--style-dashed',
+          'preview__divider--color-accent',
+        ]),
+      )
+    })
+
+    it('az alapértelmezett, null és hibás értékű elválasztó alapmegjelenést kap', () => {
+      const wrapper = mount(PagePreview, {
+        props: {
+          components: [
+            { id: 'a', type: 'divider' },
+            { id: 'b', type: 'divider', thickness: null, style: null, color: null },
+            { id: 'c', type: 'divider', thickness: 'huge' as 'thin', color: 'red' as 'text' },
+          ],
+        },
+      })
+
+      expect(wrapper.findAll('hr')).toHaveLength(3)
+      for (const hr of wrapper.findAll('hr')) {
+        expect(hr.classes()).toEqual(['preview__divider'])
+      }
+    })
+
+    it('kattintásra kijelöli a komponenst', async () => {
+      const wrapper = mount(PagePreview, {
+        props: { components: [{ id: 'a', type: 'divider' }] },
+      })
+
+      await wrapper.find('.preview__item').trigger('click')
+
+      expect(wrapper.emitted('select')).toEqual([['a']])
+    })
+  })
+
   describe('kártyacsoport elrendezése', () => {
     const base = { id: 'k', type: 'cards' as const, cards: [{ id: 'a', title: 'A' }] }
 

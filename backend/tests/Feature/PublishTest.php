@@ -253,6 +253,35 @@ describe('job', function () {
             ->toContain('<div class="cards">');
     });
 
+    it('az elválasztó vízszintes vonalként, osztályokkal jelenik meg; az alapértelmezett osztály nélkül', function () {
+        $this->index->update(['content' => [
+            ['id' => 'a', 'type' => 'divider', 'thickness' => 'thick', 'style' => 'dotted', 'color' => 'accent'],
+            ['id' => 'b', 'type' => 'divider'],
+            ['id' => 'c', 'type' => 'divider', 'thickness' => null, 'style' => null],
+        ]]);
+
+        runJob($this->website);
+
+        $html = file_get_contents("{$this->dir}/proba/index.html");
+        expect($html)
+            ->toContain('<hr class="divider divider--thickness-thick divider--style-dotted divider--color-accent">')
+            ->and(substr_count($html, '<hr class="divider">'))->toBe(2)
+            ->and($html)->toContain('.divider--color-accent {');
+    });
+
+    it('a hibás tárolt elválasztó-beállítás nem kerül a HTML-be (a validációt megkerülve sem)', function () {
+        $this->index->update(['content' => [
+            ['id' => 'a', 'type' => 'divider', 'thickness' => '"><script>alert(1)</script>', 'style' => ['x'], 'color' => 'red'],
+        ]]);
+
+        runJob($this->website);
+
+        $html = file_get_contents("{$this->dir}/proba/index.html");
+        expect($html)
+            ->not->toContain('<script')
+            ->toContain('<hr class="divider">');
+    });
+
     it('az ismeretlen vagy hibás tárolt ikon nem renderelődik (a validációt megkerülve sem)', function () {
         $this->index->update(['content' => [
             ['id' => 'a', 'type' => 'heading', 'text' => 'Egy', 'level' => 2, 'icon' => '<script>alert(1)</script>'],

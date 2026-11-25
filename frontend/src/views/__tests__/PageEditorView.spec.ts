@@ -565,6 +565,41 @@ describe('PageEditorView', () => {
     expect(wrapper.find('.preview__cards').classes()).not.toContain('preview__cards--gap-large')
   })
 
+  it('az elválasztó felvehető, beállítható, az előnézet követi, mentéskor elmegy', async () => {
+    vi.mocked(pagesApi.update).mockImplementation(async (_id, payload) => ({ ...page, ...payload }))
+    const wrapper = await mountEditor()
+    const before = wrapper.findAll('.component').length
+
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text() === '+ Elválasztó')!
+      .trigger('click')
+    expect(wrapper.findAll('.component')).toHaveLength(before + 1)
+    expect(wrapper.find('.preview hr').exists()).toBe(true)
+
+    await selectByLabel(wrapper, 'Vastagság').setValue('thick')
+    await selectByLabel(wrapper, 'Stílus').setValue('dotted')
+    await selectByLabel(wrapper, 'Szín').setValue('accent')
+
+    expect(wrapper.find('.preview hr').classes()).toEqual(
+      expect.arrayContaining([
+        'preview__divider--thickness-thick',
+        'preview__divider--style-dotted',
+        'preview__divider--color-accent',
+      ]),
+    )
+    await wrapper.find('button.btn:not(.btn--secondary)').trigger('click')
+    await flushPromises()
+
+    const saved = vi.mocked(pagesApi.update).mock.calls[0]![1].content[before]
+    expect(saved).toMatchObject({
+      type: 'divider',
+      thickness: 'thick',
+      style: 'dotted',
+      color: 'accent',
+    })
+  })
+
   it('a címsor ikonja kiválasztható, azonnal látszik az előnézetben, és mentéskor elmegy', async () => {
     const wrapper = await mountEditor()
     vi.mocked(pagesApi.update).mockImplementation(async (_id, payload) => ({ ...page, ...payload }))

@@ -88,11 +88,27 @@ class SiteRenderContext
     /** A kártyacsoport osztályai (`cards` + elrendezési módosítók); csak az engedélyezett értékekből. */
     public function cardsClass(array $component): string
     {
-        $classes = ['cards'];
-        foreach (PageContentRules::CARDS_OPTIONS as $option => $allowed) {
+        return $this->modifierClass('cards', $component, PageContentRules::CARDS_OPTIONS);
+    }
+
+    /** Az elválasztó osztályai (`divider` + módosítók); csak az engedélyezett értékekből. */
+    public function dividerClass(array $component): string
+    {
+        return $this->modifierClass('divider', $component, PageContentRules::DIVIDER_OPTIONS);
+    }
+
+    /**
+     * Az alaposztály és a módosítók (`alap--beallitas-ertek`); ismeretlen vagy hibás érték elmarad.
+     *
+     * @param  array<string, list<int|string>>  $options
+     */
+    private function modifierClass(string $base, array $component, array $options): string
+    {
+        $classes = [$base];
+        foreach ($options as $option => $allowed) {
             $value = $component[$option] ?? null;
             if ((is_int($value) || is_string($value)) && in_array($value, $allowed, true)) {
-                $classes[] = 'cards--'.str_replace('_', '-', $option).'-'.$value;
+                $classes[] = $base.'--'.str_replace('_', '-', $option).'-'.$value;
             }
         }
 

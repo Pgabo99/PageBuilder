@@ -9,6 +9,7 @@ import {
   cardsClasses,
   buttonWrapClasses,
   createAccordionItem,
+  dividerClasses,
   createCard,
   createComponent,
   MAX_ACCORDION_ITEMS,
@@ -288,5 +289,25 @@ describe('cardsClasses', () => {
     expect(
       cardsClasses({ columns: 7 as 4, gap: '"><x' as 'small', shadow: ['small'] as never }),
     ).toEqual([])
+  })
+})
+
+describe('elválasztó', () => {
+  it('felvehető alapértelmezett (mező nélküli) formában, és van összefoglalója', () => {
+    const divider = createComponent('divider')
+
+    expect(divider).toMatchObject({ type: 'divider' })
+    expect(Object.keys(divider).sort()).toEqual(['id', 'type'])
+    expect(componentSummary(divider)).toBe('Vízszintes vonal')
+    expect(componentTypes.map((t) => t.type)).toContain('divider')
+  })
+
+  it('csak az engedélyezett értékekből képez osztályt', () => {
+    expect(dividerClasses({ thickness: 'medium', color: 'text' })).toEqual([
+      'preview__divider--thickness-medium',
+      'preview__divider--color-text',
+    ])
+    expect(dividerClasses({})).toEqual([])
+    expect(dividerClasses({ thickness: 'huge', style: '"><x', color: null })).toEqual([])
   })
 })

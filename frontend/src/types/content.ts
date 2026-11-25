@@ -100,6 +100,15 @@ export interface AccordionItem {
   text: string
 }
 
+/** Az elválasztó vonal megjelenése; az üres érték a vékony, folytonos, keretszínű vonal. */
+export interface DividerComponent {
+  id: string
+  type: 'divider'
+  thickness?: 'thin' | 'medium' | 'thick' | null
+  style?: 'solid' | 'dashed' | 'dotted' | null
+  color?: 'border' | 'text' | 'accent' | null
+}
+
 export interface AccordionComponent {
   id: string
   type: 'accordion'
@@ -107,7 +116,12 @@ export interface AccordionComponent {
 }
 
 export type PageComponent =
-  HeadingComponent | TextComponent | ButtonComponent | CardsComponent | AccordionComponent
+  | HeadingComponent
+  | TextComponent
+  | ButtonComponent
+  | CardsComponent
+  | AccordionComponent
+  | DividerComponent
 export type ComponentType = PageComponent['type']
 
 export interface Page {
