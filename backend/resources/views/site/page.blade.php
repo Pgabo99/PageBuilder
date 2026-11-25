@@ -52,6 +52,9 @@
         @for ($rem = \App\Support\PageContentRules::SPACER_MIN_HEIGHT; $rem <= \App\Support\PageContentRules::SPACER_MAX_HEIGHT; $rem++)
         .spacer--{{ $rem }} { height: {{ $rem }}rem; }
         @endfor
+        .rich a { color: var(--primary); }
+        .rich ul, .rich ol { padding-left: 1.5rem; }
+        .rich { overflow-wrap: anywhere; }
         .site-footer { max-width: 42rem; margin: 2rem auto 0; padding: 1rem; font-size: .9rem; border-top: 1px solid var(--border); overflow-wrap: anywhere; }
         .site-footer a { color: var(--primary); }
         .site-footer__links { display: flex; flex-wrap: wrap; gap: .5rem 1rem; margin: 0 0 .75rem; padding: 0; list-style: none; }
@@ -119,7 +122,11 @@
             <h{{ $level }}@if ($class !== '') class="{{ $class }}"@endif>{!! $site->icon($component['icon'] ?? null) !!}{{ $component['text'] ?? '' }}</h{{ $level }}>
             @break
         @case('text')
-            <p>{{ $component['text'] ?? '' }}</p>
+            @if ($site->isRichText($component))
+                <div class="rich">{!! $site->richText($component['text'] ?? '') !!}</div>
+            @else
+                <p>{{ $component['text'] ?? '' }}</p>
+            @endif
             @break
         @case('cards')
             <div class="{{ $site->cardsClass($component) }}">
