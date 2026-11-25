@@ -214,7 +214,7 @@ describe('createComponent', () => {
     const button = createComponent('button')
 
     expect(heading).toMatchObject({ type: 'heading', level: 2 })
-    expect(text).toMatchObject({ type: 'text' })
+    expect(text).toMatchObject({ type: 'text', format: 'markdown' })
     expect(button).toMatchObject({ type: 'button', url: '/' })
     expect(new Set([heading.id, text.id, button.id]).size).toBe(3)
   })

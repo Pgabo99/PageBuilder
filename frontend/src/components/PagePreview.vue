@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 
 import AppIcon from '@/components/AppIcon.vue'
+import RichText from '@/components/RichText.vue'
 import {
   buttonClasses,
   buttonWrapClasses,
@@ -12,6 +13,7 @@ import {
   headingClasses,
   MAX_FOOTER_LINKS,
   phoneHref,
+  SAFE_URL,
   spacerHeight,
   MAX_ACCORDION_ITEMS,
   MAX_CARDS,
@@ -46,9 +48,6 @@ const shown = computed(() => {
   ]
 })
 
-// A backend `PageContentRules::URL_PATTERN`-jével azonos szabály: a publikált oldal a nem biztonságos URL-ű gombot elhagyja.
-const SAFE_URL = /^(?:https?:\/\/\S+|\/(?!\/)\S*|#\S*)$/i
-
 /** A lábléc megjeleníthető linkjei: felirattal és biztonságos céllal, legfeljebb a megengedett számban (mint a publikált oldalon). */
 const footerLinks = (links: readonly FooterLink[] | null | undefined): FooterLink[] =>
   (links ?? []).filter((link) => link.label && SAFE_URL.test(link.url)).slice(0, MAX_FOOTER_LINKS)
@@ -72,6 +71,15 @@ const level = (value: number): number => Math.min(6, Math.max(1, Math.trunc(valu
           component.text
         }}
       </component>
+      <div
+        v-else-if="component.type === 'text' && component.format === 'markdown'"
+        class="preview__item preview__rich"
+        :class="{ 'preview__item--active': component.id === activeId }"
+        :data-component-id="component.id"
+        @click="$emit('select', component.id)"
+      >
+        <RichText :source="component.text" />
+      </div>
       <p
         v-else-if="component.type === 'text'"
         class="preview__item"
@@ -780,6 +788,16 @@ const level = (value: number): number => Math.min(6, Math.max(1, Math.trunc(valu
 
 .preview__divider--color-accent {
   --divider-color: var(--accent);
+}
+
+/* Mint a publikált oldal `.rich` szabályai: a hivatkozás az elsődleges szín, a lista behúzott. */
+.preview__rich :deep(a) {
+  color: var(--primary);
+}
+
+.preview__rich :deep(ul),
+.preview__rich :deep(ol) {
+  padding-left: 1.5rem;
 }
 
 .preview__empty {

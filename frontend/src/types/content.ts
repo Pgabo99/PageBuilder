@@ -42,10 +42,14 @@ export interface HeadingComponent {
   icon?: string | null
 }
 
+/** `markdown`: formázott szöveg (félkövér, dőlt, listák, link); az üres érték a sima szöveg (a régi komponensek). */
+export type TextFormat = 'markdown'
+
 export interface TextComponent {
   id: string
   type: 'text'
   text: string
+  format?: TextFormat | null
 }
 
 /** A gomb megjelenése; az üres érték a jelenlegi (kitöltött, közepes, balra igazított, kissé lekerekített) megjelenés. */

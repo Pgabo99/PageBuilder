@@ -20,8 +20,10 @@ import {
   DIVIDER_OPTIONS,
   HEADING_LEVEL_OPTIONS,
   HEADING_OPTIONS,
+  MARKDOWN_HINT,
   MAX_SPACER_HEIGHT,
   MIN_SPACER_HEIGHT,
+  TEXT_FORMATS,
   type PageTarget,
   URL_FIELD_HINT,
 } from '@/utils/components'
@@ -126,15 +128,24 @@ const uid = useId()
         <IconPicker v-model="model.icon" :error="errors.icon" />
       </template>
 
-      <FormField
-        v-else-if="model.type === 'text'"
-        v-model="model.text"
-        label="Szöveg"
-        multiline
-        :rows="4"
-        :required="false"
-        :error="errors.text"
-      />
+      <template v-else-if="model.type === 'text'">
+        <SelectField
+          v-model="model.format"
+          label="Formátum"
+          empty-label="Sima szöveg"
+          :options="TEXT_FORMATS"
+          :error="errors.format"
+        />
+        <FormField
+          v-model="model.text"
+          label="Szöveg"
+          multiline
+          :rows="4"
+          :required="false"
+          :hint="model.format === 'markdown' ? MARKDOWN_HINT : undefined"
+          :error="errors.text"
+        />
+      </template>
 
       <template v-else-if="model.type === 'button'">
         <FormField v-model="model.label" label="Felirat" :required="false" :error="errors.label" />

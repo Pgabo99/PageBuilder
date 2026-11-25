@@ -776,6 +776,34 @@ describe('PageEditorView', () => {
     })
   })
 
+  it('a szöveg formátuma választható, a súgó csak formázott szövegnél látszik, mentéskor elmegy', async () => {
+    vi.mocked(pagesApi.get).mockResolvedValue(
+      structuredClone({
+        ...page,
+        content: [{ id: 't', type: 'text', text: 'régi **szöveg**' }],
+      } as Page),
+    )
+    vi.mocked(pagesApi.update).mockImplementation(async (_id, payload) => ({ ...page, ...payload }))
+    const wrapper = await mountEditor()
+    await wrapper.find('.component__toggle').trigger('click')
+
+    expect((selectByLabel(wrapper, 'Formátum').element as HTMLSelectElement).value).toBe('')
+    expect(wrapper.text()).not.toContain('üres sor új bekezdés')
+    expect(wrapper.find('.preview__rich').exists()).toBe(false)
+
+    await selectByLabel(wrapper, 'Formátum').setValue('markdown')
+
+    expect(wrapper.text()).toContain('üres sor új bekezdés')
+    expect(wrapper.find('.preview__rich strong').text()).toBe('szöveg')
+    await wrapper.find('button.btn:not(.btn--secondary)').trigger('click')
+    await flushPromises()
+
+    expect(vi.mocked(pagesApi.update).mock.calls[0]![1].content[0]).toMatchObject({
+      type: 'text',
+      format: 'markdown',
+    })
+  })
+
   it('a térköz felvehető, a magassága állítható, az előnézet követi, mentéskor elmegy', async () => {
     vi.mocked(pagesApi.update).mockImplementation(async (_id, payload) => ({ ...page, ...payload }))
     const wrapper = await mountEditor()
