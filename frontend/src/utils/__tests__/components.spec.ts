@@ -11,6 +11,9 @@ import {
   alertMarker,
   alertVariant,
   createAccordionItem,
+  createStat,
+  MAX_STATS,
+  MIN_STATS,
   spacerHeight,
   dividerClasses,
   createCard,
@@ -360,5 +363,30 @@ describe('idézet', () => {
     expect(Object.keys(quote).sort()).toEqual(['id', 'text', 'type'])
     expect(componentSummary(quote)).toBe('Új idézet')
     expect(componentTypes.map((t) => t.type)).toContain('quote')
+  })
+})
+
+describe('statisztika', () => {
+  it('egy elemmel vehető fel, és van összefoglalója', () => {
+    const stats = createComponent('stats')
+
+    expect(stats).toMatchObject({ type: 'stats' })
+    expect((stats as { items: unknown[] }).items).toHaveLength(MIN_STATS)
+    expect(componentSummary(stats)).toBe('1 statisztika: Új statisztika')
+    expect(componentTypes.map((t) => t.type)).toContain('stats')
+    expect(MAX_STATS).toBe(6)
+  })
+
+  it('az új elem érvényes, a másolat új azonosítókat kap és nem osztozik az eredetivel', () => {
+    const stat = createStat()
+    expect(stat).toMatchObject({ value: '100', label: 'Új statisztika' })
+
+    const original = createComponent('stats')
+    const copy = cloneComponent(original) as { id: string; items: { id: string }[] }
+    const source = original as unknown as { id: string; items: { id: string }[] }
+
+    expect(copy.id).not.toBe(source.id)
+    expect(copy.items[0]!.id).not.toBe(source.items[0]!.id)
+    expect(copy.items).not.toBe(source.items)
   })
 })

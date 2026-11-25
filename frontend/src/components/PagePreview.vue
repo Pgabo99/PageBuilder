@@ -13,6 +13,7 @@ import {
   spacerHeight,
   MAX_ACCORDION_ITEMS,
   MAX_CARDS,
+  MAX_STATS,
 } from '@/utils/components'
 import { findIcon } from '@/utils/icons'
 import type { PageComponent } from '@/types/content'
@@ -98,6 +99,25 @@ const level = (value: number): number => Math.min(6, Math.max(1, Math.trunc(valu
           <summary tabindex="-1">{{ item.title }}</summary>
           <p>{{ item.text }}</p>
         </details>
+      </div>
+      <div
+        v-else-if="component.type === 'stats'"
+        class="preview__item preview__stats"
+        :class="{ 'preview__item--active': component.id === activeId }"
+        :data-component-id="component.id"
+        @click="$emit('select', component.id)"
+      >
+        <div
+          v-for="stat in component.items.slice(0, MAX_STATS)"
+          :key="stat.id"
+          class="preview__stat"
+        >
+          <div v-if="findIcon(stat.icon)" class="preview__stat-icon">
+            <AppIcon :name="stat.icon" />
+          </div>
+          <p class="preview__stat-value">{{ stat.prefix }}{{ stat.value }}{{ stat.suffix }}</p>
+          <p class="preview__stat-label">{{ stat.label }}</p>
+        </div>
       </div>
       <figure
         v-else-if="component.type === 'quote'"
@@ -473,6 +493,33 @@ const level = (value: number): number => Math.min(6, Math.max(1, Math.trunc(valu
 .preview__accordion details p {
   margin: 0;
   padding: 0 1rem 1rem;
+}
+
+/* Mint a publikált oldal `.stats` szabályai. */
+.preview__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0;
+  text-align: center;
+}
+
+.preview__stat-icon .icon {
+  width: 1.75rem;
+  height: 1.75rem;
+  margin-bottom: 0.25rem;
+  color: var(--accent);
+}
+
+.preview__stat-value {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.preview__stat-label {
+  margin: 0.25rem 0 0;
 }
 
 /* Mint a publikált oldal `.quote` szabályai; a forráslink az előnézetben nem navigál. */
