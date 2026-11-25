@@ -49,6 +49,9 @@
         .heading--left { text-align: left; }
         .heading--center { text-align: center; }
         .heading--right { text-align: right; }
+        @for ($rem = \App\Support\PageContentRules::SPACER_MIN_HEIGHT; $rem <= \App\Support\PageContentRules::SPACER_MAX_HEIGHT; $rem++)
+        .spacer--{{ $rem }} { height: {{ $rem }}rem; }
+        @endfor
         .divider { margin: 1.5rem 0; border: 0; border-top: var(--divider-width, 1px) var(--divider-style, solid) var(--divider-color, var(--border)); }
         .divider--thickness-thin { --divider-width: 1px; } .divider--thickness-medium { --divider-width: 2px; } .divider--thickness-thick { --divider-width: 4px; }
         .divider--style-solid { --divider-style: solid; } .divider--style-dashed { --divider-style: dashed; } .divider--style-dotted { --divider-style: dotted; }
@@ -105,6 +108,9 @@
                 </article>
             @endforeach
             </div>
+            @break
+        @case('spacer')
+            <div class="spacer--{{ $site->spacerHeight($component) }}" aria-hidden="true"></div>
             @break
         @case('divider')
             <hr class="{{ $site->dividerClass($component) }}">

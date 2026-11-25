@@ -8,6 +8,7 @@ import {
   cardsClasses,
   dividerClasses,
   headingClasses,
+  spacerHeight,
   MAX_ACCORDION_ITEMS,
   MAX_CARDS,
 } from '@/utils/components'
@@ -96,6 +97,15 @@ const level = (value: number): number => Math.min(6, Math.max(1, Math.trunc(valu
           <p>{{ item.text }}</p>
         </details>
       </div>
+      <!-- A szaggatott keret csak szerkesztői jelölés (hogy a térköz ne tűnjön üres elemnek); a publikált oldalon nincs. -->
+      <div
+        v-else-if="component.type === 'spacer'"
+        class="preview__item preview__spacer"
+        :class="{ 'preview__item--active': component.id === activeId }"
+        :style="{ height: `${spacerHeight(component.height)}rem` }"
+        :data-component-id="component.id"
+        @click="$emit('select', component.id)"
+      ></div>
       <div
         v-else-if="component.type === 'divider'"
         class="preview__item preview__divider-wrap"
@@ -421,6 +431,11 @@ const level = (value: number): number => Math.min(6, Math.max(1, Math.trunc(valu
 .preview__accordion details p {
   margin: 0;
   padding: 0 1rem 1rem;
+}
+
+.preview__spacer {
+  border: 1px dashed var(--border);
+  border-radius: 0.25rem;
 }
 
 /* Mint a publikált oldal `.divider` szabályai; a körítés a kattintható felület. */

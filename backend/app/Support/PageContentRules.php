@@ -59,7 +59,14 @@ class PageContentRules
         'color' => ['border', 'text', 'accent'],
     ];
 
-    private const TYPES = ['heading', 'text', 'button', 'cards', 'accordion', 'divider'];
+    /** A térköz magassága rem-ben (egész szám). */
+    public const SPACER_MIN_HEIGHT = 1;
+
+    public const SPACER_MAX_HEIGHT = 20;
+
+    public const SPACER_DEFAULT_HEIGHT = 2;
+
+    private const TYPES = ['heading', 'text', 'button', 'cards', 'accordion', 'divider', 'spacer'];
 
     /**
      * @return array<string, mixed>
@@ -150,6 +157,9 @@ class PageContentRules
                 'items.*.text' => ['required', 'string', 'max:2000'],
             ],
             'divider' => self::optionRules(self::DIVIDER_OPTIONS),
+            'spacer' => [
+                'height' => ['required', 'integer', 'between:'.self::SPACER_MIN_HEIGHT.','.self::SPACER_MAX_HEIGHT],
+            ],
             default => [],
         };
     }

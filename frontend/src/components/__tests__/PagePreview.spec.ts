@@ -170,6 +170,35 @@ describe('PagePreview', () => {
     })
   })
 
+  describe('térköz', () => {
+    const heightOf = (wrapper: ReturnType<typeof mount>, index = 0) =>
+      (wrapper.findAll('.preview__spacer')[index]!.element as HTMLElement).style.height
+
+    it('a beállított magasságban jelenik meg, és kattintásra kijelöli a komponenst', async () => {
+      const wrapper = mount(PagePreview, {
+        props: { components: [{ id: 's', type: 'spacer', height: 5 }] },
+      })
+
+      expect(heightOf(wrapper)).toBe('5rem')
+      await wrapper.find('.preview__spacer').trigger('click')
+      expect(wrapper.emitted('select')).toEqual([['s']])
+    })
+
+    it('a hibás magasságot a megengedett tartományra szorítja', () => {
+      const wrapper = mount(PagePreview, {
+        props: {
+          components: [
+            { id: 'a', type: 'spacer', height: 999 },
+            { id: 'b', type: 'spacer', height: -4 },
+            { id: 'c', type: 'spacer', height: 'x' as unknown as number },
+          ],
+        },
+      })
+
+      expect([0, 1, 2].map((i) => heightOf(wrapper, i))).toEqual(['20rem', '1rem', '2rem'])
+    })
+  })
+
   describe('elválasztó', () => {
     it('vízszintes vonalként jelenik meg, a beállítások osztályként', () => {
       const wrapper = mount(PagePreview, {

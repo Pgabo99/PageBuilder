@@ -9,6 +9,7 @@ import {
   cardsClasses,
   buttonWrapClasses,
   createAccordionItem,
+  spacerHeight,
   dividerClasses,
   createCard,
   createComponent,
@@ -309,5 +310,24 @@ describe('elválasztó', () => {
     ])
     expect(dividerClasses({})).toEqual([])
     expect(dividerClasses({ thickness: 'huge', style: '"><x', color: null })).toEqual([])
+  })
+})
+
+describe('térköz', () => {
+  it('alapértelmezett magassággal vehető fel, és van összefoglalója', () => {
+    const spacer = createComponent('spacer')
+
+    expect(spacer).toMatchObject({ type: 'spacer', height: 2 })
+    expect(componentSummary(spacer)).toBe('2 rem térköz')
+    expect(componentTypes.map((t) => t.type)).toContain('spacer')
+  })
+
+  it('a magasságot a megengedett tartományra szorítja, hibás érték esetén az alapérték', () => {
+    expect(spacerHeight(5)).toBe(5)
+    expect(spacerHeight(0)).toBe(1)
+    expect(spacerHeight(99)).toBe(20)
+    expect(spacerHeight(3.9)).toBe(3)
+    expect(spacerHeight('x')).toBe(2)
+    expect(spacerHeight(undefined)).toBe(2)
   })
 })

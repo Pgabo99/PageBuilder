@@ -240,6 +240,19 @@ export const cardsClasses = (cards: CardsLayout): string[] =>
 export const dividerClasses = (divider: object): string[] =>
   modifierClasses(divider, DIVIDER_OPTIONS, 'preview__divider')
 
+/** A térköz magassága rem-ben (a backend `PageContentRules::SPACER_*` értékeivel azonos). */
+export const MIN_SPACER_HEIGHT = 1
+export const MAX_SPACER_HEIGHT = 20
+export const DEFAULT_SPACER_HEIGHT = 2
+
+/** A megjelenített térköz a megengedett tartományra szorítva (hibás vagy hiányzó érték esetén az alapérték). */
+export const spacerHeight = (value: unknown): number => {
+  const height = Math.trunc(Number(value))
+  return Number.isFinite(height)
+    ? Math.min(MAX_SPACER_HEIGHT, Math.max(MIN_SPACER_HEIGHT, height))
+    : DEFAULT_SPACER_HEIGHT
+}
+
 export const componentTypes: { type: ComponentType; label: string }[] = [
   { type: 'heading', label: 'Címsor' },
   { type: 'text', label: 'Szöveg' },
@@ -247,6 +260,7 @@ export const componentTypes: { type: ComponentType; label: string }[] = [
   { type: 'cards', label: 'Kártyák' },
   { type: 'accordion', label: 'Becsukható részek' },
   { type: 'divider', label: 'Elválasztó' },
+  { type: 'spacer', label: 'Térköz' },
 ]
 
 export function componentLabel(type: ComponentType): string {
@@ -285,6 +299,8 @@ export function createComponent(type: ComponentType): PageComponent {
       return { id, type, items: [createAccordionItem()] }
     case 'divider':
       return { id, type }
+    case 'spacer':
+      return { id, type, height: DEFAULT_SPACER_HEIGHT }
   }
 }
 
@@ -308,6 +324,8 @@ function summarySource(component: PageComponent): string {
     }
     case 'divider':
       return 'Vízszintes vonal'
+    case 'spacer':
+      return `${component.height} rem térköz`
     case 'accordion': {
       const first = component.items[0]?.title ?? ''
       return `${component.items.length} rész${first ? `: ${first}` : ''}`
