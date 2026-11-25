@@ -37,7 +37,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: worker
-          image: ghcr.io/pgabo99/pagebuilder-backend:278df525ed5ba9c42bedd3956d32dc5f21bf07f9
+          image: ghcr.io/pgabo99/pagebuilder-backend:e1319081f996ed5e831b989c7270f1ae9e97a012
           # A --timeout kisebb a Redis queue retry_after értékénél (90 s), így egy job nem fut kétszer párhuzamosan.
           command: ["php", "artisan", "queue:work", "--tries=3", "--timeout=60"]
           envFrom:
