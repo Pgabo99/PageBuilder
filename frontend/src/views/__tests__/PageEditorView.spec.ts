@@ -565,6 +565,50 @@ describe('PageEditorView', () => {
     expect(wrapper.find('.preview__cards').classes()).not.toContain('preview__cards--gap-large')
   })
 
+  it('a statisztika felvehető, az elemei szerkeszthetők, az előnézet követi, mentéskor elmegy', async () => {
+    vi.mocked(pagesApi.update).mockImplementation(async (_id, payload) => ({ ...page, ...payload }))
+    const wrapper = await mountEditor()
+    const before = wrapper.findAll('.component').length
+    const field = (label: string) =>
+      wrapper
+        .findAll('.field')
+        .find((f) => f.find('label').text() === label)!
+        .find('input')
+
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text() === '+ Statisztika')!
+      .trigger('click')
+    expect(wrapper.findAll('.component')).toHaveLength(before + 1)
+
+    await field('Érték').setValue('120')
+    await field('Megnevezés').setValue('Ügyfél')
+    await field('Előtag (opcionális)').setValue('~')
+    await field('Utótag (opcionális)').setValue('+')
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text().includes('Statisztika hozzáadása'))!
+      .trigger('click')
+
+    expect(wrapper.findAll('.preview__stat')).toHaveLength(2)
+    expect(wrapper.find('.preview__stat-value').text()).toBe('~120+')
+    await wrapper.find('button.btn:not(.btn--secondary)').trigger('click')
+    await flushPromises()
+
+    const saved = vi.mocked(pagesApi.update).mock.calls[0]![1].content[before] as {
+      type: string
+      items: { value: string; label: string; prefix: string; suffix: string }[]
+    }
+    expect(saved.type).toBe('stats')
+    expect(saved.items).toHaveLength(2)
+    expect(saved.items[0]).toMatchObject({
+      value: '120',
+      label: 'Ügyfél',
+      prefix: '~',
+      suffix: '+',
+    })
+  })
+
   it('az idézet felvehető, a mezői szerkeszthetők, az előnézet követi, mentéskor elmegy', async () => {
     vi.mocked(pagesApi.update).mockImplementation(async (_id, payload) => ({ ...page, ...payload }))
     const wrapper = await mountEditor()
@@ -770,8 +814,8 @@ describe('PageEditorView', () => {
       }))
       await addCards(wrapper)
 
-      await wrapper.find('.card-editor input[type="text"]').setValue('Első kártya')
-      await wrapper.find('.card-editor input[aria-label="Csillag"]').setValue(true)
+      await wrapper.find('.item-editor input[type="text"]').setValue('Első kártya')
+      await wrapper.find('.item-editor input[aria-label="Csillag"]').setValue(true)
       expect(wrapper.find('.preview .preview__card h3').text()).toBe('Első kártya')
       expect(wrapper.find('.preview .preview__card-icon svg').exists()).toBe(true)
 
@@ -807,7 +851,7 @@ describe('PageEditorView', () => {
 
       await wrapper.findAll('[aria-label="Komponens másolása"]')[3]!.trigger('click')
       await flushPromises()
-      await wrapper.find('.card-editor input[type="text"]').setValue('Másolat címe')
+      await wrapper.find('.item-editor input[type="text"]').setValue('Másolat címe')
 
       const headings = wrapper.findAll('.preview .preview__card h3').map((h) => h.text())
       expect(headings).toEqual(['Új kártya', 'Másolat címe'])
@@ -819,7 +863,7 @@ describe('PageEditorView', () => {
       vi.mocked(pagesApi.update).mockRejectedValue(
         new ValidationError('Hibás', { 'content.3.cards.0.title': ['A cím kötelező.'] }),
       )
-      await wrapper.find('.card-editor input[type="text"]').setValue('X')
+      await wrapper.find('.item-editor input[type="text"]').setValue('X')
       await wrapper.findAll('.component__toggle')[0]!.trigger('click')
       expect(activeTitles(wrapper)).toEqual(['Címsor'])
 
@@ -827,7 +871,7 @@ describe('PageEditorView', () => {
       await flushPromises()
 
       expect(activeTitles(wrapper)).toEqual(['Kártyák'])
-      expect(wrapper.find('.card-editor').text()).toContain('A cím kötelező.')
+      expect(wrapper.find('.item-editor').text()).toContain('A cím kötelező.')
     })
 
     it('az előnézeti kártyára kattintva a kártyacsoport aktív lesz', async () => {

@@ -138,6 +138,22 @@ export interface QuoteComponent {
   source_url?: string | null
 }
 
+/** Egy statisztika: az érték (szövegként) és a megnevezés kötelező, az ikon, az előtag és az utótag opcionális. */
+export interface StatItem {
+  id: string
+  icon?: string | null
+  value: string
+  label: string
+  prefix?: string | null
+  suffix?: string | null
+}
+
+export interface StatsComponent {
+  id: string
+  type: 'stats'
+  items: StatItem[]
+}
+
 export interface AccordionComponent {
   id: string
   type: 'accordion'
@@ -154,6 +170,7 @@ export type PageComponent =
   | SpacerComponent
   | AlertComponent
   | QuoteComponent
+  | StatsComponent
 export type ComponentType = PageComponent['type']
 
 export interface Page {

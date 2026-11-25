@@ -52,6 +52,10 @@
         @for ($rem = \App\Support\PageContentRules::SPACER_MIN_HEIGHT; $rem <= \App\Support\PageContentRules::SPACER_MAX_HEIGHT; $rem++)
         .spacer--{{ $rem }} { height: {{ $rem }}rem; }
         @endfor
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: 1rem; margin: 1.5rem 0; text-align: center; }
+        .stat__icon .icon { width: 1.75rem; height: 1.75rem; margin: 0 0 .25rem; }
+        .stat__value { margin: 0; font-size: 2rem; font-weight: 700; line-height: 1.2; overflow-wrap: anywhere; }
+        .stat__label { margin: .25rem 0 0; overflow-wrap: anywhere; }
         .quote { margin: 1.5rem 0; padding: .25rem 1rem; border-left: 4px solid var(--accent); }
         .quote blockquote { margin: 0; font-size: 1.125rem; font-style: italic; overflow-wrap: anywhere; }
         .quote blockquote p { margin: 0; }
@@ -121,6 +125,19 @@
                         <p class="card__action"><a class="button" href="{{ $card['url'] }}">{{ $card['label'] }}</a></p>
                     @endif
                 </article>
+            @endforeach
+            </div>
+            @break
+        @case('stats')
+            <div class="stats">
+            @foreach ($site->statItems($component) as $stat)
+                <div class="stat">
+                    @if ($icon = $site->icon($stat['icon'] ?? null))
+                        <div class="stat__icon">{!! $icon !!}</div>
+                    @endif
+                    <p class="stat__value">{{ $stat['prefix'] ?? '' }}{{ $stat['value'] ?? '' }}{{ $stat['suffix'] ?? '' }}</p>
+                    <p class="stat__label">{{ $stat['label'] ?? '' }}</p>
+                </div>
             @endforeach
             </div>
             @break

@@ -1,5 +1,6 @@
 import type {
   AccordionItem,
+  StatItem,
   AlertVariant,
   CardsLayout,
   ButtonRadius,
@@ -312,6 +313,10 @@ export const alertVariant = (value: unknown): AlertVariant =>
 export const alertMarker = (value: unknown): string =>
   ALERT_VARIANTS.find((item) => item.value === alertVariant(value))!.marker
 
+/** A statisztikák megengedett száma (a backend `PageContentRules::MAX_STATS`-ával azonos). */
+export const MIN_STATS = 1
+export const MAX_STATS = 6
+
 export const componentTypes: { type: ComponentType; label: string }[] = [
   { type: 'heading', label: 'Címsor' },
   { type: 'text', label: 'Szöveg' },
@@ -322,6 +327,7 @@ export const componentTypes: { type: ComponentType; label: string }[] = [
   { type: 'spacer', label: 'Térköz' },
   { type: 'alert', label: 'Értesítődoboz' },
   { type: 'quote', label: 'Idézet' },
+  { type: 'stats', label: 'Statisztika' },
 ]
 
 export function componentLabel(type: ComponentType): string {
@@ -337,6 +343,11 @@ function newId(): string {
 /** Új kártya: a cím kötelező, a többi mező opcionális. */
 export function createCard(): CardItem {
   return { id: newId(), icon: null, title: 'Új kártya', text: '', label: '', url: '' }
+}
+
+/** Új statisztika: az érték és a megnevezés kötelező, a többi opcionális. */
+export function createStat(): StatItem {
+  return { id: newId(), icon: null, value: '100', label: 'Új statisztika', prefix: '', suffix: '' }
 }
 
 /** Új rész: a szerver üres címet és szöveget nem fogad el. */
@@ -366,6 +377,8 @@ export function createComponent(type: ComponentType): PageComponent {
       return { id, type, variant: 'info', text: 'Új értesítés' }
     case 'quote':
       return { id, type, text: 'Új idézet' }
+    case 'stats':
+      return { id, type, items: [createStat()] }
   }
 }
 
@@ -393,6 +406,10 @@ function summarySource(component: PageComponent): string {
       return `${component.height} rem térköz`
     case 'alert':
       return component.title || component.text
+    case 'stats': {
+      const first = component.items[0]?.label ?? ''
+      return `${component.items.length} statisztika${first ? `: ${first}` : ''}`
+    }
     case 'accordion': {
       const first = component.items[0]?.title ?? ''
       return `${component.items.length} rész${first ? `: ${first}` : ''}`
@@ -433,6 +450,13 @@ export function cloneComponent(component: PageComponent): PageComponent {
       ...component,
       id: newId(),
       cards: component.cards.map((card) => ({ ...card, id: newId() })),
+    }
+  }
+  if (component.type === 'stats') {
+    return {
+      ...component,
+      id: newId(),
+      items: component.items.map((item) => ({ ...item, id: newId() })),
     }
   }
   if (component.type === 'accordion') {

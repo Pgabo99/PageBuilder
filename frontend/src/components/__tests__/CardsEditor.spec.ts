@@ -29,7 +29,7 @@ function mountEditor(cards: CardItem[], errors: Record<string, string[]> = {}) {
 
 const titles = (wrapper: ReturnType<typeof mountEditor>) =>
   wrapper
-    .findAll('.card-editor')
+    .findAll('.item-editor')
     .map((c) => (c.find('input[type="text"]').element as HTMLInputElement).value)
 
 const addButton = (wrapper: ReturnType<typeof mountEditor>) =>
@@ -38,7 +38,7 @@ const addButton = (wrapper: ReturnType<typeof mountEditor>) =>
 describe('CardsEditor', () => {
   it('kártyánként ikonválasztót, címet, leírást, gomb feliratot és célt mutat', () => {
     const wrapper = mountEditor([card(1)])
-    const group = wrapper.find('.card-editor')
+    const group = wrapper.find('.item-editor')
 
     expect(group.find('legend').text()).toBe('Kártya 1')
     expect(group.findAll('input[type="radio"]')).toHaveLength(21)
@@ -54,12 +54,12 @@ describe('CardsEditor', () => {
 
     for (let i = 0; i < MAX_CARDS - 1; i++) await addButton(wrapper).trigger('click')
 
-    expect(wrapper.findAll('.card-editor')).toHaveLength(MAX_CARDS)
+    expect(wrapper.findAll('.item-editor')).toHaveLength(MAX_CARDS)
     expect(addButton(wrapper).attributes('disabled')).toBeDefined()
     expect(wrapper.text()).toContain(`${MAX_CARDS}/${MAX_CARDS} kártya`)
 
     await addButton(wrapper).trigger('click')
-    expect(wrapper.findAll('.card-editor')).toHaveLength(MAX_CARDS)
+    expect(wrapper.findAll('.item-editor')).toHaveLength(MAX_CARDS)
   })
 
   it('kártyát töröl, de az utolsót nem lehet', async () => {
@@ -92,7 +92,7 @@ describe('CardsEditor', () => {
   it('a kártya mezői és ikonja szerkeszthető', async () => {
     const cards = [card(1)]
     const wrapper = mountEditor(cards)
-    const group = wrapper.find('.card-editor')
+    const group = wrapper.find('.item-editor')
 
     await group.find('input[type="text"]').setValue('Új cím')
     await group.find('textarea').setValue('Leírás')
@@ -117,7 +117,7 @@ describe('CardsEditor', () => {
       'cards.0.url': ['Hibás cím.'],
       'cards.1.icon': ['Ismeretlen ikon.'],
     })
-    const groups = wrapper.findAll('.card-editor')
+    const groups = wrapper.findAll('.item-editor')
 
     expect(wrapper.text()).toContain('Legfeljebb 6 kártya.')
     expect(groups[1]!.text()).toContain('Kötelező.')

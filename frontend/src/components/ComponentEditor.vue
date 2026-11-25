@@ -7,6 +7,7 @@ import FormField from '@/components/FormField.vue'
 import IconPicker from '@/components/IconPicker.vue'
 import OptionFields from '@/components/OptionFields.vue'
 import SelectField from '@/components/SelectField.vue'
+import StatsEditor from '@/components/StatsEditor.vue'
 import type { PageComponent } from '@/types/content'
 import {
   ALERT_VARIANTS,
@@ -156,6 +157,8 @@ const uid = useId()
         </details>
         <CardsEditor v-model="model.cards" :errors="errors" :targets="targets" />
       </template>
+
+      <StatsEditor v-else-if="model.type === 'stats'" v-model="model.items" :errors="errors" />
 
       <template v-else-if="model.type === 'quote'">
         <FormField

@@ -170,6 +170,48 @@ describe('PagePreview', () => {
     })
   })
 
+  describe('statisztikák', () => {
+    it('érték, előtag, utótag, megnevezés és ikon szerint jelennek meg', () => {
+      const wrapper = mount(PagePreview, {
+        props: {
+          components: [
+            {
+              id: 's',
+              type: 'stats',
+              items: [
+                { id: 'a', value: '120', label: 'Ügyfél', prefix: '~', suffix: '+', icon: 'users' },
+                { id: 'b', value: '99%', label: 'Elégedett', icon: 'nincs-ilyen' },
+              ],
+            },
+          ],
+        },
+      })
+      const stats = wrapper.findAll('.preview__stat')
+
+      expect(stats).toHaveLength(2)
+      expect(stats[0]!.find('.preview__stat-value').text()).toBe('~120+')
+      expect(stats[0]!.find('.preview__stat-label').text()).toBe('Ügyfél')
+      expect(stats[0]!.find('svg').exists()).toBe(true)
+      expect(stats[1]!.find('.preview__stat-value').text()).toBe('99%')
+      expect(stats[1]!.find('svg').exists()).toBe(false)
+    })
+
+    it('legfeljebb a megengedett számú elemet mutatja, és kattintásra kijelöl', async () => {
+      const items = Array.from({ length: 9 }, (_, i) => ({
+        id: `i${i}`,
+        value: String(i),
+        label: 'L',
+      }))
+      const wrapper = mount(PagePreview, {
+        props: { components: [{ id: 's', type: 'stats', items }] },
+      })
+
+      expect(wrapper.findAll('.preview__stat')).toHaveLength(6)
+      await wrapper.find('.preview__stats').trigger('click')
+      expect(wrapper.emitted('select')).toEqual([['s']])
+    })
+  })
+
   describe('idézet', () => {
     it('szöveggel, szerzővel és a forrás szövegével jelenik meg, a link nem navigál', () => {
       const wrapper = mount(PagePreview, {

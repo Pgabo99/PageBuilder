@@ -191,6 +191,19 @@ class SiteRenderContext
             : '';
     }
 
+    /**
+     * A statisztikák futáskor is korlátozva: csak tömb elemek, legfeljebb a megengedett darabszám.
+     *
+     * @param  array<string, mixed>  $component
+     * @return list<array<string, mixed>>
+     */
+    public function statItems(array $component): array
+    {
+        $items = is_array($component['items'] ?? null) ? $component['items'] : [];
+
+        return array_slice(array_values(array_filter($items, 'is_array')), 0, PageContentRules::MAX_STATS);
+    }
+
     /** Futáskor is ellenőrizzük a komponens URL-jét (a validációval azonos szabály). */
     public function isSafeUrl(mixed $url): bool
     {
