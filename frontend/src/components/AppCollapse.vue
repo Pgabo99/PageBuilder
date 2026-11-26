@@ -5,6 +5,8 @@ import { nextTick, ref, useTemplateRef, watch } from 'vue'
 // A tartalom csak nyitva (vagy záródás közben) van a DOM-ban; az időtartamot a --motion-normal token adja,
 // így csökkentett mozgásnál (0ms) azonnal vált.
 const props = defineProps<{ open: boolean }>()
+// A nyitás után (már nem inert) a tartalom fókuszálható.
+const emit = defineEmits<{ opened: [] }>()
 
 const el = useTemplateRef<HTMLElement>('el')
 const rendered = ref(props.open)
@@ -24,6 +26,8 @@ watch(
       await nextTick()
       void el.value?.offsetHeight // reflow: a nyitás a zárt állapotból induljon
       expanded.value = true
+      await nextTick()
+      emit('opened')
     } else {
       expanded.value = false
       if (!animates()) rendered.value = false
@@ -41,7 +45,7 @@ function onTransitionEnd(event: TransitionEvent): void {
     ref="el"
     class="collapse"
     :class="{ 'collapse--open': expanded }"
-    :inert="!expanded"
+    v-bind="expanded ? {} : { inert: true }"
     @transitionend="onTransitionEnd"
   >
     <div class="collapse__inner">

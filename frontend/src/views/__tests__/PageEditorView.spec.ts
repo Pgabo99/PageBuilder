@@ -35,6 +35,19 @@ const PlainGroup = defineComponent({
       h(props.tag, slots.default?.()),
 })
 
+// Komponens felvétele a választón át: megnyitás, majd a típus kiválasztása.
+async function addByLabel(wrapper: VueWrapper, label: string): Promise<void> {
+  if (!wrapper.find('.picker__panel').exists()) {
+    await wrapper.find('.picker__trigger').trigger('click')
+    await flushPromises()
+  }
+  await wrapper
+    .findAll('.picker__item')
+    .find((b) => b.find('.picker__label').text() === label)!
+    .trigger('click')
+  await flushPromises()
+}
+
 const page: Page = {
   id: 3,
   website_id: 1,
@@ -114,10 +127,7 @@ describe('PageEditorView', () => {
       ...payload,
     }))
 
-    await wrapper
-      .findAll('.add-bar button')
-      .find((b) => b.text().includes('Szöveg'))!
-      .trigger('click')
+    await addByLabel(wrapper, 'Szöveg')
     expect(wrapper.text()).toContain('Nem mentett módosítások')
     await wrapper.find('button.btn:not(.btn--secondary)').trigger('click')
     await flushPromises()
@@ -339,10 +349,7 @@ describe('PageEditorView', () => {
     const wrapper = await mountEditor()
     await wrapper.findAll('.component__toggle')[0]!.trigger('click')
 
-    await wrapper
-      .findAll('.add-bar button')
-      .find((b) => b.text().includes('Gomb'))!
-      .trigger('click')
+    await addByLabel(wrapper, 'Gomb')
     await flushPromises()
 
     expect(activeTitles(wrapper)).toEqual(['Gomb'])
@@ -581,16 +588,23 @@ describe('PageEditorView', () => {
     vi.mocked(pagesApi.update).mockImplementation(async (_id, payload) => ({ ...page, ...payload }))
     const wrapper = await mountEditor()
     const before = wrapper.findAll('.component').length
-    const addButton = () => wrapper.findAll('button').find((b) => b.text() === '+ Lábléc')!
     const field = (label: string) =>
       wrapper
         .findAll('.field')
         .find((f) => f.find('label').text().startsWith(label))!
         .find('input')
 
-    await addButton().trigger('click')
+    await addByLabel(wrapper, 'Lábléc')
     expect(wrapper.findAll('.component')).toHaveLength(before + 1)
-    expect(addButton().attributes('disabled')).toBeDefined()
+    // A második lábléc a választóban letiltott, indoklással.
+    await wrapper.find('.picker__trigger').trigger('click')
+    await flushPromises()
+    const footerItem = wrapper
+      .findAll('.picker__item')
+      .find((b) => b.find('.picker__label').text() === 'Lábléc')!
+    expect(footerItem.attributes('disabled')).toBeDefined()
+    expect(wrapper.find('.picker__why').text()).toContain('legfeljebb egy lábléc')
+    await wrapper.find('.picker__trigger').trigger('click')
 
     await field('Copyright').setValue('© Tesztcég')
     await field('E-mail').setValue('info@example.com')
@@ -643,10 +657,7 @@ describe('PageEditorView', () => {
     const wrapper = await mountEditor()
     const before = wrapper.findAll('.component').length
 
-    await wrapper
-      .findAll('button')
-      .find((b) => b.text() === '+ Közösségi média')!
-      .trigger('click')
+    await addByLabel(wrapper, 'Közösségi média')
     expect(wrapper.findAll('.component')).toHaveLength(before + 1)
     expect(wrapper.findAll('.preview__social li')).toHaveLength(1)
 
@@ -684,10 +695,7 @@ describe('PageEditorView', () => {
         .find((f) => f.find('label').text() === label)!
         .find('input')
 
-    await wrapper
-      .findAll('button')
-      .find((b) => b.text() === '+ Statisztika')!
-      .trigger('click')
+    await addByLabel(wrapper, 'Statisztika')
     expect(wrapper.findAll('.component')).toHaveLength(before + 1)
 
     await field('Érték').setValue('120')
@@ -728,10 +736,7 @@ describe('PageEditorView', () => {
         .find((f) => f.find('label').text().startsWith(label))!
         .find('input, textarea')
 
-    await wrapper
-      .findAll('button')
-      .find((b) => b.text() === '+ Idézet')!
-      .trigger('click')
+    await addByLabel(wrapper, 'Idézet')
     expect(wrapper.findAll('.component')).toHaveLength(before + 1)
 
     await field('Idézet').setValue('Az élet szép')
@@ -759,10 +764,7 @@ describe('PageEditorView', () => {
     const wrapper = await mountEditor()
     const before = wrapper.findAll('.component').length
 
-    await wrapper
-      .findAll('button')
-      .find((b) => b.text() === '+ Értesítődoboz')!
-      .trigger('click')
+    await addByLabel(wrapper, 'Értesítődoboz')
     expect(wrapper.findAll('.component')).toHaveLength(before + 1)
     expect(wrapper.find('.preview__alert').classes()).toContain('preview__alert--info')
 
@@ -821,10 +823,7 @@ describe('PageEditorView', () => {
     const wrapper = await mountEditor()
     const before = wrapper.findAll('.component').length
 
-    await wrapper
-      .findAll('button')
-      .find((b) => b.text() === '+ Térköz')!
-      .trigger('click')
+    await addByLabel(wrapper, 'Térköz')
     expect(wrapper.findAll('.component')).toHaveLength(before + 1)
     expect((wrapper.find('.preview__spacer').element as HTMLElement).style.height).toBe('2rem')
 
@@ -845,10 +844,7 @@ describe('PageEditorView', () => {
     const wrapper = await mountEditor()
     const before = wrapper.findAll('.component').length
 
-    await wrapper
-      .findAll('button')
-      .find((b) => b.text() === '+ Elválasztó')!
-      .trigger('click')
+    await addByLabel(wrapper, 'Elválasztó')
     expect(wrapper.findAll('.component')).toHaveLength(before + 1)
     expect(wrapper.find('.preview hr').exists()).toBe(true)
 
@@ -925,10 +921,7 @@ describe('PageEditorView', () => {
 
   describe('kártyák', () => {
     const addCards = async (wrapper: Awaited<ReturnType<typeof mountEditor>>) => {
-      await wrapper
-        .findAll('.add-bar button')
-        .find((b) => b.text().includes('Kártyák'))!
-        .trigger('click')
+      await addByLabel(wrapper, 'Kártyák')
       await flushPromises()
     }
 
@@ -1026,10 +1019,7 @@ describe('PageEditorView', () => {
 
   describe('becsukható részek', () => {
     const addAccordion = async (wrapper: Awaited<ReturnType<typeof mountEditor>>) => {
-      await wrapper
-        .findAll('.add-bar button')
-        .find((b) => b.text().includes('Becsukható részek'))!
-        .trigger('click')
+      await addByLabel(wrapper, 'Becsukható részek')
       await flushPromises()
     }
 
@@ -1145,10 +1135,7 @@ describe('PageEditorView', () => {
   it('az új komponens mentés előtt azonnal megjelenik az előnézetben', async () => {
     const wrapper = await mountEditor()
 
-    await wrapper
-      .findAll('.add-bar button')
-      .find((b) => b.text().includes('Szöveg'))!
-      .trigger('click')
+    await addByLabel(wrapper, 'Szöveg')
 
     expect(wrapper.find('.preview').text()).toContain('Új bekezdés')
     expect(pagesApi.update).not.toHaveBeenCalled()

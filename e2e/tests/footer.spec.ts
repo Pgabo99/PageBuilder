@@ -24,7 +24,10 @@ test('lábléc: copyright, link és elérhetőségek; a publikált oldal végén
   await page.getByLabel('Cím (opcionális)', { exact: true }).fill('1051 Budapest, Fő utca 1.')
 
   // Egy oldalon csak egy lábléc lehet.
-  await expect(page.getByRole('button', { name: '+ Lábléc' })).toBeDisabled()
+  await page.getByRole('button', { name: '+ Elem hozzáadása' }).click()
+  await expect(page.getByRole('group', { name: 'Komponens hozzáadása' }).getByRole('button', { name: 'Lábléc', exact: true })).toBeDisabled()
+  await expect(page.getByText('Oldalanként legfeljebb egy lábléc lehet.')).toBeVisible()
+  await page.keyboard.press('Escape')
 
   // Az előnézet aria-hidden, ezért elemre és szövegre keresünk.
   const preview = page.locator('.preview__footer')
