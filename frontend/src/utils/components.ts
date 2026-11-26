@@ -361,20 +361,43 @@ export const TEXT_FORMATS: { value: TextFormat; label: string }[] = [
 export const MARKDOWN_HINT =
   '**félkövér**, *dőlt*, „- elem” felsorolás, „1. elem” számozott lista, [szöveg](cím) hivatkozás; üres sor új bekezdés.'
 
-export const componentTypes: { type: ComponentType; label: string }[] = [
-  { type: 'heading', label: 'Címsor' },
-  { type: 'text', label: 'Szöveg' },
-  { type: 'button', label: 'Gomb' },
-  { type: 'cards', label: 'Kártyák' },
-  { type: 'accordion', label: 'Becsukható részek' },
-  { type: 'divider', label: 'Elválasztó' },
-  { type: 'spacer', label: 'Térköz' },
-  { type: 'alert', label: 'Értesítődoboz' },
-  { type: 'quote', label: 'Idézet' },
-  { type: 'stats', label: 'Statisztika' },
-  { type: 'social', label: 'Közösségi média' },
-  { type: 'footer', label: 'Lábléc' },
+export type ComponentCategory = 'basic' | 'layout' | 'content' | 'navigation'
+
+export interface ComponentTypeInfo {
+  type: ComponentType
+  label: string
+  /** A `typeIcons` készlet ikonja. */
+  icon: string
+  category: ComponentCategory
+}
+
+export const componentCategories: { id: ComponentCategory; label: string }[] = [
+  { id: 'basic', label: 'Alapelemek' },
+  { id: 'layout', label: 'Elrendezés' },
+  { id: 'content', label: 'Tartalmi elemek' },
+  { id: 'navigation', label: 'Navigáció és kapcsolatok' },
 ]
+
+/** A komponenstípusok neve, ikonja és kategóriája egy helyen: a választó és a szerkesztő ebből dolgozik. */
+export const componentTypes: ComponentTypeInfo[] = [
+  { type: 'heading', label: 'Címsor', icon: 'type', category: 'basic' },
+  { type: 'text', label: 'Szöveg', icon: 'align-left', category: 'basic' },
+  { type: 'button', label: 'Gomb', icon: 'mouse-pointer', category: 'basic' },
+  { type: 'cards', label: 'Kártyák', icon: 'grid', category: 'layout' },
+  { type: 'divider', label: 'Elválasztó', icon: 'minus', category: 'layout' },
+  { type: 'spacer', label: 'Térköz', icon: 'maximize-2', category: 'layout' },
+  { type: 'accordion', label: 'Becsukható részek', icon: 'chevrons-down', category: 'content' },
+  { type: 'alert', label: 'Értesítődoboz', icon: 'alert-circle', category: 'content' },
+  { type: 'quote', label: 'Idézet', icon: 'message-square', category: 'content' },
+  { type: 'stats', label: 'Statisztika', icon: 'bar-chart-2', category: 'content' },
+  { type: 'social', label: 'Közösségi média', icon: 'share-2', category: 'navigation' },
+  { type: 'footer', label: 'Lábléc', icon: 'layout', category: 'navigation' },
+]
+
+/** Kis- és nagybetű, valamint ékezet nélküli alak a kereséshez. */
+export function normalizeSearch(text: string): string {
+  return text.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().trim()
+}
 
 export function componentLabel(type: ComponentType): string {
   return componentTypes.find((item) => item.type === type)?.label ?? type

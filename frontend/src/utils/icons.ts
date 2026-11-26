@@ -300,6 +300,120 @@ export function findBrandIcon(name: unknown): IconDefinition | undefined {
   return brandIcons.find((icon) => icon.name === name)
 }
 
+/**
+ * A komponenstípusok ikonjai (Feather, MIT) a komponensválasztóhoz; az ikonválasztó `icons`
+ * készletétől külön, hogy ott ne jelenjenek meg. Csak a szerkesztőben használt, a backend nem ismeri.
+ */
+export const typeIcons: readonly IconDefinition[] = [
+  {
+    name: 'type',
+    label: 'Címsor',
+    elements: [
+      ['polyline', { points: '4 7 4 4 20 4 20 7' }],
+      ['line', { x1: '9', y1: '20', x2: '15', y2: '20' }],
+      ['line', { x1: '12', y1: '4', x2: '12', y2: '20' }],
+    ],
+  },
+  {
+    name: 'align-left',
+    label: 'Szöveg',
+    elements: [
+      ['line', { x1: '17', y1: '10', x2: '3', y2: '10' }],
+      ['line', { x1: '21', y1: '6', x2: '3', y2: '6' }],
+      ['line', { x1: '21', y1: '14', x2: '3', y2: '14' }],
+      ['line', { x1: '17', y1: '18', x2: '3', y2: '18' }],
+    ],
+  },
+  {
+    name: 'mouse-pointer',
+    label: 'Gomb',
+    elements: [
+      ['path', { d: 'M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z' }],
+      ['path', { d: 'M13 13l6 6' }],
+    ],
+  },
+  {
+    name: 'grid',
+    label: 'Kártyák',
+    elements: [
+      ['rect', { x: '3', y: '3', width: '7', height: '7' }],
+      ['rect', { x: '14', y: '3', width: '7', height: '7' }],
+      ['rect', { x: '14', y: '14', width: '7', height: '7' }],
+      ['rect', { x: '3', y: '14', width: '7', height: '7' }],
+    ],
+  },
+  {
+    name: 'chevrons-down',
+    label: 'Becsukható részek',
+    elements: [
+      ['polyline', { points: '7 13 12 18 17 13' }],
+      ['polyline', { points: '7 6 12 11 17 6' }],
+    ],
+  },
+  {
+    name: 'minus',
+    label: 'Elválasztó',
+    elements: [['line', { x1: '5', y1: '12', x2: '19', y2: '12' }]],
+  },
+  {
+    name: 'maximize-2',
+    label: 'Térköz',
+    elements: [
+      ['polyline', { points: '15 3 21 3 21 9' }],
+      ['polyline', { points: '9 21 3 21 3 15' }],
+      ['line', { x1: '21', y1: '3', x2: '14', y2: '10' }],
+      ['line', { x1: '3', y1: '21', x2: '10', y2: '14' }],
+    ],
+  },
+  {
+    name: 'alert-circle',
+    label: 'Értesítődoboz',
+    elements: [
+      ['circle', { cx: '12', cy: '12', r: '10' }],
+      ['line', { x1: '12', y1: '8', x2: '12', y2: '12' }],
+      ['line', { x1: '12', y1: '16', x2: '12.01', y2: '16' }],
+    ],
+  },
+  {
+    name: 'message-square',
+    label: 'Idézet',
+    elements: [['path', { d: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z' }]],
+  },
+  {
+    name: 'bar-chart-2',
+    label: 'Statisztika',
+    elements: [
+      ['line', { x1: '18', y1: '20', x2: '18', y2: '10' }],
+      ['line', { x1: '12', y1: '20', x2: '12', y2: '4' }],
+      ['line', { x1: '6', y1: '20', x2: '6', y2: '14' }],
+    ],
+  },
+  {
+    name: 'share-2',
+    label: 'Közösségi média',
+    elements: [
+      ['circle', { cx: '18', cy: '5', r: '3' }],
+      ['circle', { cx: '6', cy: '12', r: '3' }],
+      ['circle', { cx: '18', cy: '19', r: '3' }],
+      ['line', { x1: '8.59', y1: '13.51', x2: '15.42', y2: '17.49' }],
+      ['line', { x1: '15.41', y1: '6.51', x2: '8.59', y2: '10.49' }],
+    ],
+  },
+  {
+    name: 'layout',
+    label: 'Lábléc',
+    elements: [
+      ['rect', { x: '3', y: '3', width: '18', height: '18', rx: '2', ry: '2' }],
+      ['line', { x1: '3', y1: '9', x2: '21', y2: '9' }],
+      ['line', { x1: '9', y1: '21', x2: '9', y2: '9' }],
+    ],
+  },
+]
+
+export function findTypeIcon(name: unknown): IconDefinition | undefined {
+  return typeIcons.find((icon) => icon.name === name)
+}
+
 export const iconNames: readonly string[] = icons.map((icon) => icon.name)
 
 export function isIconName(value: unknown): value is string {

@@ -42,9 +42,11 @@ export async function createPage(page: Page, title: string, slug: string): Promi
 
 /** A szerkesztőben a "Hozzáadás" sávból új komponenst vesz fel. */
 export async function addComponent(page: Page, label: 'Címsor' | 'Szöveg' | 'Gomb' | 'Kártyák' | 'Becsukható részek' | 'Elválasztó' | 'Térköz' | 'Értesítődoboz' | 'Idézet' | 'Statisztika' | 'Közösségi média' | 'Lábléc'): Promise<void> {
+  const trigger = page.getByRole('button', { name: '+ Elem hozzáadása' })
+  if ((await trigger.getAttribute('aria-expanded')) !== 'true') await trigger.click()
   await page
     .getByRole('group', { name: 'Komponens hozzáadása' })
-    .getByRole('button', { name: `+ ${label}` })
+    .getByRole('button', { name: label, exact: true })
     .click()
 }
 

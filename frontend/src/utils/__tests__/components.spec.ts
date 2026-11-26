@@ -1,12 +1,14 @@
 import { describe, expect, it } from 'vitest'
 
-import { brandIconNames } from '../icons'
+import { brandIconNames, findTypeIcon, iconNames } from '../icons'
 
 import {
   cloneComponent,
   componentLabel,
   componentSummary,
+  componentCategories,
   componentTypes,
+  normalizeSearch,
   buttonClasses,
   cardsClasses,
   buttonWrapClasses,
@@ -453,5 +455,25 @@ describe('lábléc', () => {
     for (const bad of ['nem szám', '+ - ()', '', null, undefined, 42, 'javascript:alert(1)']) {
       expect(phoneHref(bad)).toBeNull()
     }
+  })
+})
+
+describe('komponenstípus-definíció', () => {
+  it('minden típushoz van ikon és létező kategória, az ikonok nem az ikonválasztóban vannak', () => {
+    const categories = componentCategories.map((category) => category.id)
+    for (const item of componentTypes) {
+      expect(findTypeIcon(item.icon)?.name).toBe(item.icon)
+      expect(categories).toContain(item.category)
+      expect(iconNames).not.toContain(item.icon)
+    }
+  })
+
+  it('a típusok egyediek', () => {
+    const types = componentTypes.map((item) => item.type)
+    expect(new Set(types).size).toBe(types.length)
+  })
+
+  it('a keresési alak ékezet-, kis/nagybetű- és szóköz-független', () => {
+    expect(normalizeSearch('  ÉrtesÍtődoboz ')).toBe('ertesitodoboz')
   })
 })

@@ -6,6 +6,7 @@ import { errorMessage, ValidationError } from '@/api/client'
 import { pagesApi } from '@/api/pages'
 import { websitesApi } from '@/api/websites'
 import ComponentEditor from '@/components/ComponentEditor.vue'
+import ComponentPicker from '@/components/ComponentPicker.vue'
 import FormField from '@/components/FormField.vue'
 import PagePreview from '@/components/PagePreview.vue'
 import StatusBlock from '@/components/StatusBlock.vue'
@@ -369,19 +370,12 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', warnBeforeUnloa
             </li>
           </TransitionGroup>
 
-          <div class="add-bar" role="group" aria-label="Komponens hozzáadása">
-            <span class="muted">Hozzáadás:</span>
-            <button
-              v-for="item in componentTypes"
-              :key="item.type"
-              class="btn btn--secondary"
-              type="button"
-              :disabled="item.type === 'footer' && hasFooter"
-              @click="add(item.type)"
-            >
-              + {{ item.label }}
-            </button>
-          </div>
+          <ComponentPicker
+            class="add-picker"
+            :types="componentTypes"
+            :disabled="hasFooter ? { footer: 'Oldalanként legfeljebb egy lábléc lehet.' } : {}"
+            @select="add"
+          />
         </section>
 
         <aside class="preview-pane" aria-labelledby="preview-title">
@@ -406,11 +400,7 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', warnBeforeUnloa
   margin-bottom: var(--space-6);
 }
 
-.add-bar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
+.add-picker {
   margin-top: var(--space-4);
 }
 
