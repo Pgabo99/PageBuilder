@@ -54,7 +54,7 @@ const group = useId()
 
 .icon-picker legend {
   padding: 0;
-  font-weight: 600;
+  font-weight: var(--weight-semibold);
 }
 
 .icon-picker__grid {
@@ -66,7 +66,7 @@ const group = useId()
 
 .icon-picker__option {
   position: relative;
-  font-weight: 400;
+  font-weight: var(--weight-regular);
 }
 
 .icon-picker__input {
@@ -86,20 +86,20 @@ const group = useId()
   min-width: 2.25rem;
   height: 2.25rem;
   padding: 0 var(--space-2);
-  font-size: 1.25rem;
+  font-size: var(--icon-md);
   color: var(--color-muted);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
 }
 
 .icon-picker__face--none {
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
 }
 
 .icon-picker__input:checked + .icon-picker__face {
   color: var(--color-primary);
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 1px var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-soft);
 }
 
 .icon-picker__input:focus-visible + .icon-picker__face {

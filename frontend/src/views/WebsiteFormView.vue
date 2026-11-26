@@ -210,14 +210,14 @@ async function onSubmit(): Promise<void> {
 
 .appearance legend {
   padding: 0 var(--space-2);
-  font-weight: 600;
+  font-weight: var(--weight-semibold);
 }
 .palette-warnings {
   display: grid;
   gap: var(--space-1);
   padding: 0;
   margin: 0;
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
   color: var(--color-danger);
   list-style: none;
 }

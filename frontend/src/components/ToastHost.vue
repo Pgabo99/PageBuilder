@@ -47,8 +47,8 @@ const { toasts, dismiss } = useToast()
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-left-width: 4px;
-  border-radius: var(--radius);
-  box-shadow: 0 4px 16px rgb(0 0 0 / 0.15);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-pop);
 }
 
 .toast--success {

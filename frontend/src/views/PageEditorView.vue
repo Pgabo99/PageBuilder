@@ -450,7 +450,7 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', warnBeforeUnloa
   justify-content: center;
   min-height: 3rem;
   padding: var(--space-2) var(--space-4);
-  font-weight: 600;
+  font-weight: var(--weight-semibold);
   color: var(--color-primary);
   background: color-mix(in srgb, var(--color-primary) 10%, transparent);
   border: 2px dashed var(--color-primary);
@@ -460,7 +460,7 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', warnBeforeUnloa
 
 h2 {
   margin: var(--space-6) 0 var(--space-3);
-  font-size: 1.125rem;
+  font-size: var(--text-lg);
 }
 
 /* Széles képernyőn a tartalom és az előnézet egymás mellett, az előnézet görgetéskor is látszik. */
@@ -471,7 +471,7 @@ h2 {
 
 .preview-pane__hint {
   margin: var(--space-2) 0 0;
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
 }
 
 @media (min-width: 64rem) {

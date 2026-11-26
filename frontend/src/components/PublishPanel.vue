@@ -115,12 +115,13 @@ const statusText = computed(() => {
   padding: var(--space-4);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xs);
 }
 
 h2 {
   margin: 0;
-  font-size: 1.125rem;
+  font-size: var(--text-lg);
 }
 
 .publish__status {

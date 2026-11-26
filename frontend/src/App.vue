@@ -68,7 +68,7 @@ async function logout(): Promise<void> {
 }
 
 .header__brand {
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   color: var(--color-text);
   text-decoration: none;
 }
