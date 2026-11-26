@@ -9,17 +9,17 @@ MVP-beadandó: minden követelményhez a legegyszerűbb működő megoldás ([ro
 ## Munka előtt
 
 - Implementáció előtt vizsgáld meg a meglévő kódot, konvenciókat és dokumentációt.
-- Minden issue előtt rövid terv, és a felhasználó jóváhagyása.
+- Minden issue előtt rövid terv; jóváhagyás csak az „Önálló munkavégzés” szakasz listájában szereplő esetekben kell, a kisebb feladatok önállóan indíthatók.
 - Jelentős architekturális döntésnél mutasd be az alternatívákat és következményeiket, majd várd meg a felhasználó döntését.
 - Ellentmondásos vagy nem egyértelmű követelményt jelezz, mielőtt feltételezésre építenél.
-- Egyszerre egy issue; későbbi funkciót ne tervezz és ne implementálj előre.
+- Egyszerre egy issue (egymástól független issue-k subagentekkel, izolált worktree-ben párhuzamosíthatók); későbbi funkciót ne tervezz és ne implementálj előre.
 
 ## Engedélyhez kötött műveletek
 
 - Új függőség telepítése (Composer, npm, Docker image, Terraform provider, Claude Code plugin).
 - Destruktív művelet: fájl- vagy könyvtártörlés, adatbázis törlése vagy `migrate:fresh`, `docker volume rm`, `git reset --hard`, `terraform destroy`.
 - Felhőerőforrás létrehozása vagy módosítása (`terraform apply`): előtte költségbecslés és külön egyeztetés.
-- Merge: csak a felhasználó jóváhagyásával. A terv jóváhagyása az issue, a branch, a commitok, a push és a PR létrehozására is felhatalmaz. A `main`-re közvetlen commit tilos.
+- Merge: csak a felhasználó jóváhagyásával (admin merge és a branch protection megkerülése külön, kifejezett engedéllyel, csak az adott PR-ra). A terv jóváhagyása az issue, a branch, a commitok, a push és a PR létrehozására is felhatalmaz. A `main`-re közvetlen commit tilos.
 
 ## GitHub Issues
 
@@ -29,7 +29,7 @@ MVP-beadandó: minden követelményhez a legegyszerűbb működő megoldás ([ro
 
 ## Git workflow (issue-nként)
 
-1. Rövid terv és jóváhagyás, majd issue.
+1. Rövid terv (jóváhagyás csak a listázott esetekben), majd issue.
 2. Frissített `main`-ről új branch: `<típus>/<issue-szám>-<rövid-leírás>` (típus: `feature`, `fix`, `docs`, `chore`; pl. `feature/12-vue-init`). Egy branch egy issue.
 3. Implementáció.
 4. Automatizált tesztek futtatása (valós eredménnyel).
@@ -40,6 +40,29 @@ MVP-beadandó: minden követelményhez a legegyszerűbb működő megoldás ([ro
 9. Merge csak teszt, kódellenőrzés és a felhasználó jóváhagyása után.
 10. A lokális `main` frissítése (`git switch main && git pull`), a merge-elt helyi branch törlése.
 11. A következő issue csak ezután indul.
+
+## Önálló munkavégzés és jóváhagyás
+
+Minimális felhasználói interakció: ne állj meg minden részfeladat után, ha nincs valódi akadály, folytasd a következő önállóan elvégezhető feladattal. A kérdéseket és a jóváhagyásra váró PR-okat gyűjtsd össze, és egyszerre mutasd be; PR zöld CI-ra vagy jóváhagyásra várása közben készíts elő független feladatot.
+
+Önállóan végezhető: issue-tervezés és -létrehozás, implementáció, kisebb vizuális és technikai döntések, tesztek írása és futtatása, code review, hibajavítás, dokumentáció, commit, push, PR, CI-hibák elemzése és javítása, subagentek indítása.
+
+Jóváhagyás kell: jelentős architekturális változtatás, adatbázis-struktúra módosítása, új külső függőség, biztonsági szabály módosítása, adattörlés (csak a kifejezetten engedélyezett, ellenőrzött adat), PR merge-elése, jelentős vizuális koncepció elfogadása, nem egyértelmű üzleti követelmény, a hatókör jelentős bővítése. Az eszközengedélyeket és a biztonsági korlátozásokat nem lazítjuk automatikusan.
+
+## Subagentek és párhuzamosítás
+
+- A fő agent koordinál: ütemezés, issue-k és függőségek, delegálás, architekturális és vizuális döntések, az eredmények ellenőrzése és integrálása, branchek, PR-ok és CI. Az összetett tervezés nála marad.
+- Agentdefiníciók: `.claude/agents/` (`frontend-developer`, `test-engineer`, `code-reviewer`, `ui-reviewer`, `documentation-writer`; biztonsági ellenőrzésre a `/security-review`). Kisebb implementációhoz, teszteléshez, review-hoz és dokumentációhoz Sonnet modellt használunk.
+- Ne indíts agentet apró művelethez. Kezdetben legfeljebb 2–3 párhuzamos agent.
+- Független feladatok párhuzamosíthatók; a függő feladatot az alapja elkészülte előtt nem kezdjük el. Ugyanazt a fájlt egyszerre egy agent módosítja; a közös tokeneket és komponenseket érintő változtatásokat a fő agent hangolja össze.
+- Párhuzamos kódmódosításhoz izolált Git worktree; a Docker-környezet és az adatbázis közös használatából eredő ütközést kerüld (a fejlesztői adatbázis és a volume-ok nem törölhetők, az E2E elkülönített Compose-projektben fut).
+- A subagentek nem merge-elnek, nem pusholnak és nem telepítenek függőséget; az eredményüket a fő agent ellenőrzi.
+
+## Vizuális változtatások
+
+- A vizuális eredményt böngészőben is ellenőrizzük (világos és sötét téma, mobil), nem csak a forráskód alapján; a dev appot `localhost:8080`-on kell megnyitni.
+- Előtte-utána képernyőképek a `docs/ui/` alatt (csak demó adatból, személyes adat nélkül), a PR-ban hivatkozva; a felhasználói fiók adatait a böngészőben csak olvasásra használjuk.
+- A felhasználók által publikált oldalak megjelenése nem változik automatikusan.
 
 ## Feladat végén
 
