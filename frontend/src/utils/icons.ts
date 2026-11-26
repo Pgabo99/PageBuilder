@@ -414,6 +414,20 @@ export function findTypeIcon(name: unknown): IconDefinition | undefined {
   return typeIcons.find((icon) => icon.name === name)
 }
 
+/** Felületi (UI) ikonok a közös komponensekhez (Feather, MIT), az ikonválasztótól külön. */
+export const uiIcons: readonly IconDefinition[] = [
+  {
+    name: 'chevron-down',
+    label: 'Lenyitás',
+    elements: [['polyline', { points: '6 9 12 15 18 9' }]],
+  },
+  { name: 'check', label: 'Kiválasztva', elements: [['polyline', { points: '20 6 9 17 4 12' }]] },
+]
+
+export function findUiIcon(name: unknown): IconDefinition | undefined {
+  return uiIcons.find((icon) => icon.name === name)
+}
+
 export const iconNames: readonly string[] = icons.map((icon) => icon.name)
 
 export function isIconName(value: unknown): value is string {

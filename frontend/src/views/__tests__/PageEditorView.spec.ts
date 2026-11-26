@@ -4,6 +4,7 @@ import { defineComponent, h } from 'vue'
 import { RouterView } from 'vue-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { chooseOption, openSelect, selectedValue } from '@/__tests__/selectHelpers'
 import { ValidationError } from '@/api/client'
 import { pagesApi } from '@/api/pages'
 import { websitesApi } from '@/api/websites'
@@ -83,13 +84,6 @@ const titles = (wrapper: Awaited<ReturnType<typeof mountEditor>>) =>
 
 const activeTitles = (wrapper: Awaited<ReturnType<typeof mountEditor>>) =>
   wrapper.findAll('.component--active').map((c) => c.find('strong').text())
-
-/** A címkéje alapján megkeresi a legördülő listát (a mezők azonosítója generált). */
-function selectByLabel(wrapper: VueWrapper, label: string) {
-  const field = wrapper.findAll('.field').find((f) => f.find('label').text() === label)
-  if (!field) throw new Error(`Nincs "${label}" mező`)
-  return field.find('select')
-}
 
 describe('PageEditorView', () => {
   afterEach(() => mounted.splice(0).forEach((wrapper) => wrapper.unmount()))
@@ -443,15 +437,19 @@ describe('PageEditorView', () => {
     vi.mocked(pagesApi.update).mockImplementation(async (_id, payload) => ({ ...page, ...payload }))
     await wrapper.findAll('.component__toggle')[0]!.trigger('click')
 
-    expect(selectByLabel(wrapper, 'Szint').findAll('option')).toHaveLength(6)
-    expect((selectByLabel(wrapper, 'Megjelenési méret').element as HTMLSelectElement).value).toBe(
-      '',
-    )
-    expect((selectByLabel(wrapper, 'Igazítás').element as HTMLSelectElement).value).toBe('')
+    await openSelect(wrapper, 'Szint')
+    expect(
+      wrapper
+        .findAll('.field')
+        .find((f) => f.find('label').text() === 'Szint')!
+        .findAll('[role="option"]'),
+    ).toHaveLength(6)
+    expect(selectedValue(wrapper, 'Megjelenési méret')).toBe('')
+    expect(selectedValue(wrapper, 'Igazítás')).toBe('')
 
-    await selectByLabel(wrapper, 'Szint').setValue(4)
-    await selectByLabel(wrapper, 'Megjelenési méret').setValue('xlarge')
-    await selectByLabel(wrapper, 'Igazítás').setValue('center')
+    await chooseOption(wrapper, 'Szint', 4)
+    await chooseOption(wrapper, 'Megjelenési méret', 'xlarge')
+    await chooseOption(wrapper, 'Igazítás', 'center')
 
     const heading = wrapper.find('.preview h4')
     expect(heading.exists()).toBe(true)
@@ -480,7 +478,7 @@ describe('PageEditorView', () => {
     await wrapper.find('.component__toggle').trigger('click')
     expect(wrapper.find('.preview h1').classes()).toContain('preview__heading--large')
 
-    await selectByLabel(wrapper, 'Megjelenési méret').setValue('')
+    await chooseOption(wrapper, 'Megjelenési méret', '')
 
     expect(wrapper.find('.preview h1').classes()).not.toContain('preview__heading--large')
   })
@@ -490,10 +488,10 @@ describe('PageEditorView', () => {
     vi.mocked(pagesApi.update).mockImplementation(async (_id, payload) => ({ ...page, ...payload }))
     await wrapper.findAll('.component__toggle')[2]!.trigger('click')
 
-    await selectByLabel(wrapper, 'Stílus').setValue('outline')
-    await selectByLabel(wrapper, 'Méret').setValue('large')
-    await selectByLabel(wrapper, 'Igazítás').setValue('right')
-    await selectByLabel(wrapper, 'Lekerekítés').setValue('full')
+    await chooseOption(wrapper, 'Stílus', 'outline')
+    await chooseOption(wrapper, 'Méret', 'large')
+    await chooseOption(wrapper, 'Igazítás', 'right')
+    await chooseOption(wrapper, 'Lekerekítés', 'full')
 
     const button = wrapper.find('.preview .preview__button')
     expect(button.classes()).toEqual(
@@ -527,7 +525,7 @@ describe('PageEditorView', () => {
     await wrapper.find('.component__toggle').trigger('click')
     expect(wrapper.find('.preview .preview__button').classes()).toContain('preview__button--soft')
 
-    await selectByLabel(wrapper, 'Stílus').setValue('')
+    await chooseOption(wrapper, 'Stílus', '')
 
     expect(wrapper.find('.preview .preview__button').classes()).not.toContain(
       'preview__button--soft',
@@ -545,10 +543,10 @@ describe('PageEditorView', () => {
     const wrapper = await mountEditor()
     await wrapper.find('.component__toggle').trigger('click')
 
-    expect((selectByLabel(wrapper, 'Ikon helye').element as HTMLSelectElement).value).toBe('')
-    await selectByLabel(wrapper, 'Oszlopok (legfeljebb)').setValue('3')
-    await selectByLabel(wrapper, 'Ikon helye').setValue('left')
-    await selectByLabel(wrapper, 'Árnyék').setValue('medium')
+    expect(selectedValue(wrapper, 'Ikon helye')).toBe('')
+    await chooseOption(wrapper, 'Oszlopok (legfeljebb)', '3')
+    await chooseOption(wrapper, 'Ikon helye', 'left')
+    await chooseOption(wrapper, 'Árnyék', 'medium')
 
     expect(wrapper.find('.preview__cards').classes()).toEqual(
       expect.arrayContaining([
@@ -579,7 +577,7 @@ describe('PageEditorView', () => {
     await wrapper.find('.component__toggle').trigger('click')
     expect(wrapper.find('.preview__cards').classes()).toContain('preview__cards--gap-large')
 
-    await selectByLabel(wrapper, 'Kártyák közti térköz').setValue('')
+    await chooseOption(wrapper, 'Kártyák közti térköz', '')
 
     expect(wrapper.find('.preview__cards').classes()).not.toContain('preview__cards--gap-large')
   })
@@ -661,7 +659,7 @@ describe('PageEditorView', () => {
     expect(wrapper.findAll('.component')).toHaveLength(before + 1)
     expect(wrapper.findAll('.preview__social li')).toHaveLength(1)
 
-    await selectByLabel(wrapper, 'Platform').setValue('github')
+    await chooseOption(wrapper, 'Platform', 'github')
     await wrapper
       .findAll('.field')
       .find((f) => f.find('label').text().startsWith('Link'))!
@@ -768,7 +766,7 @@ describe('PageEditorView', () => {
     expect(wrapper.findAll('.component')).toHaveLength(before + 1)
     expect(wrapper.find('.preview__alert').classes()).toContain('preview__alert--info')
 
-    await selectByLabel(wrapper, 'Típus').setValue('error')
+    await chooseOption(wrapper, 'Típus', 'error')
     await wrapper
       .findAll('.field')
       .find((f) => f.find('label').text() === 'Cím (opcionális)')!
@@ -801,11 +799,11 @@ describe('PageEditorView', () => {
     const wrapper = await mountEditor()
     await wrapper.find('.component__toggle').trigger('click')
 
-    expect((selectByLabel(wrapper, 'Formátum').element as HTMLSelectElement).value).toBe('')
+    expect(selectedValue(wrapper, 'Formátum')).toBe('')
     expect(wrapper.text()).not.toContain('üres sor új bekezdés')
     expect(wrapper.find('.preview__rich').exists()).toBe(false)
 
-    await selectByLabel(wrapper, 'Formátum').setValue('markdown')
+    await chooseOption(wrapper, 'Formátum', 'markdown')
 
     expect(wrapper.text()).toContain('üres sor új bekezdés')
     expect(wrapper.find('.preview__rich strong').text()).toBe('szöveg')
@@ -848,9 +846,9 @@ describe('PageEditorView', () => {
     expect(wrapper.findAll('.component')).toHaveLength(before + 1)
     expect(wrapper.find('.preview hr').exists()).toBe(true)
 
-    await selectByLabel(wrapper, 'Vastagság').setValue('thick')
-    await selectByLabel(wrapper, 'Stílus').setValue('dotted')
-    await selectByLabel(wrapper, 'Szín').setValue('accent')
+    await chooseOption(wrapper, 'Vastagság', 'thick')
+    await chooseOption(wrapper, 'Stílus', 'dotted')
+    await chooseOption(wrapper, 'Szín', 'accent')
 
     expect(wrapper.find('.preview hr').classes()).toEqual(
       expect.arrayContaining([

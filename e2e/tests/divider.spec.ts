@@ -1,6 +1,6 @@
 import { expect, test, type Locator } from '@playwright/test'
 
-import { addComponent, createPage, createWebsite, savePage, signUp, uniqueId } from './helpers'
+import { addComponent, chooseOption, createPage, createWebsite, savePage, signUp, uniqueId } from './helpers'
 
 const style = (hr: Locator) =>
   hr.evaluate((el) => {
@@ -24,9 +24,9 @@ test('elválasztó: vastagság, stílus és szín; az előnézet egyezik a publi
   await createPage(page, `Oldal ${id}`, `oldal-${id}`)
 
   await addComponent(page, 'Elválasztó')
-  await page.getByLabel('Vastagság').selectOption('thick')
-  await page.getByLabel('Stílus').selectOption('dashed')
-  await page.getByLabel('Szín').selectOption('accent')
+  await chooseOption(page.getByRole('combobox', { name: 'Vastagság' }), 'thick')
+  await chooseOption(page.getByRole('combobox', { name: 'Stílus' }), 'dashed')
+  await chooseOption(page.getByRole('combobox', { name: 'Szín' }), 'accent')
 
   // Második elválasztó: alapbeállítás (a régi mentett oldalak formája).
   await addComponent(page, 'Elválasztó')

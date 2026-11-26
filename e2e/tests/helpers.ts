@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 
-import { expect, type Page } from '@playwright/test'
+import { expect, type Locator, type Page } from '@playwright/test'
 
 /** Kisbetűs, kötőjelmentes azonosító (webcímnek is megfelel); minden teszt saját adatot hoz létre. */
 export const uniqueId = (): string => randomUUID().replaceAll('-', '').slice(0, 12)
@@ -54,4 +54,12 @@ export async function addComponent(page: Page, label: 'Címsor' | 'Szöveg' | 'G
 export async function savePage(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'Mentés', exact: true }).click()
   await expect(page.getByText('Mentve', { exact: true })).toBeVisible()
+}
+
+/** Kiválaszt egy értéket az egyedi legördülő listából (a gombját a címkéjével kell megadni). */
+export async function chooseOption(select: Locator, value: string): Promise<void> {
+  // A lista azonosítóját a megnyitás előtt olvassuk: nyitva a lista címkéje is egyezik a mező címkéjével.
+  const listId = await select.getAttribute('aria-controls')
+  await select.click()
+  await select.page().locator(`[id="${listId}"] [role="option"][data-value="${value}"]`).click()
 }

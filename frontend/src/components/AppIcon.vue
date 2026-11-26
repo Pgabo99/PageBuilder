@@ -1,16 +1,21 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import { findBrandIcon, findIcon, findTypeIcon } from '@/utils/icons'
+import { findBrandIcon, findIcon, findTypeIcon, findUiIcon } from '@/utils/icons'
 
 // Előre definiált ikon (a backend `Icons`-szal azonos készlet), dekoratív: a képernyőolvasó elől rejtett.
 // Az elemeket leírókból rendereljük (nincs `v-html`), ismeretlen névre semmi nem jelenik meg.
-// A `brand` a közösségi platformok márkaikonjait, a `kind="type"` a komponenstípusok ikonjait keresi (külön készletek).
-const props = defineProps<{ name: string | null | undefined; brand?: boolean; kind?: 'type' }>()
+// A `brand` a közösségi platformok márkaikonjait, a `kind="type"` a komponenstípusok, a `kind="ui"` a felületi ikonokat keresi (külön készletek).
+const props = defineProps<{
+  name: string | null | undefined
+  brand?: boolean
+  kind?: 'type' | 'ui'
+}>()
 
 const icon = computed(() => {
   if (props.brand) return findBrandIcon(props.name)
-  return props.kind === 'type' ? findTypeIcon(props.name) : findIcon(props.name)
+  if (props.kind === 'type') return findTypeIcon(props.name)
+  return props.kind === 'ui' ? findUiIcon(props.name) : findIcon(props.name)
 })
 </script>
 

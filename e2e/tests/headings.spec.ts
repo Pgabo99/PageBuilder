@@ -1,6 +1,6 @@
 import { expect, test, type Locator } from '@playwright/test'
 
-import { addComponent, createPage, createWebsite, savePage, signUp, uniqueId } from './helpers'
+import { addComponent, chooseOption, createPage, createWebsite, savePage, signUp, uniqueId } from './helpers'
 
 const style = (locator: Locator) =>
   locator.evaluate((el) => {
@@ -22,9 +22,9 @@ test('címsorok: a szint, a méret és az igazítás független, és az előnéz
   // Első címsor: H6 szint, óriási méret, középre igazítva.
   await addComponent(page, 'Címsor')
   await page.locator('.component--active').getByLabel('Szöveg', { exact: true }).fill(`Hatos ${id}`)
-  await page.getByLabel('Szint', { exact: true }).selectOption('6')
-  await page.getByLabel('Megjelenési méret').selectOption('xlarge')
-  await page.getByLabel('Igazítás').selectOption('center')
+  await chooseOption(page.getByRole('combobox', { name: 'Szint', exact: true }), '6')
+  await chooseOption(page.getByRole('combobox', { name: 'Megjelenési méret' }), 'xlarge')
+  await chooseOption(page.getByRole('combobox', { name: 'Igazítás' }), 'center')
 
   // Második címsor: alapbeállítás (a régi mentett címsorokkal azonos megjelenés).
   await addComponent(page, 'Címsor')

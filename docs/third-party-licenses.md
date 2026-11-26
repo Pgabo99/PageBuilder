@@ -2,7 +2,7 @@
 
 ## Feather ikonok
 
-A szerkesztő, az előnézet és a publikált oldal ~20 előre definiált ikonja a [Feather](https://feathericons.com) (v4.29.2) ikonkészletből származik; az SVG-útvonalak a repóban vannak (`backend/app/Support/Icons.php`, `frontend/src/utils/icons.ts`), futásidejű betöltés és függőség nincs. A `social` komponens 8 márkaikonja (Facebook, Instagram, Twitter, LinkedIn, YouTube, GitHub, Twitch, GitLab) ugyanennek a készletnek (MIT) a tagja, az ikonválasztótól külön készletben (`Icons::BRAND_MARKUP`, `brandIcons`). A komponensválasztó 12 típusikonja ugyanennek a készletnek (MIT) a tagja, szintén külön készletben (`typeIcons`, csak a szerkesztőben).
+A szerkesztő, az előnézet és a publikált oldal ~20 előre definiált ikonja a [Feather](https://feathericons.com) (v4.29.2) ikonkészletből származik; az SVG-útvonalak a repóban vannak (`backend/app/Support/Icons.php`, `frontend/src/utils/icons.ts`), futásidejű betöltés és függőség nincs. A `social` komponens 8 márkaikonja (Facebook, Instagram, Twitter, LinkedIn, YouTube, GitHub, Twitch, GitLab) ugyanennek a készletnek (MIT) a tagja, az ikonválasztótól külön készletben (`Icons::BRAND_MARKUP`, `brandIcons`). A komponensválasztó 12 típusikonja ugyanennek a készletnek (MIT) a tagja, szintén külön készletben (`typeIcons`, csak a szerkesztőben). A legördülő lista chevron és pipa ikonja is innen való (`uiIcons`).
 
 ```
 The MIT License (MIT)

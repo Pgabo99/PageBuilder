@@ -1,3 +1,4 @@
+import { chooseOption, selectedValue } from '@/__tests__/selectHelpers'
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -147,7 +148,7 @@ describe('WebsiteFormView', () => {
     await wrapper.findAll('input')[0]!.setValue('Név')
 
     await colorByLabel(wrapper, 'Kiemelőszín').setValue('#e11d48')
-    await wrapper.find('select').setValue('dark')
+    await chooseOption(wrapper, 'Oldaltéma', 'dark')
     await wrapper.find('form').trigger('submit')
     await flushPromises()
 
@@ -176,7 +177,7 @@ describe('WebsiteFormView', () => {
       const wrapper = mountView(WebsiteFormView)
       await wrapper.findAll('input')[0]!.setValue('Név')
 
-      await wrapper.find('select').setValue(theme)
+      await chooseOption(wrapper, 'Oldaltéma', theme)
       expect((colorByLabel(wrapper, 'Kiemelőszín').element as HTMLInputElement).value).toBe(accent)
       await wrapper.find('form').trigger('submit')
       await flushPromises()
@@ -202,7 +203,7 @@ describe('WebsiteFormView', () => {
     await flushPromises()
 
     expect((colorByLabel(wrapper, 'Kiemelőszín').element as HTMLInputElement).value).toBe('#112233')
-    expect((wrapper.find('select').element as HTMLSelectElement).value).toBe('dark')
+    expect(selectedValue(wrapper, 'Oldaltéma')).toBe('dark')
   })
 
   it('az egyedi színeket csak a megadottakkal küldi, és a minta az előnézetben követi őket', async () => {

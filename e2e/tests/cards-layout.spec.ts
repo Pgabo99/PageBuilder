@@ -1,6 +1,6 @@
 import { expect, test, type Locator } from '@playwright/test'
 
-import { addComponent, createPage, createWebsite, savePage, signUp, uniqueId } from './helpers'
+import { addComponent, chooseOption, createPage, createWebsite, savePage, signUp, uniqueId } from './helpers'
 
 // Az előnézet és a publikált oldal eltérő szélességű, ezért az oszlopszámot külön ellenőrizzük;
 // a kártya saját megjelenése (keret, árnyék, lekerekítés, igazítás, ikonméret) azonos kell legyen.
@@ -42,13 +42,13 @@ test('kártyák elrendezése: a beállítások az előnézetben és a publikált
     .fill(`Második ${id}`)
 
   await page.getByText('Elrendezés', { exact: true }).click()
-  await page.getByLabel('Oszlopok (legfeljebb)').selectOption('2')
-  await page.getByLabel('Ikon helye').selectOption('left')
-  await page.getByLabel('Ikon mérete').selectOption('large')
-  await page.getByLabel('Szövegigazítás').selectOption('center')
-  await page.getByLabel('Keret').selectOption('thick')
-  await page.getByLabel('Árnyék').selectOption('medium')
-  await page.getByLabel('Lekerekítés').selectOption('none')
+  await chooseOption(page.getByRole('combobox', { name: 'Oszlopok (legfeljebb)' }), '2')
+  await chooseOption(page.getByRole('combobox', { name: 'Ikon helye' }), 'left')
+  await chooseOption(page.getByRole('combobox', { name: 'Ikon mérete' }), 'large')
+  await chooseOption(page.getByRole('combobox', { name: 'Szövegigazítás' }), 'center')
+  await chooseOption(page.getByRole('combobox', { name: 'Keret' }), 'thick')
+  await chooseOption(page.getByRole('combobox', { name: 'Árnyék' }), 'medium')
+  await chooseOption(page.getByRole('combobox', { name: 'Lekerekítés' }), 'none')
 
   const preview = page.locator('.preview')
   const previewCard = preview.locator('.preview__card').first()

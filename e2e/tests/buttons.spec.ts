@@ -1,6 +1,6 @@
 import { expect, test, type Locator } from '@playwright/test'
 
-import { addComponent, createPage, createWebsite, savePage, signUp, uniqueId } from './helpers'
+import { addComponent, chooseOption, createPage, createWebsite, savePage, signUp, uniqueId } from './helpers'
 
 const style = (locator: Locator) =>
   locator.evaluate((el) => {
@@ -27,10 +27,10 @@ test('gombok: stílus, méret, igazítás és lekerekítés; az előnézet egyez
 
   await addComponent(page, 'Gomb')
   await page.locator('.component--active').getByLabel('Felirat').fill(`Stílusos ${id}`)
-  await page.getByLabel('Stílus').selectOption('outline')
-  await page.getByLabel('Méret', { exact: true }).selectOption('large')
-  await page.getByLabel('Igazítás').selectOption('center')
-  await page.getByLabel('Lekerekítés').selectOption('full')
+  await chooseOption(page.getByRole('combobox', { name: 'Stílus' }), 'outline')
+  await chooseOption(page.getByRole('combobox', { name: 'Méret', exact: true }), 'large')
+  await chooseOption(page.getByRole('combobox', { name: 'Igazítás' }), 'center')
+  await chooseOption(page.getByRole('combobox', { name: 'Lekerekítés' }), 'full')
 
   // Második gomb: alapbeállítás (a régi mentett gombokkal azonos megjelenés).
   await addComponent(page, 'Gomb')
