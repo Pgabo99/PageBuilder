@@ -27,6 +27,8 @@
   --motion-normal: 220ms;
   --motion-slow: 360ms;
   --ease: cubic-bezier(0.2, 0, 0, 1);
+
+  --shadow-pop: 0 8px 24px rgb(15 17 21 / 14%);
   --font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 
   color-scheme: light;
@@ -46,6 +48,8 @@
   --color-danger-hover: #ff9aa2;
   --color-danger-bg: #3a1c20;
   --color-success: #3fb950;
+
+  --shadow-pop: 0 8px 24px rgb(0 0 0 / 45%);
 
   color-scheme: dark;
 }
@@ -79,7 +83,6 @@ a {
 }
 
 input,
-select,
 textarea {
   color: var(--color-text);
   background: var(--color-bg);
@@ -96,7 +99,6 @@ textarea {
 }
 
 .field input:not([type='color']),
-.field select,
 .field textarea {
   min-width: 0;
   padding: var(--space-2) var(--space-3);

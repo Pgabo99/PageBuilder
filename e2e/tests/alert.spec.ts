@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-import { addComponent, createPage, createWebsite, savePage, signUp, uniqueId } from './helpers'
+import { addComponent, chooseOption, createPage, createWebsite, savePage, signUp, uniqueId } from './helpers'
 
 test('értesítődoboz: típus, cím és szöveg; a típus nem csak színnel jelenik meg a publikált oldalon', async ({
   page,
@@ -14,7 +14,7 @@ test('értesítődoboz: típus, cím és szöveg; a típus nem csak színnel jel
   await createPage(page, `Oldal ${id}`, `oldal-${id}`)
 
   await addComponent(page, 'Értesítődoboz')
-  await page.getByLabel('Típus').selectOption('warning')
+  await chooseOption(page.getByRole('combobox', { name: 'Típus' }), 'warning')
   await page.getByLabel('Cím (opcionális)').fill(`Figyelem ${id}`)
   await page.getByLabel('Szöveg', { exact: true }).fill(`Üzenet ${id}`)
 

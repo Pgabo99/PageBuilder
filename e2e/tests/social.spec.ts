@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-import { addComponent, createPage, createWebsite, savePage, signUp, uniqueId } from './helpers'
+import { addComponent, chooseOption, createPage, createWebsite, savePage, signUp, uniqueId } from './helpers'
 
 test('közösségi média: platformok és linkek, olvasható név, a publikált oldalon is megjelennek', async ({
   page,
@@ -15,12 +15,12 @@ test('közösségi média: platformok és linkek, olvasható név, a publikált 
 
   await addComponent(page, 'Közösségi média')
   const first = page.getByRole('group', { name: 'Profil 1' })
-  await first.getByLabel('Platform').selectOption('github')
+  await chooseOption(first.getByRole('combobox', { name: 'Platform' }), 'github')
   await first.getByLabel(/^Link/).fill(`https://github.com/${id}`)
 
   await page.getByRole('button', { name: '+ Profil hozzáadása' }).click()
   const second = page.getByRole('group', { name: 'Profil 2' })
-  await second.getByLabel('Platform').selectOption('youtube')
+  await chooseOption(second.getByRole('combobox', { name: 'Platform' }), 'youtube')
   await second.getByLabel(/^Link/).fill(`https://youtube.com/@${id}`)
 
   // Az előnézet aria-hidden, ezért elemre keresünk.
@@ -29,7 +29,8 @@ test('közösségi média: platformok és linkek, olvasható név, a publikált 
 
   // Átrendezés a fel gombbal.
   await page.getByRole('button', { name: 'Profil 2 feljebb' }).click()
-  await expect(page.getByRole('group', { name: 'Profil 1' }).getByLabel('Platform')).toHaveValue(
+  await expect(page.getByRole('group', { name: 'Profil 1' }).getByRole('combobox', { name: 'Platform' })).toHaveAttribute(
+    'data-value',
     'youtube',
   )
 
