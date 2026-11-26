@@ -422,6 +422,53 @@ export const uiIcons: readonly IconDefinition[] = [
     elements: [['polyline', { points: '6 9 12 15 18 9' }]],
   },
   { name: 'check', label: 'Kiválasztva', elements: [['polyline', { points: '20 6 9 17 4 12' }]] },
+  {
+    name: 'arrow-up',
+    label: 'Feljebb',
+    elements: [
+      ['line', { x1: '12', y1: '19', x2: '12', y2: '5' }],
+      ['polyline', { points: '5 12 12 5 19 12' }],
+    ],
+  },
+  {
+    name: 'arrow-down',
+    label: 'Lejjebb',
+    elements: [
+      ['line', { x1: '12', y1: '5', x2: '12', y2: '19' }],
+      ['polyline', { points: '19 12 12 19 5 12' }],
+    ],
+  },
+  {
+    name: 'copy',
+    label: 'Másolás',
+    elements: [
+      ['rect', { x: '9', y: '9', width: '13', height: '13', rx: '2', ry: '2' }],
+      ['path', { d: 'M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1' }],
+    ],
+  },
+  {
+    name: 'trash-2',
+    label: 'Törlés',
+    elements: [
+      ['polyline', { points: '3 6 5 6 21 6' }],
+      [
+        'path',
+        {
+          d: 'M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2',
+        },
+      ],
+      ['line', { x1: '10', y1: '11', x2: '10', y2: '17' }],
+      ['line', { x1: '14', y1: '11', x2: '14', y2: '17' }],
+    ],
+  },
+  {
+    name: 'x',
+    label: 'Bezárás',
+    elements: [
+      ['line', { x1: '18', y1: '6', x2: '6', y2: '18' }],
+      ['line', { x1: '6', y1: '6', x2: '18', y2: '18' }],
+    ],
+  },
 ]
 
 export function findUiIcon(name: unknown): IconDefinition | undefined {

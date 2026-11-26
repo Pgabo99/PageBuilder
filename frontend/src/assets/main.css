@@ -281,6 +281,30 @@ textarea {
   background: var(--state-active);
 }
 
+/* Halk gomb: nincs keret és kitöltés, csak hoverre jelenik meg a réteg */
+.btn--ghost {
+  color: var(--color-text);
+  background: transparent;
+  box-shadow: none;
+}
+
+.btn--ghost:hover:not(:disabled) {
+  background: var(--state-hover);
+}
+
+/* Veszélyes, de nem domináns: csak a szöveg piros, hoverre jelenik meg a háttér */
+.btn--danger-soft {
+  color: var(--color-danger);
+  background: transparent;
+  border-color: var(--color-border-control);
+  box-shadow: none;
+}
+
+.btn--danger-soft:hover:not(:disabled) {
+  background: var(--color-danger-bg);
+  border-color: var(--color-danger);
+}
+
 .btn:disabled {
   opacity: var(--state-disabled-opacity);
   cursor: not-allowed;
@@ -409,16 +433,24 @@ textarea {
   }
 }
 
+/* Érintőképernyőn legalább 44 px-es célméret */
+@media (pointer: coarse) {
+  .btn {
+    min-height: 2.75rem;
+  }
+}
+
 a.btn {
   display: inline-block;
   text-decoration: none;
 }
 
-a.btn:not(.btn--secondary) {
+a.btn:not(.btn--secondary, .btn--ghost, .btn--danger-soft) {
   color: var(--color-on-primary);
 }
 
-a.btn--secondary {
+a.btn--secondary,
+a.btn--ghost {
   color: var(--color-text);
 }
 
