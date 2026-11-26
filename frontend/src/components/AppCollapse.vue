@@ -41,7 +41,7 @@ function onTransitionEnd(event: TransitionEvent): void {
     ref="el"
     class="collapse"
     :class="{ 'collapse--open': expanded }"
-    :inert="expanded ? undefined : ''"
+    :inert="!expanded"
     @transitionend="onTransitionEnd"
   >
     <div class="collapse__inner">
