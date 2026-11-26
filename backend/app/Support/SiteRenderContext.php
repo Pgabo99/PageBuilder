@@ -191,6 +191,28 @@ class SiteRenderContext
         return 'tel:'.preg_replace('/[^0-9+]/', '', $phone);
     }
 
+    /**
+     * Az oszlopkonténer oszlopai futáskor is korlátozva: legfeljebb a megengedett oszlop- és elemszám, csak tömb
+     * elemek, és oszlopba konténer vagy lábléc nem kerülhet (így a beágyazás egy szint marad).
+     *
+     * @param  array<string, mixed>  $component
+     * @return list<list<array<string, mixed>>>
+     */
+    public function columnList(array $component): array
+    {
+        $columns = is_array($component['columns'] ?? null) ? $component['columns'] : [];
+        $result = [];
+        foreach (array_slice(array_values(array_filter($columns, 'is_array')), 0, PageContentRules::MAX_COLUMNS) as $column) {
+            $items = is_array($column['items'] ?? null) ? $column['items'] : [];
+            $result[] = array_slice(array_values(array_filter(
+                $items,
+                fn ($item) => is_array($item) && ! in_array($item['type'] ?? null, ['columns', 'footer'], true),
+            )), 0, PageContentRules::MAX_COLUMN_ITEMS);
+        }
+
+        return $result;
+    }
+
     /** A szöveg komponens formázott (Markdown) szövegének HTML-je; a kimenet csak engedélyezett elemekből épül. */
     public function richText(mixed $text): string
     {

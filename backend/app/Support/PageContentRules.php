@@ -82,7 +82,17 @@ class PageContentRules
     /** A lábléc telefonszáma: számjegyek, +, szóköz, zárójel, kötőjel és pont. */
     public const PHONE_PATTERN = '~^[0-9+()\-\s.]*[0-9][0-9+()\-\s.]*$~';
 
-    private const TYPES = ['heading', 'text', 'button', 'cards', 'accordion', 'divider', 'spacer', 'alert', 'quote', 'stats', 'social', 'footer'];
+    /** Az oszlopkonténer oszlopszáma és az oszloponkénti komponensek legnagyobb száma. */
+    public const MIN_COLUMNS = 2;
+
+    public const MAX_COLUMNS = 3;
+
+    public const MAX_COLUMN_ITEMS = 20;
+
+    /** Oszlopba csak egy szint tehető: oszlopkonténer és lábléc nem (a lábléc az oldal végén áll). */
+    private const NESTED_EXCLUDED = ['columns', 'footer'];
+
+    private const TYPES = ['heading', 'text', 'button', 'cards', 'accordion', 'divider', 'spacer', 'alert', 'quote', 'stats', 'social', 'footer', 'columns'];
 
     /**
      * @return array<string, mixed>
@@ -90,9 +100,7 @@ class PageContentRules
     public static function rules(mixed $content): array
     {
         $rules = [
-            'content' => ['present', 'array', 'max:'.self::MAX_COMPONENTS, self::singleFooter(...)],
-            'content.*.id' => ['required', 'string', 'max:64'],
-            'content.*.type' => ['required', Rule::in(self::TYPES)],
+            'content' => ['present', 'array', 'max:'.self::MAX_COMPONENTS, self::singleFooter(...), self::totalComponents(...)],
         ];
 
         if (! is_array($content)) {
@@ -100,14 +108,56 @@ class PageContentRules
         }
 
         foreach ($content as $index => $component) {
-            $type = is_array($component) ? ($component['type'] ?? null) : null;
+            $rules += self::componentRules($component, "content.$index", self::TYPES);
+        }
 
-            foreach (self::fields($type, $index) as $field => $fieldRules) {
-                $rules["content.$index.$field"] = $fieldRules;
+        return $rules;
+    }
+
+    /**
+     * Egy komponens szabályai a megadott kulcs-előtaggal; az oszlopkonténer elemeire rekurzívan (egy szint).
+     *
+     * @param  list<string>  $types  az ezen a szinten engedélyezett típusok
+     * @return array<string, array<int, mixed>>
+     */
+    private static function componentRules(mixed $component, string $prefix, array $types): array
+    {
+        $type = is_array($component) ? ($component['type'] ?? null) : null;
+        $rules = [
+            "$prefix.id" => ['required', 'string', 'max:64'],
+            "$prefix.type" => ['required', Rule::in($types)],
+        ];
+
+        foreach (self::fields($type, $prefix) as $field => $fieldRules) {
+            $rules["$prefix.$field"] = $fieldRules;
+        }
+
+        if ($type === 'columns' && is_array($component['columns'] ?? null)) {
+            $nested = array_values(array_diff(self::TYPES, self::NESTED_EXCLUDED));
+            foreach ($component['columns'] as $column => $data) {
+                foreach (is_array($data) && is_array($data['items'] ?? null) ? $data['items'] : [] as $item => $child) {
+                    $rules += self::componentRules($child, "$prefix.columns.$column.items.$item", $nested);
+                }
             }
         }
 
         return $rules;
+    }
+
+    /** Az oldal összes komponense (az oszlopokban lévőkkel együtt) legfeljebb a megengedett számú lehet. */
+    private static function totalComponents(string $attribute, mixed $value, Closure $fail): void
+    {
+        $count = 0;
+        foreach (is_array($value) ? $value : [] as $component) {
+            $count++;
+            foreach (is_array($component) && is_array($component['columns'] ?? null) ? $component['columns'] : [] as $column) {
+                $count += is_array($column) && is_array($column['items'] ?? null) ? count($column['items']) : 0;
+            }
+        }
+
+        if ($count > self::MAX_COMPONENTS) {
+            $fail('Az oldalon legfeljebb '.self::MAX_COMPONENTS.' komponens lehet (az oszlopokban lévőkkel együtt).');
+        }
     }
 
     /** Egy oldalon legfeljebb egy lábléc lehet (a lábléc az oldal végén jelenik meg). */
@@ -142,9 +192,9 @@ class PageContentRules
     /**
      * @return array<string, array<int, mixed>>
      */
-    private static function fields(mixed $type, int|string $index): array
+    private static function fields(mixed $type, string $prefix): array
     {
-        $card = "content.$index.cards.*";
+        $card = "$prefix.cards.*";
         $cardsLayout = self::optionRules(self::CARDS_OPTIONS);
 
         return match ($type) {
@@ -185,12 +235,18 @@ class PageContentRules
                 'items.*.title' => ['required', 'string', 'max:150'],
                 'items.*.text' => ['required', 'string', 'max:2000'],
             ],
+            // Az oszlopok elemei a `componentRules()`-ban kapnak szabályt (egy szint, lábléc és konténer nélkül).
+            'columns' => [
+                'columns' => ['required', 'array', 'min:'.self::MIN_COLUMNS, 'max:'.self::MAX_COLUMNS],
+                'columns.*.id' => ['required', 'string', 'max:64'],
+                'columns.*.items' => ['present', 'array', 'max:'.self::MAX_COLUMN_ITEMS],
+            ],
             'divider' => self::optionRules(self::DIVIDER_OPTIONS),
             // A forrás linkje csak a forrás szövegével együtt adható meg (a link a forrás szövegén jelenik meg).
             'quote' => [
                 'text' => ['required', 'string', 'max:500'],
                 'author' => ['nullable', 'string', 'max:100'],
-                'source' => ['nullable', 'string', 'max:150', "required_with:content.$index.source_url"],
+                'source' => ['nullable', 'string', 'max:150', "required_with:$prefix.source_url"],
                 'source_url' => ['nullable', 'string', 'max:2048', 'regex:'.self::URL_PATTERN],
             ],
             // Az érték szövegként tárolt (pl. „120+”), így formázható; az előtag és az utótag opcionális.
