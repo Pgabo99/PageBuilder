@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import AppLoader from '@/components/AppLoader.vue'
+
 // Betöltés / hiba / üres lista egységes megjelenítése; az alapértelmezett slot a tartalom.
 defineProps<{
   loading: boolean
@@ -11,7 +13,7 @@ defineEmits<{ retry: [] }>()
 </script>
 
 <template>
-  <p v-if="loading" class="muted" role="status">Betöltés…</p>
+  <AppLoader v-if="loading" loading />
   <div v-else-if="error" class="alert" role="alert">
     {{ error }}
     <button class="btn btn--secondary" type="button" @click="$emit('retry')">Újra</button>

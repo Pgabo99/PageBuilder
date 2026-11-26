@@ -5,6 +5,7 @@ import { onBeforeRouteLeave, useRoute } from 'vue-router'
 import { errorMessage, ValidationError } from '@/api/client'
 import { pagesApi } from '@/api/pages'
 import { websitesApi } from '@/api/websites'
+import AppLoader from '@/components/AppLoader.vue'
 import ComponentEditor from '@/components/ComponentEditor.vue'
 import ComponentPicker from '@/components/ComponentPicker.vue'
 import FormField from '@/components/FormField.vue'
@@ -294,13 +295,15 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', warnBeforeUnloa
           <h1>Oldal szerkesztése</h1>
         </div>
         <div class="actions">
-          <span v-if="saving" class="status muted" role="status">Mentés…</span>
+          <span v-if="saving" class="status muted" role="status">
+            <AppLoader :loading="saving" size="button" />Mentés…
+          </span>
           <span v-else-if="dirty" class="status status--dirty" role="status">
             Nem mentett módosítások
           </span>
           <span v-else class="status muted" role="status">Mentve</span>
           <button class="btn" type="button" :disabled="saving || !dirty" @click="save">
-            Mentés
+            <AppLoader :loading="saving" size="button" />Mentés
           </button>
         </div>
       </div>

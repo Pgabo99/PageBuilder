@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppLoader from '@/components/AppLoader.vue'
 import { reactive } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
@@ -41,6 +42,7 @@ async function onSubmit(): Promise<void> {
         :error="errors.password"
       />
       <button class="btn" type="submit" :disabled="submitting">
+        <AppLoader :loading="submitting" size="button" />
         {{ submitting ? 'Bejelentkezés…' : 'Bejelentkezés' }}
       </button>
       <p class="muted">Nincs még fiókod? <RouterLink to="/register">Regisztráció</RouterLink></p>
