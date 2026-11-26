@@ -35,7 +35,7 @@ spec:
       initContainers:
         # A séma mindig a futtatott image-hez tartozik; ha a MySQL még nem kész, a konténer újraindul.
         - name: migrate
-          image: ghcr.io/pgabo99/pagebuilder-backend:278df525ed5ba9c42bedd3956d32dc5f21bf07f9
+          image: ghcr.io/pgabo99/pagebuilder-backend:fb1202d8dadfe2509a33cbe1a8a491a4da29be9c
           command: ["php", "artisan", "migrate", "--force"]
           envFrom:
             - configMapRef:
@@ -72,7 +72,7 @@ spec:
               memory: 256Mi
       containers:
         - name: backend
-          image: ghcr.io/pgabo99/pagebuilder-backend:278df525ed5ba9c42bedd3956d32dc5f21bf07f9
+          image: ghcr.io/pgabo99/pagebuilder-backend:fb1202d8dadfe2509a33cbe1a8a491a4da29be9c
           ports:
             - name: fastcgi
               containerPort: 9000
