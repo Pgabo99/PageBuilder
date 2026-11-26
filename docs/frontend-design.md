@@ -80,3 +80,12 @@ A backend `GET /pages/{page}/preview` HTML-jét sandboxolt iframe jeleníti meg 
 ## Megjelenés
 
 Közös design tokenek CSS változókban; a vászon és a publikált kimenet azonos komponens-CSS-t használ (a backend renderer stíluslapja), így a megjelenés egyezik.
+
+### Design tokenek (`frontend/src/assets/main.css`)
+
+- **Felületek:** három réteg (`--color-bg` < `--color-surface` < `--color-surface-raised`), plusz `--color-field` (űrlapmező); a mezők kerete `--color-border-strong` (legalább 3:1), a gomboké halkabb `--color-border-control`. Az akcentus egységes (indigó-ibolya, `--color-primary*`), az állapotokat áttetsző rétegek adják (`--state-hover/active`), így bármely felületen működnek.
+- **Skálák:** sugár (`--radius-sm/md/lg`; a vezérlők `--radius`, a panelek `--radius-lg`), árnyék (`--shadow-xs/sm/pop`), betű (`--text-*`, `--weight-*`, `--leading-*`), ikon (`--icon-*`), térköz (`--space-*`), mozgás (`--motion-*`, `--ease`).
+- **Téma:** a sötét téma önálló paletta (kék-fekete rétegek, halkabb keretek), nem a világos invertálása; minden színtokent felülír. A szöveg és az interaktív színek kontrasztja legalább 4,5, a mezőkeret legalább 3:1 – ezt a `styles.spec.ts` ellenőrzi mindkét témára.
+- **Állapotszínek:** `--color-danger`, `--color-success`, `--color-warning` (a „nem mentett” jelzés borostyán, nem piros).
+- **Mozgás:** `prefers-reduced-motion` esetén az animációs tokenek 0 ms-ra állnak.
+- A komponensek nyers színt, sugarat vagy árnyékot nem használnak; kivétel a publikált oldal egyezését szolgáló előnézet (`PagePreview`), mert a felhasználók oldalainak megjelenése nem változik.

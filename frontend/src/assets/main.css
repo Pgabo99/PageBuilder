@@ -1,17 +1,36 @@
-/* Közös design tokenek és alapelemek: az egész alkalmazás ezekre épül. */
+/* Közös design tokenek és alapelemek: az egész alkalmazás ezekre épül.
+   Karakter: tört fehér háttér, tiszta fehér panelek, indigó-ibolya akcentus, finom rétegek és árnyékok. */
 :root {
-  --color-bg: #f6f7f9;
+  /* Felületek (három réteg): app háttér < panel < felemelt (felugró) */
+  --color-bg: #f6f6f9;
   --color-surface: #ffffff;
-  --color-text: #1f2328;
-  --color-muted: #59636e;
-  --color-border: #d1d9e0;
-  --color-primary: #2f5bea;
-  --color-primary-hover: #2449c4;
+  --color-surface-raised: #ffffff;
+  --color-field: #ffffff;
+
+  --color-text: #18181f;
+  --color-muted: #62627a;
+  --color-border: #e2e2ea;
+  /* Űrlapmezők kerete (legalább 3:1), a gombok halkabb vezérlőkeretet kapnak */
+  --color-border-strong: #868693;
+  --color-border-control: #c6c6d2;
+  --color-backdrop: rgb(20 20 18 / 45%);
+
+  /* Akcentus (egységes: indigó-ibolya) */
+  --color-primary: #5555d0;
+  --color-primary-hover: #4646bd;
   --color-on-primary: #ffffff;
-  --color-danger: #cf222e;
-  --color-danger-hover: #a40e26;
-  --color-danger-bg: #ffebe9;
-  --color-success: #1a7f37;
+  --color-primary-soft: color-mix(in srgb, var(--color-primary) 10%, transparent);
+
+  --color-danger: #c3262f;
+  --color-danger-hover: #a01a22;
+  --color-danger-bg: #fdecee;
+  --color-success: #17783a;
+  --color-warning: #8a5300;
+
+  /* Interaktív állapotok: áttetsző rétegek, bármilyen felületen működnek */
+  --state-hover: color-mix(in srgb, var(--color-text) 5%, transparent);
+  --state-active: color-mix(in srgb, var(--color-text) 9%, transparent);
+  --state-disabled-opacity: 0.6;
 
   --space-1: 0.25rem;
   --space-2: 0.5rem;
@@ -20,7 +39,36 @@
   --space-6: 1.5rem;
   --space-8: 2rem;
 
-  --radius: 0.5rem;
+  /* Sugárskála: a vezérlők kisebb, a panelek nagyobb lekerekítést kapnak */
+  --radius-sm: 0.3125rem;
+  --radius-md: 0.4375rem;
+  --radius-lg: 0.75rem;
+  --radius: var(--radius-md);
+
+  /* Árnyékskála: finom, rétegzett */
+  --shadow-xs: 0 1px 2px rgb(24 24 20 / 6%);
+  --shadow-sm: 0 1px 3px rgb(24 24 32 / 10%), 0 1px 2px rgb(24 24 32 / 6%);
+  --shadow-pop: 0 10px 28px rgb(24 24 20 / 12%), 0 2px 6px rgb(24 24 20 / 6%);
+
+  /* Tipográfia */
+  --font:
+    ui-sans-serif, system-ui, -apple-system, 'Segoe UI Variable', 'Segoe UI', Roboto, sans-serif;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.5rem;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --weight-bold: 700;
+
+  /* Ikonméretek */
+  --icon-sm: 0.875rem;
+  --icon-md: 1.125rem;
+  --icon-lg: 1.5rem;
 
   /* Egységes animációs tokenek: minden átmenet ezeket használja. */
   --motion-fast: 120ms;
@@ -28,28 +76,36 @@
   --motion-slow: 360ms;
   --ease: cubic-bezier(0.2, 0, 0, 1);
 
-  --shadow-pop: 0 8px 24px rgb(15 17 21 / 14%);
-  --font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-
   color-scheme: light;
 }
 
-/* Sötét téma: csak a színtokenek változnak, a komponensek ezeket használják. */
+/* Sötét téma: önálló paletta (kék-fekete rétegek), nem a világos téma invertálása. */
 :root[data-theme='dark'] {
-  --color-bg: #0f1115;
-  --color-surface: #171a21;
-  --color-text: #e6e8ec;
-  --color-muted: #9aa4b2;
-  --color-border: #2b313c;
-  --color-primary: #7b97ff;
-  --color-primary-hover: #9bb1ff;
-  --color-on-primary: #0b1020;
-  --color-danger: #ff7b85;
-  --color-danger-hover: #ff9aa2;
-  --color-danger-bg: #3a1c20;
-  --color-success: #3fb950;
+  --color-bg: #0e0f14;
+  --color-surface: #15161d;
+  --color-surface-raised: #1c1e27;
+  --color-field: #0f1016;
 
-  --shadow-pop: 0 8px 24px rgb(0 0 0 / 45%);
+  --color-text: #ececf1;
+  --color-muted: #9b9dae;
+  --color-border: #262833;
+  --color-border-strong: #666a7c;
+  --color-border-control: #3d4050;
+  --color-backdrop: rgb(0 0 0 / 60%);
+
+  --color-primary: #8d8df2;
+  --color-primary-hover: #a3a3f6;
+  --color-on-primary: #101018;
+
+  --color-danger: #ff8089;
+  --color-danger-hover: #ffa1a8;
+  --color-danger-bg: #36171b;
+  --color-success: #4cc064;
+  --color-warning: #f0b24a;
+
+  --shadow-xs: 0 1px 2px rgb(0 0 0 / 40%);
+  --shadow-sm: 0 1px 3px rgb(0 0 0 / 50%), 0 1px 2px rgb(0 0 0 / 30%);
+  --shadow-pop: 0 12px 32px rgb(0 0 0 / 55%), 0 2px 6px rgb(0 0 0 / 35%);
 
   color-scheme: dark;
 }
@@ -69,13 +125,43 @@
   box-sizing: border-box;
 }
 
+/* Vékony, a témához illő görgetősáv */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-strong) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 0.625rem;
+  height: 0.625rem;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong);
+  background-clip: content-box;
+  border: 2px solid transparent;
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 body {
   margin: 0;
   font-family: var(--font);
-  font-size: 1rem;
-  line-height: 1.5;
+  font-size: var(--text-md);
+  line-height: var(--leading-normal);
   color: var(--color-text);
   background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  line-height: var(--leading-tight);
+  letter-spacing: -0.015em;
 }
 
 a {
@@ -85,7 +171,7 @@ a {
 input,
 textarea {
   color: var(--color-text);
-  background: var(--color-bg);
+  background: var(--color-field);
 }
 
 /* Az űrlapmezők (FormField, SelectField, ColorField, szerkesztők) egységes megjelenése. */
@@ -95,7 +181,8 @@ textarea {
 }
 
 .field label {
-  font-weight: 600;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
 }
 
 .field input:not([type='color']),
@@ -103,8 +190,18 @@ textarea {
   min-width: 0;
   padding: var(--space-2) var(--space-3);
   font: inherit;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border-strong);
   border-radius: var(--radius);
+  transition:
+    border-color var(--motion-fast) var(--ease),
+    box-shadow var(--motion-fast) var(--ease);
+}
+
+.field input:not([type='color']):focus-visible,
+.field textarea:focus-visible {
+  border-color: var(--color-primary);
+  outline: 2px solid transparent; /* kényszerített színes módban a gyűrű látszik */
+  box-shadow: 0 0 0 3px var(--color-primary-soft);
 }
 
 .field [aria-invalid='true'] {
@@ -114,7 +211,7 @@ textarea {
 .field__hint,
 .field__error {
   margin: 0;
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
 }
 
 .field__error {
@@ -141,12 +238,13 @@ textarea {
   padding: var(--space-6);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
 }
 
 .card h1 {
   margin: 0 0 var(--space-6);
-  font-size: 1.5rem;
+  font-size: var(--text-xl);
 }
 
 .form {
@@ -157,14 +255,17 @@ textarea {
 .btn {
   padding: var(--space-2) var(--space-4);
   font: inherit;
-  font-weight: 600;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
   color: var(--color-on-primary);
   background: var(--color-primary);
-  border: 0;
+  border: 1px solid transparent;
   border-radius: var(--radius);
+  box-shadow: var(--shadow-xs);
   cursor: pointer;
   transition:
     background-color var(--motion-fast) var(--ease),
+    border-color var(--motion-fast) var(--ease),
     transform var(--motion-fast) var(--ease);
 }
 
@@ -176,19 +277,24 @@ textarea {
   transform: translateY(1px);
 }
 
+.btn--secondary:active:not(:disabled) {
+  background: var(--state-active);
+}
+
 .btn:disabled {
-  opacity: 0.6;
+  opacity: var(--state-disabled-opacity);
   cursor: not-allowed;
 }
 
 .btn--secondary {
   color: var(--color-text);
-  background: transparent;
-  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  border-color: var(--color-border-control);
+  box-shadow: var(--shadow-xs);
 }
 
 .btn--secondary:hover:not(:disabled) {
-  background: var(--color-bg);
+  background: var(--state-hover);
 }
 
 .alert {
@@ -225,7 +331,7 @@ textarea {
 
 .page-head h1 {
   margin: 0;
-  font-size: 1.5rem;
+  font-size: var(--text-xl);
 }
 
 .actions {
@@ -252,11 +358,12 @@ textarea {
   padding: var(--space-3) var(--space-4);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xs);
 }
 
 .list__title {
-  font-weight: 600;
+  font-weight: var(--weight-semibold);
   color: var(--color-text);
 }
 
@@ -320,11 +427,11 @@ a.btn--secondary {
 }
 
 .status {
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
 }
 
 .status--dirty {
-  color: var(--color-danger);
+  color: var(--color-warning);
 }
 
 .sr-only {

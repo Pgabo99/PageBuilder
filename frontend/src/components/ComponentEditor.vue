@@ -288,19 +288,22 @@ const uid = useId()
   padding: var(--space-3) var(--space-4);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xs);
   transition:
     border-color var(--motion-fast) var(--ease),
     box-shadow var(--motion-fast) var(--ease);
 }
 
 .component:hover {
-  border-color: var(--color-muted);
+  border-color: var(--color-border-strong);
 }
 
 .component--active {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 1px var(--color-primary);
+  box-shadow:
+    0 0 0 3px var(--color-primary-soft),
+    var(--shadow-xs);
 }
 
 .component__head {
@@ -334,7 +337,7 @@ const uid = useId()
 }
 
 .component__invalid {
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
   color: var(--color-danger);
 }
 

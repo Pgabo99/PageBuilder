@@ -99,7 +99,7 @@ function move(from: number, to: number): void {
 
 .item-editor legend {
   padding: 0 var(--space-2);
-  font-weight: 600;
+  font-weight: var(--weight-semibold);
 }
 
 .item-editor__actions {

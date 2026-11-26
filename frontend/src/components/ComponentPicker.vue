@@ -185,20 +185,21 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onPointerDown)
   padding: var(--space-3);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
 }
 
 .picker__search {
   width: 100%;
   padding: var(--space-2) var(--space-3);
   font: inherit;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border-strong);
   border-radius: var(--radius);
 }
 
 .picker__heading {
   margin: 0;
-  font-size: 1rem;
+  font-size: var(--text-md);
 }
 
 .picker__category {
@@ -208,7 +209,7 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onPointerDown)
   gap: var(--space-2);
   padding: var(--space-1) 0;
   font: inherit;
-  font-weight: 600;
+  font-weight: var(--weight-semibold);
   color: inherit;
   text-align: left;
   background: none;
@@ -243,8 +244,8 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onPointerDown)
   font: inherit;
   color: var(--color-text);
   text-align: left;
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
+  background: var(--color-field);
+  border: 1px solid var(--color-border-strong);
   border-radius: var(--radius);
   cursor: pointer;
   transition: border-color var(--motion-fast) var(--ease);
@@ -255,14 +256,14 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onPointerDown)
 }
 
 .picker__item:disabled {
-  opacity: 0.6;
+  opacity: var(--state-disabled-opacity);
   cursor: not-allowed;
 }
 
 .picker__why {
   display: block;
   margin-top: var(--space-1);
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
   color: var(--color-muted);
 }
 </style>

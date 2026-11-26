@@ -53,18 +53,19 @@ watch(pending, (options) => {
   width: min(26rem, calc(100vw - 2 * var(--space-4)));
   padding: var(--space-6);
   color: var(--color-text);
-  background: var(--color-surface);
+  background: var(--color-surface-raised);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-pop);
 }
 
 .dialog::backdrop {
-  background: rgb(0 0 0 / 0.5);
+  background: var(--color-backdrop);
 }
 
 h2 {
   margin: 0 0 var(--space-3);
-  font-size: 1.125rem;
+  font-size: var(--text-lg);
 }
 
 p {

@@ -323,8 +323,8 @@ watch(
   font: inherit;
   color: var(--color-text);
   text-align: left;
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
+  background: var(--color-field);
+  border: 1px solid var(--color-border-strong);
   border-radius: var(--radius);
   cursor: pointer;
   transition:
@@ -338,12 +338,12 @@ watch(
 
 .select__trigger[aria-expanded='true'] {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 1px var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-soft);
 }
 
 .select__trigger:disabled {
   cursor: not-allowed;
-  opacity: 0.6;
+  opacity: var(--state-disabled-opacity);
 }
 
 .select__value {
@@ -362,8 +362,8 @@ watch(
 
 /* A chevron a jobb szélhez képest kap helyet (a gomb belső térköze és a rés együtt). */
 .select__chevron {
-  width: 1rem;
-  height: 1rem;
+  width: var(--icon-sm);
+  height: var(--icon-sm);
   margin-right: var(--space-1);
   color: var(--color-muted);
   transition: transform var(--motion-normal) var(--ease);
@@ -378,9 +378,9 @@ watch(
   z-index: 50;
   overflow-y: auto;
   padding: var(--space-1);
-  background: var(--color-surface);
+  background: var(--color-surface-raised);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-pop);
 }
 
@@ -400,8 +400,8 @@ watch(
 
 .select__group-label {
   padding: var(--space-2) var(--space-3) var(--space-1);
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
   color: var(--color-muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -413,22 +413,22 @@ watch(
   gap: var(--space-2);
   padding: var(--space-2) var(--space-3);
   cursor: pointer;
-  border-radius: calc(var(--radius) - 2px);
+  border-radius: var(--radius-sm);
   transition: background-color var(--motion-fast) var(--ease);
 }
 
 .select__option.is-active {
-  background: var(--color-bg);
+  background: var(--state-hover);
 }
 
 .select__option.is-selected {
-  font-weight: 600;
-  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  font-weight: var(--weight-semibold);
+  background: var(--color-primary-soft);
 }
 
 .select__option.is-disabled {
   cursor: not-allowed;
-  opacity: 0.5;
+  opacity: var(--state-disabled-opacity);
 }
 
 .select__option-text {
@@ -438,8 +438,8 @@ watch(
 }
 
 .select__option-desc {
-  font-size: 0.875rem;
-  font-weight: 400;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-regular);
   color: var(--color-muted);
 }
 

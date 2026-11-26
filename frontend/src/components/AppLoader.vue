@@ -52,8 +52,8 @@ const decorative = computed(() => props.size === 'button')
 
 .loader__spinner {
   flex: none;
-  width: 1.25rem;
-  height: 1.25rem;
+  width: var(--icon-md);
+  height: var(--icon-md);
   border: 2px solid var(--color-border);
   border-top-color: var(--color-primary);
   border-radius: 50%;
@@ -61,8 +61,8 @@ const decorative = computed(() => props.size === 'button')
 }
 
 .loader--page .loader__spinner {
-  width: 2rem;
-  height: 2rem;
+  width: var(--icon-lg);
+  height: var(--icon-lg);
 }
 
 .loader--button .loader__spinner {
