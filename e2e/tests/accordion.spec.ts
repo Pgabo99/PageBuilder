@@ -73,3 +73,25 @@ test('becsukható részek: előnézet, mentés és a publikált details/summary 
   await expect(details.nth(1)).toHaveAttribute('open', '')
   await expect(page.getByText(`Második válasz ${id}`, { exact: true })).toBeVisible()
 })
+
+test('animáció: csökkentett mozgásnál a szerkesztőpanel és a publikált accordion azonnal vált', async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  const id = uniqueId()
+
+  await signUp(page)
+  await createWebsite(page, `Webhely ${id}`, `webhely-${id}`)
+  await createPage(page, `Oldal ${id}`, `oldal-${id}`)
+  await addComponent(page, 'Becsukható részek')
+
+  const toggle = page.locator('.component__toggle', { hasText: /^Becsukható részek/ })
+  const fields = page.locator('.component__fields')
+  await expect(fields).toBeVisible()
+  await toggle.click()
+  await expect(toggle).toHaveAttribute('aria-expanded', 'false')
+  await expect(fields).toHaveCount(0)
+  await toggle.click()
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true')
+  await expect(fields).toBeVisible()
+})

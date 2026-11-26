@@ -26,7 +26,7 @@ test('gombok: stílus, méret, igazítás és lekerekítés; az előnézet egyez
   await createPage(page, `Oldal ${id}`, `oldal-${id}`)
 
   await addComponent(page, 'Gomb')
-  await page.getByLabel('Felirat').fill(`Stílusos ${id}`)
+  await page.locator('.component--active').getByLabel('Felirat').fill(`Stílusos ${id}`)
   await page.getByLabel('Stílus').selectOption('outline')
   await page.getByLabel('Méret', { exact: true }).selectOption('large')
   await page.getByLabel('Igazítás').selectOption('center')
@@ -34,7 +34,7 @@ test('gombok: stílus, méret, igazítás és lekerekítés; az előnézet egyez
 
   // Második gomb: alapbeállítás (a régi mentett gombokkal azonos megjelenés).
   await addComponent(page, 'Gomb')
-  await page.getByLabel('Felirat').fill(`Alap ${id}`)
+  await page.locator('.component--active').getByLabel('Felirat').fill(`Alap ${id}`)
 
   // Az előnézet aria-hidden, ezért elemre és szövegre keresünk.
   const preview = page.locator('.preview')

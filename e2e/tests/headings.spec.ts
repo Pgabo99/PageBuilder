@@ -21,14 +21,14 @@ test('címsorok: a szint, a méret és az igazítás független, és az előnéz
 
   // Első címsor: H6 szint, óriási méret, középre igazítva.
   await addComponent(page, 'Címsor')
-  await page.getByLabel('Szöveg', { exact: true }).fill(`Hatos ${id}`)
+  await page.locator('.component--active').getByLabel('Szöveg', { exact: true }).fill(`Hatos ${id}`)
   await page.getByLabel('Szint', { exact: true }).selectOption('6')
   await page.getByLabel('Megjelenési méret').selectOption('xlarge')
   await page.getByLabel('Igazítás').selectOption('center')
 
   // Második címsor: alapbeállítás (a régi mentett címsorokkal azonos megjelenés).
   await addComponent(page, 'Címsor')
-  await page.getByLabel('Szöveg', { exact: true }).fill(`Alap ${id}`)
+  await page.locator('.component--active').getByLabel('Szöveg', { exact: true }).fill(`Alap ${id}`)
 
   // Az előnézet aria-hidden, ezért nem szerepkörre, hanem elemre és szövegre keresünk.
   const preview = page.locator('.preview')

@@ -1,6 +1,6 @@
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import { h } from 'vue'
+import { defineComponent, h } from 'vue'
 import { RouterView } from 'vue-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -26,6 +26,15 @@ vi.mock('@/api/websites', () => ({
   websitesApi: { get: vi.fn<(id: number) => Promise<Website>>() },
 }))
 
+// Átmenet nélküli TransitionGroup: a tesztek ne várjanak az animációra.
+const PlainGroup = defineComponent({
+  props: { tag: { type: String, default: 'div' } },
+  setup:
+    (props, { slots }) =>
+    () =>
+      h(props.tag, slots.default?.()),
+})
+
 const page: Page = {
   id: 3,
   website_id: 1,
@@ -47,7 +56,10 @@ const mounted: VueWrapper[] = []
 async function mountEditor() {
   await router.replace('/pages/3')
   // RouterView-n át renderelünk: az elhagyás-őr csak így regisztrálódik az útvonalhoz.
-  const wrapper = mount({ render: () => h(RouterView) }, { global: { plugins: [router] } })
+  const wrapper = mount(
+    { render: () => h(RouterView) },
+    { global: { plugins: [router], stubs: { 'transition-group': PlainGroup } } },
+  )
   mounted.push(wrapper)
   await flushPromises()
   return wrapper

@@ -2,6 +2,7 @@
 import { useId } from 'vue'
 
 import AccordionEditor from '@/components/AccordionEditor.vue'
+import AppCollapse from '@/components/AppCollapse.vue'
 import CardsEditor from '@/components/CardsEditor.vue'
 import FooterEditor from '@/components/FooterEditor.vue'
 import FormField from '@/components/FormField.vue'
@@ -115,163 +116,170 @@ const uid = useId()
       </span>
     </div>
 
-    <div v-if="active" :id="`${uid}-fields`" class="component__fields">
-      <template v-if="model.type === 'heading'">
-        <FormField v-model="model.text" label="Szöveg" :required="false" :error="errors.text" />
-        <SelectField
-          v-model="model.level"
-          label="Szint"
-          :options="HEADING_LEVEL_OPTIONS"
-          :error="errors.level"
-        />
-        <OptionFields v-model="model" :spec="HEADING_OPTIONS" :errors="errors" />
-        <IconPicker v-model="model.icon" :error="errors.icon" />
-      </template>
+    <AppCollapse :id="`${uid}-fields`" :open="active">
+      <div class="component__fields">
+        <template v-if="model.type === 'heading'">
+          <FormField v-model="model.text" label="Szöveg" :required="false" :error="errors.text" />
+          <SelectField
+            v-model="model.level"
+            label="Szint"
+            :options="HEADING_LEVEL_OPTIONS"
+            :error="errors.level"
+          />
+          <OptionFields v-model="model" :spec="HEADING_OPTIONS" :errors="errors" />
+          <IconPicker v-model="model.icon" :error="errors.icon" />
+        </template>
 
-      <template v-else-if="model.type === 'text'">
-        <SelectField
-          v-model="model.format"
-          label="Formátum"
-          empty-label="Sima szöveg"
-          :options="TEXT_FORMATS"
-          :error="errors.format"
+        <template v-else-if="model.type === 'text'">
+          <SelectField
+            v-model="model.format"
+            label="Formátum"
+            empty-label="Sima szöveg"
+            :options="TEXT_FORMATS"
+            :error="errors.format"
+          />
+          <FormField
+            v-model="model.text"
+            label="Szöveg"
+            multiline
+            :rows="4"
+            :required="false"
+            :hint="model.format === 'markdown' ? MARKDOWN_HINT : undefined"
+            :error="errors.text"
+          />
+        </template>
+
+        <template v-else-if="model.type === 'button'">
+          <FormField
+            v-model="model.label"
+            label="Felirat"
+            :required="false"
+            :error="errors.label"
+          />
+          <FormField
+            v-model="model.url"
+            :label="`Cél ${URL_FIELD_HINT}`"
+            :required="false"
+            :list="targets?.length ? `${uid}-targets` : undefined"
+            :error="errors.url"
+          />
+          <datalist v-if="targets?.length" :id="`${uid}-targets`">
+            <option v-for="target in targets" :key="target.url" :value="target.url">
+              {{ target.label }}
+            </option>
+          </datalist>
+          <OptionFields v-model="model" :spec="BUTTON_OPTIONS" :errors="errors" />
+        </template>
+
+        <template v-else-if="model.type === 'cards'">
+          <details class="component__options">
+            <summary>Elrendezés</summary>
+            <OptionFields v-model="model" :spec="CARDS_OPTIONS" :errors="errors" />
+          </details>
+          <CardsEditor v-model="model.cards" :errors="errors" :targets="targets" />
+        </template>
+
+        <FooterEditor
+          v-else-if="model.type === 'footer'"
+          v-model="model"
+          :errors="errors"
+          :targets="targets"
         />
+
+        <StatsEditor v-else-if="model.type === 'stats'" v-model="model.items" :errors="errors" />
+
+        <SocialEditor
+          v-else-if="model.type === 'social'"
+          v-model="model.items"
+          :errors="errors"
+          :targets="targets"
+        />
+
+        <template v-else-if="model.type === 'quote'">
+          <FormField
+            v-model="model.text"
+            label="Idézet"
+            multiline
+            :rows="3"
+            :required="false"
+            :error="errors.text"
+          />
+          <FormField
+            v-model="model.author"
+            label="Szerző (opcionális)"
+            :required="false"
+            :error="errors.author"
+          />
+          <FormField
+            v-model="model.source"
+            label="Forrás (opcionális)"
+            :required="false"
+            :error="errors.source"
+          />
+          <FormField
+            v-model="model.source_url"
+            :label="`Forrás linkje (opcionális) ${URL_FIELD_HINT}`"
+            :required="false"
+            :list="targets?.length ? `${uid}-targets` : undefined"
+            :error="errors.source_url"
+          />
+          <datalist v-if="targets?.length" :id="`${uid}-targets`">
+            <option v-for="target in targets" :key="target.url" :value="target.url">
+              {{ target.label }}
+            </option>
+          </datalist>
+        </template>
+
+        <template v-else-if="model.type === 'alert'">
+          <SelectField
+            v-model="model.variant"
+            label="Típus"
+            :options="ALERT_VARIANTS"
+            :error="errors.variant"
+          />
+          <FormField
+            v-model="model.title"
+            label="Cím (opcionális)"
+            :required="false"
+            :error="errors.title"
+          />
+          <FormField
+            v-model="model.text"
+            label="Szöveg"
+            multiline
+            :rows="3"
+            :required="false"
+            :error="errors.text"
+          />
+          <IconPicker v-model="model.icon" :error="errors.icon" />
+        </template>
+
         <FormField
-          v-model="model.text"
-          label="Szöveg"
-          multiline
-          :rows="4"
+          v-else-if="model.type === 'spacer'"
+          v-model="model.height"
+          label="Magasság (rem)"
+          type="number"
+          :min="MIN_SPACER_HEIGHT"
+          :max="MAX_SPACER_HEIGHT"
+          :step="1"
           :required="false"
-          :hint="model.format === 'markdown' ? MARKDOWN_HINT : undefined"
-          :error="errors.text"
+          :error="errors.height"
         />
-      </template>
 
-      <template v-else-if="model.type === 'button'">
-        <FormField v-model="model.label" label="Felirat" :required="false" :error="errors.label" />
-        <FormField
-          v-model="model.url"
-          :label="`Cél ${URL_FIELD_HINT}`"
-          :required="false"
-          :list="targets?.length ? `${uid}-targets` : undefined"
-          :error="errors.url"
+        <OptionFields
+          v-else-if="model.type === 'divider'"
+          v-model="model"
+          :spec="DIVIDER_OPTIONS"
+          :errors="errors"
         />
-        <datalist v-if="targets?.length" :id="`${uid}-targets`">
-          <option v-for="target in targets" :key="target.url" :value="target.url">
-            {{ target.label }}
-          </option>
-        </datalist>
-        <OptionFields v-model="model" :spec="BUTTON_OPTIONS" :errors="errors" />
-      </template>
 
-      <template v-else-if="model.type === 'cards'">
-        <details class="component__options">
-          <summary>Elrendezés</summary>
-          <OptionFields v-model="model" :spec="CARDS_OPTIONS" :errors="errors" />
-        </details>
-        <CardsEditor v-model="model.cards" :errors="errors" :targets="targets" />
-      </template>
-
-      <FooterEditor
-        v-else-if="model.type === 'footer'"
-        v-model="model"
-        :errors="errors"
-        :targets="targets"
-      />
-
-      <StatsEditor v-else-if="model.type === 'stats'" v-model="model.items" :errors="errors" />
-
-      <SocialEditor
-        v-else-if="model.type === 'social'"
-        v-model="model.items"
-        :errors="errors"
-        :targets="targets"
-      />
-
-      <template v-else-if="model.type === 'quote'">
-        <FormField
-          v-model="model.text"
-          label="Idézet"
-          multiline
-          :rows="3"
-          :required="false"
-          :error="errors.text"
+        <AccordionEditor
+          v-else-if="model.type === 'accordion'"
+          v-model="model.items"
+          :errors="errors"
         />
-        <FormField
-          v-model="model.author"
-          label="Szerző (opcionális)"
-          :required="false"
-          :error="errors.author"
-        />
-        <FormField
-          v-model="model.source"
-          label="Forrás (opcionális)"
-          :required="false"
-          :error="errors.source"
-        />
-        <FormField
-          v-model="model.source_url"
-          :label="`Forrás linkje (opcionális) ${URL_FIELD_HINT}`"
-          :required="false"
-          :list="targets?.length ? `${uid}-targets` : undefined"
-          :error="errors.source_url"
-        />
-        <datalist v-if="targets?.length" :id="`${uid}-targets`">
-          <option v-for="target in targets" :key="target.url" :value="target.url">
-            {{ target.label }}
-          </option>
-        </datalist>
-      </template>
-
-      <template v-else-if="model.type === 'alert'">
-        <SelectField
-          v-model="model.variant"
-          label="Típus"
-          :options="ALERT_VARIANTS"
-          :error="errors.variant"
-        />
-        <FormField
-          v-model="model.title"
-          label="Cím (opcionális)"
-          :required="false"
-          :error="errors.title"
-        />
-        <FormField
-          v-model="model.text"
-          label="Szöveg"
-          multiline
-          :rows="3"
-          :required="false"
-          :error="errors.text"
-        />
-        <IconPicker v-model="model.icon" :error="errors.icon" />
-      </template>
-
-      <FormField
-        v-else-if="model.type === 'spacer'"
-        v-model="model.height"
-        label="Magasság (rem)"
-        type="number"
-        :min="MIN_SPACER_HEIGHT"
-        :max="MAX_SPACER_HEIGHT"
-        :step="1"
-        :required="false"
-        :error="errors.height"
-      />
-
-      <OptionFields
-        v-else-if="model.type === 'divider'"
-        v-model="model"
-        :spec="DIVIDER_OPTIONS"
-        :errors="errors"
-      />
-
-      <AccordionEditor
-        v-else-if="model.type === 'accordion'"
-        v-model="model.items"
-        :errors="errors"
-      />
-    </div>
+      </div>
+    </AppCollapse>
   </div>
 </template>
 
@@ -281,6 +289,13 @@ const uid = useId()
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
+  transition:
+    border-color var(--motion-fast) var(--ease),
+    box-shadow var(--motion-fast) var(--ease);
+}
+
+.component:hover {
+  border-color: var(--color-muted);
 }
 
 .component--active {
@@ -293,10 +308,6 @@ const uid = useId()
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-3);
-}
-
-.component--active .component__head {
-  margin-bottom: var(--space-3);
 }
 
 /* Az összefoglaló egész sora kattintható és billentyűzettel is használható (Enter, szóköz). */
@@ -340,6 +351,7 @@ const uid = useId()
 .component__fields {
   display: grid;
   gap: var(--space-3);
+  padding-top: var(--space-3);
 }
 
 /* Érintőképernyőn nincs HTML5 húzás: a fel/le gomb marad, a gombok nagyobbak. */
