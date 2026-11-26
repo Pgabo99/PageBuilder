@@ -292,6 +292,10 @@ textarea {
   background: var(--state-hover);
 }
 
+.btn--ghost:active:not(:disabled) {
+  background: var(--state-active);
+}
+
 /* Veszélyes, de nem domináns: csak a szöveg piros, hoverre jelenik meg a háttér */
 .btn--danger-soft {
   color: var(--color-danger);
@@ -303,6 +307,10 @@ textarea {
 .btn--danger-soft:hover:not(:disabled) {
   background: var(--color-danger-bg);
   border-color: var(--color-danger);
+}
+
+.btn--danger-soft:active:not(:disabled) {
+  background: var(--color-danger-bg);
 }
 
 .btn:disabled {
