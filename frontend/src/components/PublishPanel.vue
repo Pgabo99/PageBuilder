@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppLoader from '@/components/AppLoader.vue'
 import { computed, ref, watch } from 'vue'
 
 import { errorMessage } from '@/api/client'
@@ -96,6 +97,7 @@ const statusText = computed(() => {
       </a>
     </div>
     <button class="btn" type="button" :disabled="busy || inProgress" @click="publish">
+      <AppLoader :loading="busy || inProgress" size="button" />
       {{ busy || inProgress ? 'Publikálás…' : 'Publikálás' }}
     </button>
     <p v-if="error" class="alert publish__error" role="alert">{{ error }}</p>

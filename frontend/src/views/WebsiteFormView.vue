@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppLoader from '@/components/AppLoader.vue'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
@@ -183,6 +184,7 @@ async function onSubmit(): Promise<void> {
       </fieldset>
       <div class="actions">
         <button class="btn" type="submit" :disabled="submitting">
+          <AppLoader :loading="submitting" size="button" />
           {{ submitting ? 'Mentés…' : 'Mentés' }}
         </button>
         <RouterLink

@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import { errorMessage } from '@/api/client'
+import AppLoader from '@/components/AppLoader.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import ThemeToggle from '@/components/ThemeToggle.vue'
 import ToastHost from '@/components/ToastHost.vue'
@@ -48,7 +49,7 @@ async function logout(): Promise<void> {
   </header>
   <p v-if="logoutError" class="alert" role="alert">{{ logoutError }}</p>
   <main v-if="!ready" class="container">
-    <p class="muted" role="status">Betöltés…</p>
+    <AppLoader loading size="page" />
   </main>
   <RouterView v-else />
   <ConfirmDialog />
