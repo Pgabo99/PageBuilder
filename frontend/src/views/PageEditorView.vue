@@ -117,7 +117,8 @@ async function save(): Promise<void> {
 
 // Az aktív komponens csak szerkesztői állapot: nem része a mentett tartalomnak és a pillanatképnek.
 const activeId = ref<string | null>(null)
-const listEl = ref<HTMLElement | null>(null)
+const listRef = ref<{ $el: HTMLElement } | null>(null)
+const listEl = computed(() => listRef.value?.$el ?? null)
 
 function toggleActive(id: string): void {
   activeId.value = activeId.value === id ? null : id
@@ -184,6 +185,14 @@ const placeholderAt = computed(() =>
 const draggedComponent = computed(() =>
   dragIndex.value === null ? null : (form.content[dragIndex.value] ?? null),
 )
+
+// A távozó elem kikerül a folyásból, így a többi elem azonnal a helyére csúszik (list-anim-move).
+function pinLeaving(el: Element): void {
+  if (!(el instanceof HTMLElement)) return
+  el.style.width = `${el.offsetWidth}px`
+  el.style.top = `${el.offsetTop}px`
+  el.style.left = `${el.offsetLeft}px`
+}
 
 function onDragStart(index: number, event: DragEvent): void {
   dragIndex.value = index
@@ -308,16 +317,26 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', warnBeforeUnloa
           <p v-if="form.content.length === 0" class="muted">
             Az oldal még üres. Adj hozzá egy komponenst!
           </p>
-          <ul
-            ref="listEl"
-            class="list"
+          <!-- Húzás közben nincs CSS-átmenet, hogy a lista ne ugráljon; a drop utáni átrendezés animált. -->
+          <TransitionGroup
+            ref="listRef"
+            tag="ul"
+            name="list-anim"
+            :css="dragIndex === null"
+            class="list component-list"
             @dragover="onDragOver"
             @dragleave="onDragLeave"
             @drop.prevent="onDrop"
             @dragend="onDragEnd"
+            @before-leave="pinLeaving"
           >
             <template v-for="(component, index) in form.content" :key="component.id">
-              <li v-if="placeholderAt === index" class="drop-placeholder" aria-hidden="true">
+              <li
+                v-if="placeholderAt === index"
+                key="placeholder"
+                class="drop-placeholder"
+                aria-hidden="true"
+              >
                 Ide kerül: {{ componentLabel(draggedComponent!.type) }}
               </li>
               <li
@@ -342,12 +361,13 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', warnBeforeUnloa
             </template>
             <li
               v-if="placeholderAt === form.content.length"
+              key="placeholder"
               class="drop-placeholder"
               aria-hidden="true"
             >
               Ide kerül: {{ componentLabel(draggedComponent!.type) }}
             </li>
-          </ul>
+          </TransitionGroup>
 
           <div class="add-bar" role="group" aria-label="Komponens hozzáadása">
             <span class="muted">Hozzáadás:</span>
@@ -392,6 +412,35 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', warnBeforeUnloa
   align-items: center;
   gap: var(--space-2);
   margin-top: var(--space-4);
+}
+
+.component-list {
+  position: relative;
+}
+
+.list-anim-enter-active,
+.list-anim-leave-active {
+  transition:
+    opacity var(--motion-normal) var(--ease),
+    transform var(--motion-normal) var(--ease);
+}
+
+.list-anim-move {
+  transition: transform var(--motion-normal) var(--ease);
+}
+
+.list-anim-enter-from,
+.list-anim-leave-to {
+  opacity: 0;
+  transform: translateY(-0.5rem);
+}
+
+.list-anim-leave-active {
+  position: absolute;
+}
+
+.list-anim-leave-active.drop-placeholder {
+  display: none;
 }
 
 /* A húzott elem a helyén marad, halványan; a helykitöltő mutatja, hová kerül elengedéskor. */

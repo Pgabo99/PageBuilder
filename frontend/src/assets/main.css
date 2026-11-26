@@ -21,6 +21,12 @@
   --space-8: 2rem;
 
   --radius: 0.5rem;
+
+  /* Egységes animációs tokenek: minden átmenet ezeket használja. */
+  --motion-fast: 120ms;
+  --motion-normal: 220ms;
+  --motion-slow: 360ms;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
   --font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 
   color-scheme: light;
@@ -42,6 +48,15 @@
   --color-success: #3fb950;
 
   color-scheme: dark;
+}
+
+/* Csökkentett mozgás: az átmenetek azonnali váltássá válnak (a komponensek a tokenekből dolgoznak). */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0ms;
+    --motion-normal: 0ms;
+    --motion-slow: 0ms;
+  }
 }
 
 *,
@@ -146,10 +161,17 @@ textarea {
   border: 0;
   border-radius: var(--radius);
   cursor: pointer;
+  transition:
+    background-color var(--motion-fast) var(--ease),
+    transform var(--motion-fast) var(--ease);
 }
 
 .btn:hover:not(:disabled) {
   background: var(--color-primary-hover);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
 }
 
 .btn:disabled {
@@ -256,6 +278,26 @@ textarea {
 
 .btn--danger:hover:not(:disabled) {
   background: var(--color-danger-hover);
+}
+
+/* Natív details (előnézeti accordion, szerkesztői opciók): smooth nyitás, ahol a böngésző támogatja;
+   máshol azonnali váltás marad. */
+@supports selector(::details-content) {
+  details {
+    interpolate-size: allow-keywords;
+  }
+
+  details::details-content {
+    block-size: 0;
+    overflow: clip;
+    transition:
+      block-size var(--motion-normal) var(--ease),
+      content-visibility var(--motion-normal) allow-discrete;
+  }
+
+  details[open]::details-content {
+    block-size: auto;
+  }
 }
 
 a.btn {

@@ -41,6 +41,12 @@
         .accordion summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
         .accordion details[open] summary { color: var(--accent); }
         .accordion details p { margin: 0; padding: 0 1rem 1rem; }
+        @supports selector(::details-content) {
+            .accordion details { interpolate-size: allow-keywords; }
+            .accordion details::details-content { block-size: 0; overflow: clip; transition: block-size .22s cubic-bezier(.2, 0, 0, 1), content-visibility .22s allow-discrete; }
+            .accordion details[open]::details-content { block-size: auto; }
+        }
+        @media (prefers-reduced-motion: reduce) { .accordion details::details-content { transition: none; } }
         .heading--small, .heading--medium, .heading--large, .heading--xlarge { line-height: 1.25; overflow-wrap: anywhere; }
         .heading--small { font-size: 1.25rem; }
         .heading--medium { font-size: 1.75rem; }
