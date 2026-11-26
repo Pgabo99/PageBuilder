@@ -89,3 +89,8 @@ Közös design tokenek CSS változókban; a vászon és a publikált kimenet azo
 - **Állapotszínek:** `--color-danger`, `--color-success`, `--color-warning` (a „nem mentett” jelzés borostyán, nem piros).
 - **Mozgás:** `prefers-reduced-motion` esetén az animációs tokenek 0 ms-ra állnak.
 - A komponensek nyers színt, sugarat vagy árnyékot nem használnak; kivétel a publikált oldal egyezését szolgáló előnézet (`PagePreview`), mert a felhasználók oldalainak megjelenése nem változik.
+
+### Űrlapelemek
+
+- Egységes vezérlőmagasság (`--control-height`): szöveges mező, legördülő, színminta, ikonválasztó csempe. A mező kerete `--color-border-strong`, fókuszra akcentus és `--color-primary-soft` gyűrű; a hibát `aria-invalid` és a mező alatti üzenet jelzi.
+- `CheckboxField`, `RadioField`, `SwitchField`: a natív input (billentyűzet, képernyőolvasó, form) a háttérben marad, a megjelenés a közös `.choice*` CSS-ből jön (`main.css`); a kapcsoló `role="switch"`. Az ikonválasztó ugyanerre a mintára épül (`.choice__face`).
