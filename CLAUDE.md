@@ -39,7 +39,7 @@ Egyetemi Cloud és DevOps projekt: weboldalépítő alkalmazás szerkeszthető �
 
 ## Munkamenet
 
-MVP-beadandó, legegyszerűbb működő megoldással; halasztott elemek: `docs/backlog.md`. Small Issues, Small Commits, Small PRs, Small Context. Egyszerre egy GitHub issue (ütemterv-feladatnál `docs/roadmap.md` azonosítóval), saját branchen: rövid terv → jóváhagyás → issue → implementáció → tesztek → gyors kódellenőrzés → atomi commitok → push → PR (`Closes #`) → merge a felhasználó jóváhagyásával → `main` frissítése. Részletek: `.claude/rules/ai-workflow.md`.
+MVP-beadandó, legegyszerűbb működő megoldással; halasztott elemek: `docs/backlog.md`. Small Issues, Small Commits, Small PRs, Small Context. Egyszerre egy GitHub issue (ütemterv-feladatnál `docs/roadmap.md` azonosítóval), saját branchen: rövid terv → issue → implementáció → tesztek → gyors kódellenőrzés → atomi commitok → push → PR (`Closes #`) → merge a felhasználó jóváhagyásával → `main` frissítése. Jóváhagyás csak a nagyobb döntésekhez és a merge-hez kell; subagentek (`.claude/agents/`) és párhuzamosítás a szabályok szerint. Részletek: `.claude/rules/ai-workflow.md`.
 
 ## Szabályfájlok
 
