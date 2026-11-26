@@ -16,20 +16,20 @@ const group = useId()
   <fieldset class="icon-picker">
     <legend>{{ label ?? 'Ikon' }}</legend>
     <div class="icon-picker__grid">
-      <label class="icon-picker__option">
+      <label class="choice">
         <input
-          class="icon-picker__input"
+          class="choice__input"
           type="radio"
           :name="group"
           value=""
           :checked="!model"
           @change="model = null"
         />
-        <span class="icon-picker__face icon-picker__face--none">Nincs</span>
+        <span class="choice__face icon-picker__none">Nincs</span>
       </label>
-      <label v-for="icon in icons" :key="icon.name" class="icon-picker__option" :title="icon.label">
+      <label v-for="icon in icons" :key="icon.name" class="choice" :title="icon.label">
         <input
-          class="icon-picker__input"
+          class="choice__input"
           type="radio"
           :name="group"
           :value="icon.name"
@@ -37,7 +37,7 @@ const group = useId()
           :aria-label="icon.label"
           @change="model = icon.name"
         />
-        <span class="icon-picker__face"><AppIcon :name="icon.name" /></span>
+        <span class="choice__face"><AppIcon :name="icon.name" /></span>
       </label>
     </div>
     <p v-if="error?.length" class="field__error">{{ error.join(' ') }}</p>
@@ -64,46 +64,7 @@ const group = useId()
   margin-top: var(--space-1);
 }
 
-.icon-picker__option {
-  position: relative;
-  font-weight: var(--weight-regular);
-}
-
-.icon-picker__input {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  opacity: 0;
-  cursor: pointer;
-}
-
-.icon-picker__face {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 2.25rem;
-  height: 2.25rem;
-  padding: 0 var(--space-2);
-  font-size: var(--icon-md);
-  color: var(--color-muted);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-}
-
-.icon-picker__face--none {
+.icon-picker__none {
   font-size: var(--text-sm);
-}
-
-.icon-picker__input:checked + .icon-picker__face {
-  color: var(--color-primary);
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px var(--color-primary-soft);
-}
-
-.icon-picker__input:focus-visible + .icon-picker__face {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
 }
 </style>

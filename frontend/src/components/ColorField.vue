@@ -37,10 +37,11 @@ const hasError = computed(() => (props.error?.length ?? 0) > 0)
 <style scoped>
 input[type='color'] {
   width: 3rem;
-  height: 2.25rem;
+  height: var(--control-height);
   padding: 0;
   cursor: pointer;
-  border: 1px solid var(--color-border);
+  background: var(--color-field);
+  border: 1px solid var(--color-border-strong);
   border-radius: var(--radius);
 }
 </style>

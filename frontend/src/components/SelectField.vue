@@ -316,6 +316,7 @@ watch(
   display: flex;
   width: 100%;
   min-width: 0;
+  min-height: var(--control-height);
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
