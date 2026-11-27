@@ -65,6 +65,9 @@
   --leading-normal: 1.5;
   --weight-bold: 700;
 
+  /* Egységes vezérlőmagasság: mező, legördülő, színminta, ikonválasztó */
+  --control-height: 2.375rem;
+
   /* Ikonméretek */
   --icon-sm: 0.875rem;
   --icon-md: 1.125rem;
@@ -188,6 +191,7 @@ textarea {
 .field input:not([type='color']),
 .field textarea {
   min-width: 0;
+  min-height: var(--control-height);
   padding: var(--space-2) var(--space-3);
   font: inherit;
   border: 1px solid var(--color-border-strong);
@@ -216,6 +220,172 @@ textarea {
 
 .field__error {
   color: var(--color-danger);
+}
+
+/* Választóelemek (checkbox, rádió, kapcsoló, ikonválasztó): a natív input megmarad a háttérben
+   (billentyűzet, képernyőolvasó, form), csak a megjelenés egyedi. */
+.choice {
+  position: relative;
+  display: inline-flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  font-weight: var(--weight-regular);
+  cursor: pointer;
+}
+
+.choice__input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: inherit;
+}
+
+.choice__box {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 1.125rem;
+  height: 1.125rem;
+  margin-top: 0.1875rem;
+  color: var(--color-on-primary);
+  background: var(--color-field);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  transition:
+    background-color var(--motion-fast) var(--ease),
+    border-color var(--motion-fast) var(--ease);
+}
+
+.choice__box .icon {
+  width: var(--icon-sm);
+  height: var(--icon-sm);
+  stroke-width: 3;
+  opacity: 0;
+  transition: opacity var(--motion-fast) var(--ease);
+}
+
+.choice--radio .choice__box {
+  border-radius: 50%;
+}
+
+.choice--radio .choice__box::after {
+  width: 0.5rem;
+  height: 0.5rem;
+  content: '';
+  background: var(--color-on-primary);
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity var(--motion-fast) var(--ease);
+}
+
+.choice__input:checked + .choice__box {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.choice__input:checked + .choice__box .icon,
+.choice--radio .choice__input:checked + .choice__box::after {
+  opacity: 1;
+}
+
+.choice:hover .choice__input:not(:disabled) + .choice__box {
+  border-color: var(--color-primary);
+}
+
+.choice__input:focus-visible + .choice__box,
+.choice__input:focus-visible + .choice__track,
+.choice__input:focus-visible + .choice__face {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.choice__input[aria-invalid='true'] + .choice__box {
+  border-color: var(--color-danger);
+}
+
+.choice__input:disabled ~ * {
+  opacity: var(--state-disabled-opacity);
+}
+
+.choice__input:disabled {
+  cursor: not-allowed;
+}
+
+.choice__text {
+  display: grid;
+  gap: 0.125rem;
+}
+
+.choice__label {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+
+/* Kapcsoló: ugyanaz a natív checkbox (role=switch), sín és gomb megjelenéssel */
+.choice__track {
+  position: relative;
+  flex: none;
+  width: 2.25rem;
+  height: 1.25rem;
+  margin-top: 0.0625rem;
+  background: var(--color-border-strong);
+  border-radius: 999px;
+  transition: background-color var(--motion-fast) var(--ease);
+}
+
+.choice__track::after {
+  position: absolute;
+  top: 0.125rem;
+  left: 0.125rem;
+  width: 1rem;
+  height: 1rem;
+  content: '';
+  background: var(--color-surface);
+  border-radius: 50%;
+  box-shadow: var(--shadow-xs);
+  transition: transform var(--motion-fast) var(--ease);
+}
+
+.choice__input:checked + .choice__track {
+  background: var(--color-primary);
+}
+
+.choice__input:checked + .choice__track::after {
+  transform: translateX(1rem);
+}
+
+/* Csempe (ikonválasztó): a rádió lapja gomb-szerű felület */
+.choice__face {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--control-height);
+  height: var(--control-height);
+  padding: 0 var(--space-2);
+  font-size: var(--icon-md);
+  color: var(--color-muted);
+  background: var(--color-field);
+  border: 1px solid var(--color-border-control);
+  border-radius: var(--radius);
+  transition:
+    background-color var(--motion-fast) var(--ease),
+    border-color var(--motion-fast) var(--ease),
+    color var(--motion-fast) var(--ease);
+}
+
+.choice:hover .choice__input:not(:disabled) + .choice__face {
+  color: var(--color-text);
+  background: var(--state-hover);
+}
+
+.choice__input:checked + .choice__face {
+  color: var(--color-primary);
+  background: var(--color-primary-soft);
+  border-color: var(--color-primary);
 }
 
 /* A többsoros mező csak függőlegesen méretezhető: oldalra az oszlop szélessége szabja meg, így nem csúszik ki. */
