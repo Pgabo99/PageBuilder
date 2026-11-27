@@ -1,21 +1,21 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
+import IconButton from '@/components/IconButton.vue'
 import { useTheme } from '@/composables/useTheme'
 
+// Témaváltó ikongomb (a kijelentkezett oldalakon; belépve a felhasználói menüben van).
 const { theme, toggle } = useTheme()
 const dark = computed(() => theme.value === 'dark')
 </script>
 
 <template>
-  <button
-    class="btn btn--secondary btn--small"
-    type="button"
+  <IconButton
+    :icon="dark ? 'sun' : 'moon'"
+    :label="dark ? 'Váltás világos témára' : 'Váltás sötét témára'"
+    variant="ghost"
+    size="md"
     :aria-pressed="dark"
-    :title="dark ? 'Váltás világos témára' : 'Váltás sötét témára'"
     @click="toggle"
-  >
-    <span aria-hidden="true">{{ dark ? '☀' : '☾' }}</span>
-    <span class="sr-only">{{ dark ? 'Világos téma' : 'Sötét téma' }}</span>
-  </button>
+  />
 </template>

@@ -343,13 +343,13 @@ textarea {
 
 .container {
   width: 100%;
-  max-width: 48rem;
+  max-width: 60rem;
   margin: var(--space-8) auto;
   padding: 0 var(--space-4);
 }
 
 .container--wide {
-  max-width: 72rem;
+  max-width: 80rem;
 }
 
 .page-head {
