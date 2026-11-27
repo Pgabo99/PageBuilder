@@ -89,3 +89,8 @@ Közös design tokenek CSS változókban; a vászon és a publikált kimenet azo
 - **Állapotszínek:** `--color-danger`, `--color-success`, `--color-warning` (a „nem mentett” jelzés borostyán, nem piros).
 - **Mozgás:** `prefers-reduced-motion` esetén az animációs tokenek 0 ms-ra állnak.
 - A komponensek nyers színt, sugarat vagy árnyékot nem használnak; kivétel a publikált oldal egyezését szolgáló előnézet (`PagePreview`), mert a felhasználók oldalainak megjelenése nem változik.
+
+### Gombok és ikongombok
+
+- `.btn` változatok: elsődleges (alap), `--secondary`, `--ghost` (halk), `--danger-soft` (finom veszélyes: piros szöveg, hoverre jelenik meg a háttér), `--danger` (kitöltött, csak megerősítő ablakban). Egy nézeten egy kitöltött elsődleges gomb van.
+- `IconButton`: Feather ikon (`uiIcons`), kötelező `label` (aria-label és natív súgó; az ikon nem helyettesíti a megnevezést), változatok `secondary`/`ghost`/`danger`, méret `sm`/`md`. Érintőképernyőn (`pointer: coarse`) a gombok legalább 44 px-esek.

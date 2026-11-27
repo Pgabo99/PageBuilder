@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import IconButton from '@/components/IconButton.vue'
 import { useToast } from '@/composables/useToast'
 
 const { toasts, dismiss } = useToast()
@@ -14,14 +15,7 @@ const { toasts, dismiss } = useToast()
       :role="toast.kind === 'error' ? 'alert' : 'status'"
     >
       <span>{{ toast.message }}</span>
-      <button
-        class="toast__close"
-        type="button"
-        aria-label="Értesítés bezárása"
-        @click="dismiss(toast.id)"
-      >
-        ✕
-      </button>
+      <IconButton icon="x" label="Értesítés bezárása" variant="ghost" @click="dismiss(toast.id)" />
     </div>
   </div>
 </template>
@@ -57,14 +51,5 @@ const { toasts, dismiss } = useToast()
 
 .toast--error {
   border-left-color: var(--color-danger);
-}
-
-.toast__close {
-  padding: 0 var(--space-1);
-  font: inherit;
-  color: var(--color-muted);
-  background: transparent;
-  border: 0;
-  cursor: pointer;
 }
 </style>

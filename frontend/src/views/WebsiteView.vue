@@ -86,7 +86,12 @@ const removePage = async (id: number, title: string) => {
           >
             Szerkesztés
           </RouterLink>
-          <button class="btn btn--secondary" type="button" :disabled="busy" @click="removeWebsite">
+          <button
+            class="btn btn--danger-soft"
+            type="button"
+            :disabled="busy"
+            @click="removeWebsite"
+          >
             Törlés
           </button>
         </div>
@@ -98,7 +103,7 @@ const removePage = async (id: number, title: string) => {
 
       <div class="page-head">
         <h2>Oldalak</h2>
-        <RouterLink class="btn" :to="{ name: 'page-new', params: { websiteId } }"
+        <RouterLink class="btn btn--secondary" :to="{ name: 'page-new', params: { websiteId } }"
           >Új oldal</RouterLink
         >
       </div>
@@ -119,7 +124,7 @@ const removePage = async (id: number, title: string) => {
               <div class="muted">{{ page.slug }}</div>
             </div>
             <button
-              class="btn btn--secondary"
+              class="btn btn--danger-soft"
               type="button"
               :disabled="busy"
               @click="removePage(page.id, page.title)"

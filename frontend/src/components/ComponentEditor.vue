@@ -6,6 +6,7 @@ import AppCollapse from '@/components/AppCollapse.vue'
 import CardsEditor from '@/components/CardsEditor.vue'
 import FooterEditor from '@/components/FooterEditor.vue'
 import FormField from '@/components/FormField.vue'
+import IconButton from '@/components/IconButton.vue'
 import IconPicker from '@/components/IconPicker.vue'
 import OptionFields from '@/components/OptionFields.vue'
 import SelectField from '@/components/SelectField.vue'
@@ -78,41 +79,20 @@ const uid = useId()
         </span>
       </button>
       <span class="actions">
-        <button
-          class="btn btn--secondary btn--small"
-          type="button"
-          :disabled="first"
-          aria-label="Feljebb"
-          @click="$emit('up')"
-        >
-          ↑
-        </button>
-        <button
-          class="btn btn--secondary btn--small"
-          type="button"
-          :disabled="last"
-          aria-label="Lejjebb"
-          @click="$emit('down')"
-        >
-          ↓
-        </button>
-        <button
+        <IconButton icon="arrow-up" label="Feljebb" :disabled="first" @click="$emit('up')" />
+        <IconButton icon="arrow-down" label="Lejjebb" :disabled="last" @click="$emit('down')" />
+        <IconButton
           v-if="model.type !== 'footer'"
-          class="btn btn--secondary btn--small"
-          type="button"
-          aria-label="Komponens másolása"
+          icon="copy"
+          label="Komponens másolása"
           @click="$emit('duplicate')"
-        >
-          ⧉
-        </button>
-        <button
-          class="btn btn--secondary btn--small"
-          type="button"
-          aria-label="Komponens törlése"
+        />
+        <IconButton
+          icon="trash-2"
+          label="Komponens törlése"
+          variant="danger"
           @click="$emit('remove')"
-        >
-          ✕
-        </button>
+        />
       </span>
     </div>
 
@@ -357,15 +337,10 @@ const uid = useId()
   padding-top: var(--space-3);
 }
 
-/* Érintőképernyőn nincs HTML5 húzás: a fel/le gomb marad, a gombok nagyobbak. */
+/* Érintőképernyőn nincs HTML5 húzás: a fel/le gomb marad. */
 @media (pointer: coarse) {
   .component__handle {
     display: none;
-  }
-
-  .component__head .btn {
-    min-width: 2.75rem;
-    min-height: 2.75rem;
   }
 }
 
