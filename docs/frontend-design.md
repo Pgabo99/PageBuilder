@@ -99,3 +99,10 @@ Közös design tokenek CSS változókban; a vászon és a publikált kimenet azo
 
 - `.btn` változatok: elsődleges (alap), `--secondary`, `--ghost` (halk), `--danger-soft` (finom veszélyes: piros szöveg, hoverre jelenik meg a háttér), `--danger` (kitöltött, csak megerősítő ablakban). Egy nézeten egy kitöltött elsődleges gomb van.
 - `IconButton`: Feather ikon (`uiIcons`), kötelező `label` (aria-label és natív súgó; az ikon nem helyettesíti a megnevezést), változatok `secondary`/`ghost`/`danger`, méret `sm`/`md`. Érintőképernyőn (`pointer: coarse`) a gombok legalább 44 px-esek.
+
+### Tooltip, badge, ablak és toast
+
+- `AppTooltip`: hoverre (400 ms késleltetéssel) és billentyűzetes fókuszra jelenik meg, Escape zárja; `role="tooltip"`, az első fókuszálható elemhez `aria-describedby`-jal kötve; `position: fixed`, szükség esetén lent. Az `IconButton` minden ikongombot ezzel burkol (a megnevezés a súgó, natív `title` nincs).
+- `BadgeLabel` (`neutral`/`info`/`success`/`warning`/`danger`): a színt mindig szöveg kíséri, a pont dekoratív; a háttér 12%-os keverék, mindkét témában AA kontraszttal.
+- `ConfirmDialog`: natív `<dialog>`; a belépő/kilépő animációt CSS végzi (`@starting-style`, `allow-discrete`), ahol a böngésző nem támogatja, azonnal vált; veszélyes kérdésnél figyelmeztető ikon.
+- `ToastHost`: ikon a fajtához (siker/hiba), `TransitionGroup` belépő/kilépő animáció, `role="status"` / `"alert"`.

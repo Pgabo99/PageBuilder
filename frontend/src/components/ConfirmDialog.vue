@@ -77,6 +77,11 @@ watch(pending, (options) => {
   transform: none;
 }
 
+/* A fókuszt a gombok jelzik, az ablak kerete nem kap gyűrűt. */
+.dialog:focus-visible {
+  outline: 0;
+}
+
 .dialog::backdrop {
   background: var(--color-backdrop);
   opacity: 0;
