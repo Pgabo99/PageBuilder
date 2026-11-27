@@ -24,6 +24,21 @@ describe('toast', () => {
     expect(wrapper.find('[role="alert"]').text()).toContain('Hiba történt.')
   })
 
+  it('a toast ikonja a fajtához igazodik, és dekoratív', async () => {
+    const wrapper = mount(ToastHost)
+    const toast = useToast()
+
+    toast.success('Mentve.')
+    toast.error('Hiba történt.')
+    await wrapper.vm.$nextTick()
+
+    const icons = wrapper.findAll('.toast__icon')
+    expect(icons).toHaveLength(2)
+    expect(icons.every((icon) => icon.attributes('aria-hidden') === 'true')).toBe(true)
+    expect(wrapper.find('.toast--success .toast__icon').exists()).toBe(true)
+    expect(wrapper.find('.toast--error .toast__icon').exists()).toBe(true)
+  })
+
   it('magától eltűnik: a sikeres hamarabb, a hiba később', async () => {
     const wrapper = mount(ToastHost)
     const toast = useToast()

@@ -43,6 +43,7 @@
   --radius-sm: 0.3125rem;
   --radius-md: 0.4375rem;
   --radius-lg: 0.75rem;
+  --radius-full: 999px;
   --radius: var(--radius-md);
 
   /* Árnyékskála: finom, rétegzett */

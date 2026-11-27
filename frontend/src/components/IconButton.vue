@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import AppIcon from '@/components/AppIcon.vue'
+import AppTooltip from '@/components/AppTooltip.vue'
 
 // Ikongomb: az ikon a szöveges megnevezést nem helyettesíti, ezért a `label` kötelező (aria-label és
-// natív súgó). A többi attribútum (disabled, click) a gombra kerül.
+// tooltip). A többi attribútum (disabled, click) a gombra kerül, nem a tooltip burkolóra.
+defineOptions({ inheritAttrs: false })
+
 withDefaults(
   defineProps<{
     icon: string
@@ -15,15 +18,17 @@ withDefaults(
 </script>
 
 <template>
-  <button
-    class="icon-btn"
-    :class="[`icon-btn--${variant}`, `icon-btn--${size}`]"
-    type="button"
-    :aria-label="label"
-    :title="label"
-  >
-    <AppIcon :name="icon" kind="ui" />
-  </button>
+  <AppTooltip :text="label">
+    <button
+      type="button"
+      v-bind="$attrs"
+      class="icon-btn"
+      :class="[`icon-btn--${variant}`, `icon-btn--${size}`]"
+      :aria-label="label"
+    >
+      <AppIcon :name="icon" kind="ui" />
+    </button>
+  </AppTooltip>
 </template>
 
 <style scoped>

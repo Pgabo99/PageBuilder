@@ -4,28 +4,29 @@ import { describe, expect, it } from 'vitest'
 import IconButton from '../IconButton.vue'
 
 describe('IconButton', () => {
-  it('az aria-label és a súgó a megnevezés, az ikon dekoratív', () => {
+  it('az aria-label a megnevezés, az ikon dekoratív, a gomb alapból type=button', () => {
     const wrapper = mount(IconButton, { props: { icon: 'copy', label: 'Másolás' } })
+    const button = wrapper.find('button')
 
-    expect(wrapper.attributes('aria-label')).toBe('Másolás')
-    expect(wrapper.attributes('title')).toBe('Másolás')
-    expect(wrapper.attributes('type')).toBe('button')
+    expect(button.attributes('aria-label')).toBe('Másolás')
+    expect(button.attributes('type')).toBe('button')
+    expect(button.attributes('title')).toBeUndefined()
     expect(wrapper.find('svg').attributes('aria-hidden')).toBe('true')
-    expect(wrapper.text()).toBe('')
+    expect(button.text()).toBe('')
   })
 
-  it('kattintásra jelez, letiltva nem', async () => {
+  it('az attribútumok a gombra kerülnek: kattintásra jelez, letiltva nem', async () => {
     const enabled = mount(IconButton, { props: { icon: 'x', label: 'Bezárás' } })
     const disabled = mount(IconButton, {
       props: { icon: 'x', label: 'Bezárás' },
       attrs: { disabled: true },
     })
 
-    await enabled.trigger('click')
-    await disabled.trigger('click')
+    await enabled.find('button').trigger('click')
+    await disabled.find('button').trigger('click')
 
     expect(enabled.emitted('click')).toHaveLength(1)
-    expect(disabled.attributes('disabled')).toBeDefined()
+    expect(disabled.find('button').attributes('disabled')).toBeDefined()
     expect(disabled.emitted('click')).toBeUndefined()
   })
 
@@ -35,8 +36,19 @@ describe('IconButton', () => {
       props: { icon: 'trash-2', label: 'L', variant: 'danger', size: 'md' },
     })
 
-    expect(base.classes()).toEqual(expect.arrayContaining(['icon-btn--secondary', 'icon-btn--sm']))
-    expect(custom.classes()).toEqual(expect.arrayContaining(['icon-btn--danger', 'icon-btn--md']))
+    expect(base.find('button').classes()).toEqual(
+      expect.arrayContaining(['icon-btn--secondary', 'icon-btn--sm']),
+    )
+    expect(custom.find('button').classes()).toEqual(
+      expect.arrayContaining(['icon-btn--danger', 'icon-btn--md']),
+    )
+  })
+
+  it('a gombot tooltip burkolja, ami a megnevezést mutatja és leírásként köti', () => {
+    const wrapper = mount(IconButton, { props: { icon: 'copy', label: 'Másolás' } })
+
+    expect(wrapper.find('.tooltip-root').exists()).toBe(true)
+    expect(wrapper.find('button').attributes('aria-describedby')).toBeDefined()
   })
 
   it('minden felhasznált felületi ikon létezik', () => {

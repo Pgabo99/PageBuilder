@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppIcon from '@/components/AppIcon.vue'
 import IconButton from '@/components/IconButton.vue'
 import { useToast } from '@/composables/useToast'
 
@@ -7,16 +8,28 @@ const { toasts, dismiss } = useToast()
 
 <template>
   <div class="toasts" aria-live="polite">
-    <div
-      v-for="toast in toasts"
-      :key="toast.id"
-      class="toast"
-      :class="`toast--${toast.kind}`"
-      :role="toast.kind === 'error' ? 'alert' : 'status'"
-    >
-      <span>{{ toast.message }}</span>
-      <IconButton icon="x" label="Értesítés bezárása" variant="ghost" @click="dismiss(toast.id)" />
-    </div>
+    <TransitionGroup name="toast">
+      <div
+        v-for="toast in toasts"
+        :key="toast.id"
+        class="toast"
+        :class="`toast--${toast.kind}`"
+        :role="toast.kind === 'error' ? 'alert' : 'status'"
+      >
+        <AppIcon
+          class="toast__icon"
+          :name="toast.kind === 'error' ? 'alert-circle' : 'check-circle'"
+          kind="ui"
+        />
+        <span class="toast__message">{{ toast.message }}</span>
+        <IconButton
+          icon="x"
+          label="Értesítés bezárása"
+          variant="ghost"
+          @click="dismiss(toast.id)"
+        />
+      </div>
+    </TransitionGroup>
   </div>
 </template>
 
@@ -33,23 +46,46 @@ const { toasts, dismiss } = useToast()
 
 .toast {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  align-items: center;
   gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
   color: var(--color-text);
-  background: var(--color-surface);
+  background: var(--color-surface-raised);
   border: 1px solid var(--color-border);
-  border-left-width: 4px;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-pop);
 }
 
-.toast--success {
-  border-left-color: var(--color-success);
+.toast__icon {
+  flex: none;
+  width: var(--icon-md);
+  height: var(--icon-md);
 }
 
-.toast--error {
-  border-left-color: var(--color-danger);
+.toast--success .toast__icon {
+  color: var(--color-success);
+}
+
+.toast--error .toast__icon {
+  color: var(--color-danger);
+}
+
+.toast__message {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.toast-enter-active,
+.toast-leave-active {
+  transition:
+    opacity var(--motion-normal) var(--ease),
+    transform var(--motion-normal) var(--ease);
+}
+
+.toast-enter-from,
+.toast-leave-to {
+  opacity: 0;
+  transform: translateX(1rem);
 }
 </style>
