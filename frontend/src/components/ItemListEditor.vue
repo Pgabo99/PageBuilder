@@ -1,4 +1,5 @@
 <script setup lang="ts" generic="T extends { id: string }">
+import IconButton from '@/components/IconButton.vue'
 import { moveItem } from '@/utils/components'
 
 // Egy komponens ismétlődő elemeinek (kártyák, részek, statisztikák) listaszerkesztője: sorszámozott
@@ -38,33 +39,25 @@ function move(from: number, to: number): void {
       <legend>{{ itemLabel }} {{ index + 1 }}</legend>
 
       <span class="actions item-editor__actions">
-        <button
-          class="btn btn--secondary btn--small"
-          type="button"
+        <IconButton
+          icon="arrow-up"
+          :label="`${itemLabel} ${index + 1} feljebb`"
           :disabled="index === 0"
-          :aria-label="`${itemLabel} ${index + 1} feljebb`"
           @click="move(index, index - 1)"
-        >
-          ↑
-        </button>
-        <button
-          class="btn btn--secondary btn--small"
-          type="button"
+        />
+        <IconButton
+          icon="arrow-down"
+          :label="`${itemLabel} ${index + 1} lejjebb`"
           :disabled="index === items.length - 1"
-          :aria-label="`${itemLabel} ${index + 1} lejjebb`"
           @click="move(index, index + 1)"
-        >
-          ↓
-        </button>
-        <button
-          class="btn btn--secondary btn--small"
-          type="button"
+        />
+        <IconButton
+          icon="trash-2"
+          variant="danger"
+          :label="`${itemLabel} ${index + 1} törlése`"
           :disabled="items.length <= min"
-          :aria-label="`${itemLabel} ${index + 1} törlése`"
           @click="remove(index)"
-        >
-          ✕
-        </button>
+        />
       </span>
 
       <slot name="item" :item="item" :index="index"></slot>
@@ -104,12 +97,5 @@ function move(from: number, to: number): void {
 
 .item-editor__actions {
   justify-self: end;
-}
-
-@media (pointer: coarse) {
-  .item-editor__actions .btn {
-    min-width: 2.75rem;
-    min-height: 2.75rem;
-  }
 }
 </style>

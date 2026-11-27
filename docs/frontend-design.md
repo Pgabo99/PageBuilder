@@ -94,3 +94,8 @@ Közös design tokenek CSS változókban; a vászon és a publikált kimenet azo
 
 - Egységes vezérlőmagasság (`--control-height`): szöveges mező, legördülő, színminta, ikonválasztó csempe. A mező kerete `--color-border-strong`, fókuszra akcentus és `--color-primary-soft` gyűrű; a hibát `aria-invalid` és a mező alatti üzenet jelzi.
 - `CheckboxField`, `RadioField`, `SwitchField`: a natív input (billentyűzet, képernyőolvasó, form) a háttérben marad, a megjelenés a közös `.choice*` CSS-ből jön (`main.css`); a kapcsoló `role="switch"`. Az ikonválasztó ugyanerre a mintára épül (`.choice__face`).
+
+### Gombok és ikongombok
+
+- `.btn` változatok: elsődleges (alap), `--secondary`, `--ghost` (halk), `--danger-soft` (finom veszélyes: piros szöveg, hoverre jelenik meg a háttér), `--danger` (kitöltött, csak megerősítő ablakban). Egy nézeten egy kitöltött elsődleges gomb van.
+- `IconButton`: Feather ikon (`uiIcons`), kötelező `label` (aria-label és natív súgó; az ikon nem helyettesíti a megnevezést), változatok `secondary`/`ghost`/`danger`, méret `sm`/`md`. Érintőképernyőn (`pointer: coarse`) a gombok legalább 44 px-esek.
