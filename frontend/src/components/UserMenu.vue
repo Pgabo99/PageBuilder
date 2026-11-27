@@ -27,12 +27,12 @@ const initials = computed(
 
 <template>
   <ActionMenu label="Felhasználói menü">
-    <template #trigger="{ open, toggle: toggleMenu, attrs }">
+    <template #trigger="{ toggle: toggleMenu, attrs }">
       <button
         class="user-trigger"
         type="button"
         v-bind="attrs"
-        :aria-expanded="open"
+        :aria-label="user.name"
         @click="toggleMenu"
       >
         <span class="user-trigger__avatar" aria-hidden="true">{{ initials }}</span>
@@ -41,7 +41,7 @@ const initials = computed(
       </button>
     </template>
 
-    <div class="menu__header">
+    <div class="menu__header" aria-hidden="true">
       <div class="user-menu__name">{{ user.name }}</div>
       <div class="muted user-menu__email">{{ user.email }}</div>
     </div>
@@ -75,7 +75,7 @@ const initials = computed(
   color: var(--color-text);
   background: transparent;
   border: 1px solid transparent;
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   cursor: pointer;
   transition:
     background-color var(--motion-fast) var(--ease),

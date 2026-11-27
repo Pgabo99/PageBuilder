@@ -51,6 +51,10 @@ function position(): void {
   }
 }
 
+function reposition(): void {
+  if (open.value) position()
+}
+
 async function openMenu(): Promise<void> {
   if (open.value) return
   position()
@@ -100,6 +104,11 @@ function onPanelClick(event: MouseEvent): void {
 
 // A gyújtó nyíl lefelé gombra is megnyitja a menüt.
 function onTriggerKeydown(event: KeyboardEvent): void {
+  if (event.key === 'Escape' && open.value) {
+    event.preventDefault()
+    close(true)
+    return
+  }
   if (event.key === 'ArrowDown' && !open.value) {
     event.preventDefault()
     void openMenu()
@@ -112,13 +121,13 @@ function onPointerDown(event: PointerEvent): void {
 
 onMounted(() => {
   document.addEventListener('pointerdown', onPointerDown)
-  window.addEventListener('resize', position)
-  window.addEventListener('scroll', position, true)
+  window.addEventListener('resize', reposition)
+  window.addEventListener('scroll', reposition, true)
 })
 onBeforeUnmount(() => {
   document.removeEventListener('pointerdown', onPointerDown)
-  window.removeEventListener('resize', position)
-  window.removeEventListener('scroll', position, true)
+  window.removeEventListener('resize', reposition)
+  window.removeEventListener('scroll', reposition, true)
 })
 </script>
 

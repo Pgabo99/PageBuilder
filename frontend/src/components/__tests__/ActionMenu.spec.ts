@@ -104,6 +104,19 @@ describe('ActionMenu', () => {
     wrapper.unmount()
   })
 
+  it('Escape a gyújtón állva is bezár, és a fókusz ott marad', async () => {
+    const { wrapper } = mountMenu()
+    await open(wrapper)
+    ;(trigger(wrapper).element as HTMLElement).focus()
+
+    await trigger(wrapper).trigger('keydown', { key: 'Escape' })
+    await flushPromises()
+
+    expect(wrapper.find('[role="menu"]').exists()).toBe(false)
+    expect(document.activeElement).toBe(trigger(wrapper).element)
+    wrapper.unmount()
+  })
+
   it('a kívülre kattintás bezár, a belsőre nem; a gyújtó nyíl lefelé megnyit', async () => {
     const { wrapper } = mountMenu()
     await open(wrapper)

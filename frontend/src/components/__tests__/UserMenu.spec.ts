@@ -19,6 +19,8 @@ describe('UserMenu', () => {
 
     expect(wrapper.find('.user-trigger__avatar').text()).toBe('ÁT')
     expect(wrapper.find('.user-trigger__name').text()).toBe(user.name)
+    // Mobilon a név rejtett: a gombnak akkor is van akadálymentes neve.
+    expect(wrapper.find('.user-trigger').attributes('aria-label')).toBe(user.name)
     expect(wrapper.find('[role="menu"]').exists()).toBe(false)
   })
 
@@ -68,7 +70,7 @@ describe('UserMenu', () => {
 })
 
 describe('ThemeToggle', () => {
-  it('ikongomb: a felirata és az aria-pressed követi a témát', async () => {
+  it('ikongomb: a felirata követi a témát', async () => {
     const wrapper = mount(ThemeToggle)
     const before = wrapper.attributes('aria-label')
 
@@ -76,7 +78,6 @@ describe('ThemeToggle', () => {
 
     expect(before).toBe('Váltás sötét témára')
     expect(wrapper.attributes('aria-label')).toBe('Váltás világos témára')
-    expect(wrapper.attributes('aria-pressed')).toBe('true')
     await wrapper.trigger('click')
   })
 })

@@ -51,6 +51,7 @@ test('app shell: mobilon a fejléc nem nyúlik túl, a név rejtett, az avatar e
   )
   expect(overflow).toBeLessThanOrEqual(0)
   await expect(page.locator('.user-trigger__name')).toBeHidden()
-  await page.locator('.user-trigger').click()
+  // A név rejtett, de az avatar-gombnak van akadálymentes neve.
+  await page.getByRole('button', { name: 'E2E Teszt' }).click()
   await expect(page.getByRole('menuitem', { name: 'Kijelentkezés' })).toBeVisible()
 })

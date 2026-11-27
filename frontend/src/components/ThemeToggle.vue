@@ -15,7 +15,6 @@ const dark = computed(() => theme.value === 'dark')
     :label="dark ? 'Váltás világos témára' : 'Váltás sötét témára'"
     variant="ghost"
     size="md"
-    :aria-pressed="dark"
     @click="toggle"
   />
 </template>
