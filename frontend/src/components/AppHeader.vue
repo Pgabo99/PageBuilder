@@ -52,7 +52,7 @@ async function logout(): Promise<void> {
   display: flex;
   align-items: center;
   gap: var(--space-4);
-  min-height: 3.5rem;
+  min-height: var(--header-height);
   padding: var(--space-2) var(--space-4);
   background: var(--color-surface);
   border-bottom: 1px solid var(--color-border);

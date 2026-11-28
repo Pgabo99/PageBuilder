@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-import { addComponent, createPage, createWebsite, signUp, uniqueId } from './helpers'
+import { addComponent, createPage, createWebsite, openPageSettings, signUp, uniqueId } from './helpers'
 
 test('tooltip, toast és megerősítő ablak', async ({ page }) => {
   const id = uniqueId()
@@ -28,6 +28,7 @@ test('tooltip, toast és megerősítő ablak', async ({ page }) => {
   await expect(tooltip).toHaveCount(0)
 
   // Toast mentés után (állapotjelzés), bezárható.
+  await openPageSettings(page)
   await page.getByLabel('Cím', { exact: true }).fill(`Új cím ${id}`)
   await page.getByRole('button', { name: 'Mentés', exact: true }).click()
   const toast = page.getByRole('status').filter({ hasText: 'Oldal mentve.' })

@@ -1323,4 +1323,74 @@ describe('PageEditorView', () => {
     expect(useConfirm().pending.value).toBeNull()
     expect(router.currentRoute.value.path).toBe('/')
   })
+
+  describe('elrendezés: eszköztár, oldalbeállítások, nézetváltó, előnézet-vászon', () => {
+    it('a mentési állapotot jelzőcímke mutatja: mentve, nem mentett módosítás', async () => {
+      const wrapper = await mountEditor()
+
+      expect(wrapper.find('.editor-bar .badge--success').text()).toBe('Mentve')
+      expect(wrapper.find('.editor-bar [role="status"]').exists()).toBe(true)
+
+      await addByLabel(wrapper, 'Szöveg')
+
+      expect(wrapper.find('.editor-bar .badge--warning').text()).toBe('Nem mentett módosítások')
+      expect(wrapper.find('.editor-bar .badge--success').exists()).toBe(false)
+    })
+
+    it('az oldalbeállítások alapból összecsukottak, az összefoglaló a címet és a webcímet mutatja', async () => {
+      const wrapper = await mountEditor()
+      const toggle = wrapper.find('.page-settings__toggle')
+
+      expect(toggle.attributes('aria-expanded')).toBe('false')
+      expect(wrapper.find('.page-settings__summary').text()).toBe('Kezdőlap · /kezdolap')
+      expect(wrapper.find('.page-settings__form').exists()).toBe(false)
+
+      await toggle.trigger('click')
+      await flushPromises()
+
+      expect(toggle.attributes('aria-expanded')).toBe('true')
+      expect(wrapper.findAll('.page-settings__form input')).toHaveLength(2)
+    })
+
+    it('hibás cím vagy webcím esetén az oldalbeállítások kinyílnak, és a hiba látszik', async () => {
+      vi.mocked(pagesApi.update).mockRejectedValue(
+        new ValidationError('Hibás', { slug: ['A webcím már foglalt.'] }),
+      )
+      const wrapper = await mountEditor()
+      await addByLabel(wrapper, 'Szöveg')
+
+      await wrapper.find('button.btn:not(.btn--secondary)').trigger('click')
+      await flushPromises()
+
+      expect(wrapper.find('.page-settings__toggle').attributes('aria-expanded')).toBe('true')
+      expect(wrapper.find('.page-settings__form').text()).toContain('A webcím már foglalt.')
+    })
+
+    it('a nézetváltó alapból a szerkesztőt mutatja; az előnézetből kijelölve visszavált', async () => {
+      const wrapper = await mountEditor()
+      const buttons = wrapper.findAll('.view-toggle__btn')
+
+      expect(wrapper.find('.editor-grid').attributes('data-view')).toBe('edit')
+      expect(buttons[0]!.attributes('aria-pressed')).toBe('true')
+
+      await buttons[1]!.trigger('click')
+
+      expect(wrapper.find('.editor-grid').attributes('data-view')).toBe('preview')
+      expect(buttons[1]!.attributes('aria-pressed')).toBe('true')
+      expect(buttons[0]!.attributes('aria-pressed')).toBe('false')
+
+      wrapper.findComponent({ name: 'PagePreview' }).vm.$emit('select', 'a')
+      await flushPromises()
+
+      expect(wrapper.find('.editor-grid').attributes('data-view')).toBe('edit')
+      expect(activeTitles(wrapper)).toEqual(['Címsor'])
+    })
+
+    it('az előnézet külön vászon felületen áll, a Mentés az első `.btn` gomb', async () => {
+      const wrapper = await mountEditor()
+
+      expect(wrapper.find('.preview-canvas .preview').exists()).toBe(true)
+      expect(wrapper.find('.editor-bar .btn').text()).toBe('Mentés')
+    })
+  })
 })

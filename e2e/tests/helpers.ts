@@ -63,3 +63,9 @@ export async function chooseOption(select: Locator, value: string): Promise<void
   await select.click()
   await select.page().locator(`[id="${listId}"] [role="option"][data-value="${value}"]`).click()
 }
+
+/** Kinyitja a szerkesztő összecsukható oldalbeállításait (cím, webcím), ha zárva vannak. */
+export async function openPageSettings(page: Page): Promise<void> {
+  const toggle = page.getByRole('button', { name: /Oldal beállításai/ })
+  if ((await toggle.getAttribute('aria-expanded')) !== 'true') await toggle.click()
+}

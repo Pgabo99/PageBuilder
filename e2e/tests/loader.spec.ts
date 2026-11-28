@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 
-import { createPage, createWebsite, signUp, uniqueId } from './helpers'
+import { createPage, createWebsite, openPageSettings, signUp, uniqueId } from './helpers'
 
 // Minden .loader__spinner megjelenését rögzíti, így a villogás hiánya is ellenőrizhető.
 async function trackSpinner(page: Page): Promise<void> {
@@ -67,6 +67,7 @@ test('loader: lassú hálózaton megjelenik, gyors válasznál nem villan, ment�
     if (route.request().method() === 'PUT') await new Promise((resolve) => setTimeout(resolve, 1500))
     await route.continue()
   })
+  await openPageSettings(page)
   await page.getByLabel('Cím', { exact: true }).fill(`Új cím ${id}`)
   await page.getByRole('button', { name: 'Mentés', exact: true }).click()
   await expect(page.getByRole('status').filter({ hasText: 'Mentés…' })).toBeVisible()

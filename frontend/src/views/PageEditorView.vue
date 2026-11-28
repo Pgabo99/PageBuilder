@@ -6,6 +6,9 @@ import { errorMessage, ValidationError } from '@/api/client'
 import { pagesApi } from '@/api/pages'
 import { websitesApi } from '@/api/websites'
 import AppLoader from '@/components/AppLoader.vue'
+import AppCollapse from '@/components/AppCollapse.vue'
+import AppIcon from '@/components/AppIcon.vue'
+import BadgeLabel from '@/components/BadgeLabel.vue'
 import ComponentEditor from '@/components/ComponentEditor.vue'
 import ComponentPicker from '@/components/ComponentPicker.vue'
 import FormField from '@/components/FormField.vue'
@@ -101,6 +104,8 @@ async function save(): Promise<void> {
     if (e instanceof ValidationError) {
       errors.value = e.errors
       message.value = 'Javítsd a jelölt mezőket, majd mentsd újra.'
+      // A hibás oldalbeállítás ne maradjon összecsukva.
+      if (e.errors.title || e.errors.slug) settingsOpen.value = true
       // A hibás mező ne maradjon összecsukva: az első hibás komponens nyílik ki.
       const firstInvalid = Object.keys(e.errors)
         .map((key) => /^content\.(\d+)\./.exec(key)?.[1])
@@ -117,10 +122,20 @@ async function save(): Promise<void> {
   }
 }
 
+// Csak nézet-állapot (nem mentett tartalom): az oldalbeállítások összecsukása és a keskeny képernyős nézetváltó.
+const settingsOpen = ref(false)
+const view = ref<'edit' | 'preview'>('edit')
+
 // Az aktív komponens csak szerkesztői állapot: nem része a mentett tartalomnak és a pillanatképnek.
 const activeId = ref<string | null>(null)
 const listRef = ref<{ $el: HTMLElement } | null>(null)
 const listEl = computed(() => listRef.value?.$el ?? null)
+
+// Az előnézetből kijelölt komponens szerkesztése: keskeny képernyőn átvált a szerkesztő nézetre.
+function onPreviewSelect(id: string): void {
+  view.value = 'edit'
+  void activate(id)
+}
 
 function toggleActive(id: string): void {
   activeId.value = activeId.value === id ? null : id
@@ -283,25 +298,43 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', warnBeforeUnloa
       empty-text="Az oldal nem található."
       @retry="load"
     >
-      <div class="page-head">
-        <div>
+      <div class="editor-bar">
+        <div class="editor-bar__main">
           <RouterLink
             v-if="page"
-            class="muted"
+            class="editor-bar__back muted"
             :to="{ name: 'website', params: { id: page.website_id } }"
           >
             ← Vissza a webhelyhez
           </RouterLink>
           <h1>Oldal szerkesztése</h1>
         </div>
-        <div class="actions">
+        <div class="editor-bar__end">
           <span v-if="saving" class="status muted" role="status">
             <AppLoader :loading="saving" size="button" />Mentés…
           </span>
-          <span v-else-if="dirty" class="status status--dirty" role="status">
+          <BadgeLabel v-else-if="dirty" variant="warning" dot role="status">
             Nem mentett módosítások
-          </span>
-          <span v-else class="status muted" role="status">Mentve</span>
+          </BadgeLabel>
+          <BadgeLabel v-else variant="success" dot role="status">Mentve</BadgeLabel>
+          <div class="view-toggle" role="group" aria-label="Nézet">
+            <button
+              type="button"
+              class="view-toggle__btn"
+              :aria-pressed="view === 'edit'"
+              @click="view = 'edit'"
+            >
+              Szerkesztés
+            </button>
+            <button
+              type="button"
+              class="view-toggle__btn"
+              :aria-pressed="view === 'preview'"
+              @click="view = 'preview'"
+            >
+              Előnézet
+            </button>
+          </div>
           <button class="btn" type="button" :disabled="saving || !dirty" @click="save">
             <AppLoader :loading="saving" size="button" />Mentés
           </button>
@@ -310,13 +343,31 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', warnBeforeUnloa
 
       <p v-if="message" class="alert" role="alert">{{ message }}</p>
 
-      <form class="form settings" novalidate @submit.prevent="save">
-        <FormField v-model="form.title" label="Cím" :error="errors.title" />
-        <FormField v-model="form.slug" label="Webcím" :error="errors.slug" />
-      </form>
+      <section class="page-settings">
+        <button
+          class="page-settings__toggle"
+          type="button"
+          :aria-expanded="settingsOpen"
+          aria-controls="page-settings-fields"
+          @click="settingsOpen = !settingsOpen"
+        >
+          <AppIcon class="page-settings__chevron" name="chevron-down" kind="ui" />
+          <strong>Oldal beállításai</strong>
+          <span class="page-settings__summary muted">{{ form.title }} · /{{ form.slug }}</span>
+          <BadgeLabel v-if="!settingsOpen && (errors.title || errors.slug)" variant="danger" dot>
+            Hibás mező
+          </BadgeLabel>
+        </button>
+        <AppCollapse id="page-settings-fields" :open="settingsOpen">
+          <form class="form page-settings__form" novalidate @submit.prevent="save">
+            <FormField v-model="form.title" label="Cím" :error="errors.title" />
+            <FormField v-model="form.slug" label="Webcím" :error="errors.slug" />
+          </form>
+        </AppCollapse>
+      </section>
 
-      <div class="editor-grid">
-        <section>
+      <div class="editor-grid" :data-view="view">
+        <section class="content-pane">
           <h2>Tartalom</h2>
           <p v-if="form.content.length === 0" class="muted">
             Az oldal még üres. Adj hozzá egy komponenst!
@@ -382,16 +433,20 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', warnBeforeUnloa
         </section>
 
         <aside class="preview-pane" aria-labelledby="preview-title">
-          <h2 id="preview-title">Előnézet</h2>
-          <PagePreview
-            :components="form.content"
-            :theme="website?.page_theme"
-            :accent="website?.accent_color"
-            :palette="website?.palette"
-            :active-id="activeId"
-            @select="activate($event)"
-          />
-          <p class="muted preview-pane__hint">A mentetlen módosításokat is mutatja.</p>
+          <div class="preview-pane__head">
+            <h2 id="preview-title">Előnézet</h2>
+            <span class="muted preview-pane__hint">A mentetlen módosításokat is mutatja.</span>
+          </div>
+          <div class="preview-canvas">
+            <PagePreview
+              :components="form.content"
+              :theme="website?.page_theme"
+              :accent="website?.accent_color"
+              :palette="website?.palette"
+              :active-id="activeId"
+              @select="onPreviewSelect"
+            />
+          </div>
         </aside>
       </div>
     </StatusBlock>
@@ -399,8 +454,118 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', warnBeforeUnloa
 </template>
 
 <style scoped>
-.settings {
-  margin-bottom: var(--space-6);
+/* Tapadó eszköztár a fejléc alatt: cím, mentési állapot és a Mentés gomb mindig látszik. */
+.editor-bar {
+  position: sticky;
+  top: var(--header-height);
+  z-index: 30;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+  margin: 0 calc(-1 * var(--space-4)) var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.editor-bar__main {
+  display: grid;
+  min-width: 0;
+}
+
+.editor-bar__back {
+  font-size: var(--text-sm);
+}
+
+.editor-bar h1 {
+  margin: 0;
+  font-size: var(--text-lg);
+}
+
+.editor-bar__end {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.view-toggle {
+  display: none;
+  padding: 0.125rem;
+  background: var(--state-hover);
+  border-radius: var(--radius-md);
+}
+
+.view-toggle__btn {
+  padding: var(--space-1) var(--space-3);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--color-muted);
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+  transition:
+    background-color var(--motion-fast) var(--ease),
+    color var(--motion-fast) var(--ease);
+}
+
+.view-toggle__btn[aria-pressed='true'] {
+  color: var(--color-text);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-xs);
+}
+
+/* Összecsukható oldalbeállítások: alapból egy sor (cím és webcím összefoglalva). */
+.page-settings {
+  margin-bottom: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xs);
+}
+
+.page-settings__toggle {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  font: inherit;
+  font-size: var(--text-sm);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  background: none;
+  border: 0;
+  border-radius: var(--radius-lg);
+}
+
+.page-settings__chevron {
+  width: var(--icon-sm);
+  height: var(--icon-sm);
+  color: var(--color-muted);
+  transform: rotate(-90deg);
+  transition: transform var(--motion-normal) var(--ease);
+}
+
+.page-settings__toggle[aria-expanded='true'] .page-settings__chevron {
+  transform: none;
+}
+
+.page-settings__summary {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.page-settings__form {
+  grid-template-columns: minmax(0, 1fr);
+  padding: var(--space-2) var(--space-4) var(--space-4);
 }
 
 .add-picker {
@@ -460,7 +625,7 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', warnBeforeUnloa
 }
 
 h2 {
-  margin: var(--space-6) 0 var(--space-3);
+  margin: 0 0 var(--space-3);
   font-size: var(--text-lg);
 }
 
@@ -471,20 +636,48 @@ h2 {
   gap: var(--space-6);
 }
 
+.preview-pane__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-3);
+}
+
 .preview-pane__hint {
-  margin: var(--space-2) 0 0;
   font-size: var(--text-sm);
+}
+
+/* Az előnézet külön vászon felületen áll, hogy elváljon a szerkesztőtől. */
+.preview-canvas {
+  padding: var(--space-4);
+  background: var(--color-canvas);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+/* Keskeny képernyőn a nézetváltó dönt, melyik panel látszik. */
+@media (max-width: 63.99rem) {
+  .view-toggle {
+    display: inline-flex;
+  }
+
+  .editor-grid[data-view='edit'] .preview-pane,
+  .editor-grid[data-view='preview'] .content-pane {
+    display: none;
+  }
 }
 
 @media (min-width: 64rem) {
   .editor-grid {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
     align-items: start;
   }
 
   .preview-pane {
     position: sticky;
-    top: var(--space-4);
+    top: calc(var(--header-height) + 4.5rem);
+    max-height: calc(100vh - var(--header-height) - 5.5rem);
+    overflow-y: auto;
   }
 }
 </style>
