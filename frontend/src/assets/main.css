@@ -43,6 +43,7 @@
   --radius-sm: 0.3125rem;
   --radius-md: 0.4375rem;
   --radius-lg: 0.75rem;
+  --radius-full: 999px;
   --radius: var(--radius-md);
 
   /* Árnyékskála: finom, rétegzett */
@@ -143,7 +144,7 @@
   background: var(--color-border-strong);
   background-clip: content-box;
   border: 2px solid transparent;
-  border-radius: 999px;
+  border-radius: var(--radius-full);
 }
 
 *::-webkit-scrollbar-track {
@@ -333,7 +334,7 @@ textarea {
   height: 1.25rem;
   margin-top: 0.0625rem;
   background: var(--color-border-strong);
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   transition: background-color var(--motion-fast) var(--ease);
 }
 
@@ -513,13 +514,13 @@ textarea {
 
 .container {
   width: 100%;
-  max-width: 48rem;
+  max-width: 60rem;
   margin: var(--space-8) auto;
   padding: 0 var(--space-4);
 }
 
 .container--wide {
-  max-width: 72rem;
+  max-width: 80rem;
 }
 
 .page-head {

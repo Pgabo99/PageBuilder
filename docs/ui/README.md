@@ -5,3 +5,5 @@ Előtte-utána képernyőképek a vizuális modernizálás issue-ihoz (`u1-befor
 Az U8 mintaképei (`u8-after/`) egy ideiglenes mintablokkal készültek, mert a checkbox, a rádió és a kapcsoló egyelőre nincs használva a felületen; az ikonválasztó a valós szerkesztőből való.
 
 Az U2 „előtte” állapota megegyezik az `u1-after/` képeivel (azonos nézetek).
+
+Az U3 „előtte” állapota megegyezik az `u2-after/` és `u1-after/` képeivel (azonos nézetek).
