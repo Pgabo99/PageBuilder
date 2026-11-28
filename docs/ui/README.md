@@ -11,3 +11,5 @@ Az U10 képei (`u10-after/`) a tooltip (hover), a siker-toast és a veszélyes m
 Az U3 „előtte” állapota megegyezik az `u2-after/` és `u1-after/` képeivel (azonos nézetek).
 
 Az U4 „előtte” állapota megegyezik az `u3-after/editor-light.jpg` és az `u1-after/editor-*` képeivel; a mobil túlnyúlás javítása az `u4-after/editor-light-mobile.png`-n látszik.
+
+Az U6 „előtte” állapota az `u4-after/` képeivel azonos nézetek; az új elrendezést (tapadó eszköztár, összecsukható oldalbeállítások, előnézet-vászon, mobil nézetváltó) az `u6-after/` mutatja.

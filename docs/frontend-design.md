@@ -118,3 +118,11 @@ Közös design tokenek CSS változókban; a vászon és a publikált kimenet azo
 - Fejléc: húzófogantyú, típusikon-csempe (`componentTypes` ikonja), név és rövid összefoglaló, látható fel/le ikongombok és a hárompontos `ActionMenu` (másolás, majd elkülönítve a veszélyes stílusú törlés; a láblécnél nincs másolás). Hibás, összecsukott kártyán `BadgeLabel` jelzi a hibát.
 - Aktív kártya: akcentuskeret, puha gyűrű és bal oldali akcentussáv, az ikon akcentusszínű; a nyitott beállítások vékony vonallal válnak el a fejléctől.
 - A szerkesztő lista- és rácsoszlopa `minmax(0, 1fr)`, így a kártyák mobilon sem nyúlnak túl a nézeten.
+
+### Szerkesztő elrendezése
+
+- **Tapadó eszköztár** (`.editor-bar`, a fejléc alatt): vissza link, „Oldal szerkesztése”, mentési állapot (`BadgeLabel`: „Mentve” zöld, „Nem mentett módosítások” borostyán; mentés közben betöltésjelző), nézetváltó (csak keskeny képernyőn) és a Mentés gomb – hosszú tartalomnál is mindig látszik. A Mentés az eszköztár első `.btn` gombja.
+- **Oldalbeállítások**: összecsukható (`AppCollapse`), alapból egy sor a cím és a webcím összefoglalásával; hibás cím vagy webcím esetén magától kinyílik, zárt állapotban hibajelzés látszik.
+- **Kétpaneles elrendezés** (≥ 64 rem): tartalom és előnézet egymás mellett (`1fr` / `1.1fr`), az előnézet tapad és saját görgetésű; az előnézet külön **vászon** felületen áll (`--color-canvas`).
+- **Keskeny képernyő**: a „Szerkesztés / Előnézet” nézetváltó dönt, melyik panel látszik (`data-view`); az előnézetben egy elemre kattintva visszavált a szerkesztőre. A nézet- és összecsukási állapot lokális, nem mentett tartalom.
+- `--header-height` token az app fejléc és az eszköztár tapadási pozíciójához.
