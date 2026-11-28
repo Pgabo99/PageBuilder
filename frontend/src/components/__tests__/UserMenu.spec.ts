@@ -72,12 +72,13 @@ describe('UserMenu', () => {
 describe('ThemeToggle', () => {
   it('ikongomb: a felirata követi a témát', async () => {
     const wrapper = mount(ThemeToggle)
-    const before = wrapper.attributes('aria-label')
+    const button = wrapper.find('button')
+    const before = button.attributes('aria-label')
 
-    await wrapper.trigger('click')
+    await button.trigger('click')
 
     expect(before).toBe('Váltás sötét témára')
-    expect(wrapper.attributes('aria-label')).toBe('Váltás világos témára')
-    await wrapper.trigger('click')
+    expect(button.attributes('aria-label')).toBe('Váltás világos témára')
+    await button.trigger('click')
   })
 })
