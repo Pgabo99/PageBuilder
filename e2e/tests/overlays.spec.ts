@@ -9,21 +9,21 @@ test('tooltip, toast és megerősítő ablak', async ({ page }) => {
   await createPage(page, `Oldal ${id}`, `oldal-${id}`)
   await addComponent(page, 'Címsor')
 
-  // Tooltip billentyűzetes fókuszra: a Tab a következő ikongombra lép, a súgó megjelenik, Escape zárja.
+  // Tooltip billentyűzetes fókuszra: a Tab a következő (hárompontos menü) ikongombra lép, a súgó megjelenik, Escape zárja.
   // (Egyetlen komponensnél a fel/le gomb letiltott, ezért a fejléc gombjától lépünk Tab-bal.)
   await page.locator('.component__toggle').focus()
   await page.keyboard.press('Tab')
-  const copy = page.getByRole('button', { name: 'Komponens másolása' })
+  const copy = page.getByRole('button', { name: 'További műveletek' })
   await expect(copy).toBeFocused()
   const tooltip = page.getByRole('tooltip')
-  await expect(tooltip).toHaveText('Komponens másolása')
+  await expect(tooltip).toHaveText('További műveletek')
   await expect(copy).toHaveAttribute('aria-describedby', (await tooltip.getAttribute('id')) ?? '')
   await page.keyboard.press('Escape')
   await expect(tooltip).toHaveCount(0)
 
   // Tooltip hoverre (késleltetéssel).
-  await page.getByRole('button', { name: 'Komponens törlése' }).hover()
-  await expect(tooltip).toHaveText('Komponens törlése')
+  await copy.hover()
+  await expect(tooltip).toHaveText('További műveletek')
   await page.mouse.move(0, 0)
   await expect(tooltip).toHaveCount(0)
 

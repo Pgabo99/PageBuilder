@@ -1,8 +1,11 @@
 <script setup lang="ts">
-import { useId } from 'vue'
+import { computed, useId } from 'vue'
 
 import AccordionEditor from '@/components/AccordionEditor.vue'
+import ActionMenu from '@/components/ActionMenu.vue'
 import AppCollapse from '@/components/AppCollapse.vue'
+import AppIcon from '@/components/AppIcon.vue'
+import BadgeLabel from '@/components/BadgeLabel.vue'
 import CardsEditor from '@/components/CardsEditor.vue'
 import FooterEditor from '@/components/FooterEditor.vue'
 import FormField from '@/components/FormField.vue'
@@ -18,6 +21,7 @@ import {
   BUTTON_OPTIONS,
   CARDS_OPTIONS,
   componentLabel,
+  componentTypes,
   componentSummary,
   DIVIDER_OPTIONS,
   HEADING_LEVEL_OPTIONS,
@@ -51,6 +55,9 @@ defineEmits<{
 }>()
 
 const uid = useId()
+const typeIcon = computed(
+  () => componentTypes.find((item) => item.type === model.value.type)?.icon ?? 'type',
+)
 </script>
 
 <template>
@@ -72,27 +79,45 @@ const uid = useId()
         :aria-controls="`${uid}-fields`"
         @click="$emit('toggle')"
       >
+        <span class="component__icon" aria-hidden="true">
+          <AppIcon :name="typeIcon" kind="type" />
+        </span>
         <strong>{{ componentLabel(model.type) }}</strong>
         <span v-if="!active" class="component__summary muted">{{ componentSummary(model) }}</span>
-        <span v-if="!active && Object.keys(errors).length" class="component__invalid">
+        <BadgeLabel
+          v-if="!active && Object.keys(errors).length"
+          class="component__invalid"
+          variant="danger"
+          dot
+        >
           Hibás mező
-        </span>
+        </BadgeLabel>
       </button>
       <span class="actions">
         <IconButton icon="arrow-up" label="Feljebb" :disabled="first" @click="$emit('up')" />
         <IconButton icon="arrow-down" label="Lejjebb" :disabled="last" @click="$emit('down')" />
-        <IconButton
-          v-if="model.type !== 'footer'"
-          icon="copy"
-          label="Komponens másolása"
-          @click="$emit('duplicate')"
-        />
-        <IconButton
-          icon="trash-2"
-          label="Komponens törlése"
-          variant="danger"
-          @click="$emit('remove')"
-        />
+        <ActionMenu label="További műveletek">
+          <button
+            v-if="model.type !== 'footer'"
+            class="menu__item"
+            type="button"
+            role="menuitem"
+            @click="$emit('duplicate')"
+          >
+            <AppIcon name="copy" kind="ui" />
+            Komponens másolása
+          </button>
+          <div v-if="model.type !== 'footer'" class="menu__separator" role="separator"></div>
+          <button
+            class="menu__item menu__item--danger"
+            type="button"
+            role="menuitem"
+            @click="$emit('remove')"
+          >
+            <AppIcon name="trash-2" kind="ui" />
+            Komponens törlése
+          </button>
+        </ActionMenu>
       </span>
     </div>
 
@@ -265,7 +290,8 @@ const uid = useId()
 
 <style scoped>
 .component {
-  padding: var(--space-3) var(--space-4);
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
@@ -277,30 +303,32 @@ const uid = useId()
 
 .component:hover {
   border-color: var(--color-border-strong);
+  box-shadow: var(--shadow-sm);
 }
 
-.component--active {
+/* Aktív kártya: akcentuskeret, puha gyűrű és bal oldali akcentussáv. */
+.component--active,
+.component--active:hover {
   border-color: var(--color-primary);
   box-shadow:
-    0 0 0 3px var(--color-primary-soft),
-    var(--shadow-xs);
+    inset 3px 0 0 var(--color-primary),
+    0 0 0 3px var(--color-primary-soft);
 }
 
 .component__head {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-2);
 }
 
-/* Az összefoglaló egész sora kattintható és billentyűzettel is használható (Enter, szóköz). */
+/* Az egész sor kattintható és billentyűzettel is használható (Enter, szóköz). */
 .component__toggle {
   display: flex;
   flex: 1;
   min-width: 0;
-  align-items: baseline;
+  align-items: center;
   gap: var(--space-3);
-  padding: 0;
+  padding: var(--space-1) 0;
   font: inherit;
   color: inherit;
   text-align: left;
@@ -309,23 +337,48 @@ const uid = useId()
   cursor: pointer;
 }
 
+.component__icon {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  color: var(--color-muted);
+  background: var(--state-hover);
+  border-radius: var(--radius-md);
+  transition:
+    background-color var(--motion-fast) var(--ease),
+    color var(--motion-fast) var(--ease);
+}
+
+.component__icon :deep(.icon) {
+  width: var(--icon-md);
+  height: var(--icon-md);
+}
+
+.component--active .component__icon {
+  color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
 .component__summary {
   min-width: 0;
   overflow: hidden;
+  font-size: var(--text-sm);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.component__invalid {
-  font-size: var(--text-sm);
-  color: var(--color-danger);
-}
-
 .component__head .actions {
+  flex: none;
+  flex-wrap: nowrap;
+  gap: var(--space-1);
   margin-left: auto;
 }
 
 .component__handle {
+  flex: none;
   color: var(--color-muted);
   cursor: grab;
   user-select: none;
@@ -334,7 +387,9 @@ const uid = useId()
 .component__fields {
   display: grid;
   gap: var(--space-3);
+  margin-top: var(--space-2);
   padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
 }
 
 /* Érintőképernyőn nincs HTML5 húzás: a fel/le gomb marad. */

@@ -49,6 +49,25 @@ async function addByLabel(wrapper: VueWrapper, label: string): Promise<void> {
   await flushPromises()
 }
 
+// A komponens hárompontos menüjének megnyitása (a másolás és a törlés itt érhető el).
+async function openComponentMenu(wrapper: VueWrapper, index: number): Promise<void> {
+  await wrapper.findAll('.component [aria-haspopup="menu"]')[index]!.trigger('click')
+  await flushPromises()
+}
+
+async function componentMenuAction(
+  wrapper: VueWrapper,
+  index: number,
+  label: 'Komponens másolása' | 'Komponens törlése',
+): Promise<void> {
+  await openComponentMenu(wrapper, index)
+  await wrapper
+    .findAll('[role="menuitem"]')
+    .find((item) => item.text() === label)!
+    .trigger('click')
+  await flushPromises()
+}
+
 const page: Page = {
   id: 3,
   website_id: 1,
@@ -353,7 +372,7 @@ describe('PageEditorView', () => {
   it('a másolat aktív lesz', async () => {
     const wrapper = await mountEditor()
 
-    await wrapper.findAll('[aria-label="Komponens másolása"]')[1]!.trigger('click')
+    await componentMenuAction(wrapper, 1, 'Komponens másolása')
     await flushPromises()
 
     expect(wrapper.findAll('.component')[2]!.classes()).toContain('component--active')
@@ -364,7 +383,7 @@ describe('PageEditorView', () => {
     const wrapper = await mountEditor()
     await wrapper.findAll('.component__toggle')[1]!.trigger('click')
 
-    await wrapper.findAll('[aria-label="Komponens törlése"]')[1]!.trigger('click')
+    await componentMenuAction(wrapper, 1, 'Komponens törlése')
 
     expect(activeTitles(wrapper)).toEqual([])
   })
@@ -613,8 +632,11 @@ describe('PageEditorView', () => {
 
     expect(wrapper.find('.preview__footer-copyright').text()).toBe('© Tesztcég')
     expect(wrapper.findAll('.preview__footer-links li')).toHaveLength(1)
-    // A másolás gombja a láblécnél nincs.
-    expect(wrapper.findAll('[aria-label="Komponens másolása"]')).toHaveLength(before)
+    // A láblécnél nincs másolás: a menüben csak a törlés van.
+    await openComponentMenu(wrapper, wrapper.findAll('.component').length - 1)
+    expect(wrapper.findAll('[role="menuitem"]').map((item) => item.text())).toEqual([
+      'Komponens törlése',
+    ])
     await wrapper.find('button.btn:not(.btn--secondary)').trigger('click')
     await flushPromises()
 
@@ -977,7 +999,7 @@ describe('PageEditorView', () => {
       const wrapper = await mountEditor()
       await addCards(wrapper)
 
-      await wrapper.findAll('[aria-label="Komponens másolása"]')[3]!.trigger('click')
+      await componentMenuAction(wrapper, 3, 'Komponens másolása')
       await flushPromises()
       await wrapper.find('.item-editor input[type="text"]').setValue('Másolat címe')
 
@@ -1093,7 +1115,7 @@ describe('PageEditorView', () => {
       const summaries = wrapper.findAll('.component__summary')
       expect(summaries[summaries.length - 1]!.text()).toBe('1 rész: Új rész')
 
-      await wrapper.findAll('[aria-label="Komponens másolása"]')[3]!.trigger('click')
+      await componentMenuAction(wrapper, 3, 'Komponens másolása')
       await flushPromises()
       await wrapper.find('.item-editor input[type="text"]').setValue('Másolat')
 
@@ -1152,7 +1174,7 @@ describe('PageEditorView', () => {
   it('a törölt komponens eltűnik az előnézetből', async () => {
     const wrapper = await mountEditor()
 
-    await wrapper.findAll('[aria-label="Komponens törlése"]')[1]!.trigger('click')
+    await componentMenuAction(wrapper, 1, 'Komponens törlése')
 
     expect(wrapper.find('.preview').text()).not.toContain('Második')
   })
@@ -1182,7 +1204,7 @@ describe('PageEditorView', () => {
   it('másolja a komponenst az eredeti alá, mentetlen állapotot jelezve', async () => {
     const wrapper = await mountEditor()
 
-    await wrapper.findAll('[aria-label="Komponens másolása"]')[1]!.trigger('click')
+    await componentMenuAction(wrapper, 1, 'Komponens másolása')
 
     expect(titles(wrapper)).toEqual(['Címsor', 'Szöveg', 'Szöveg', 'Gomb'])
     expect(wrapper.text()).toContain('Nem mentett módosítások')
@@ -1209,7 +1231,7 @@ describe('PageEditorView', () => {
   it('törli a komponenst', async () => {
     const wrapper = await mountEditor()
 
-    await wrapper.findAll('[aria-label="Komponens törlése"]')[1]!.trigger('click')
+    await componentMenuAction(wrapper, 1, 'Komponens törlése')
 
     expect(titles(wrapper)).toEqual(['Címsor', 'Gomb'])
   })
@@ -1270,7 +1292,7 @@ describe('PageEditorView', () => {
 
   it('mentetlen módosításnál az elhagyás előtt rákérdez; a mégsem a lapon tart', async () => {
     const wrapper = await mountEditor()
-    await wrapper.find('[aria-label="Komponens törlése"]').trigger('click')
+    await componentMenuAction(wrapper, 0, 'Komponens törlése')
 
     const navigation = router.push('/')
     await flushPromises()
@@ -1283,7 +1305,7 @@ describe('PageEditorView', () => {
 
   it('mentetlen módosításnál a megerősítés elengedi a navigációt', async () => {
     const wrapper = await mountEditor()
-    await wrapper.find('[aria-label="Komponens törlése"]').trigger('click')
+    await componentMenuAction(wrapper, 0, 'Komponens törlése')
 
     const navigation = router.push('/')
     await flushPromises()
