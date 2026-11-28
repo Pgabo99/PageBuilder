@@ -26,6 +26,19 @@ describe('ConfirmDialog', () => {
     expect(wrapper.find('.btn--danger').exists()).toBe(true)
   })
 
+  it('a veszélyes kérdésnél figyelmeztető ikon látszik, a sima kérdésnél nem', async () => {
+    const wrapper = mount(ConfirmDialog)
+    void useConfirm().confirm(options)
+    await flushPromises()
+    expect(wrapper.find('.dialog__icon').exists()).toBe(true)
+    expect(wrapper.find('.dialog__icon').attributes('aria-hidden')).toBe('true')
+
+    useConfirm().answer(false)
+    void useConfirm().confirm({ ...options, danger: false })
+    await flushPromises()
+    expect(wrapper.find('.dialog__icon').exists()).toBe(false)
+  })
+
   it('a megerősítés igazat ad, és bezárja az ablakot', async () => {
     const wrapper = mount(ConfirmDialog)
     const answer = useConfirm().confirm(options)
