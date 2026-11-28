@@ -10,7 +10,8 @@ test('tooltip, toast és megerősítő ablak', async ({ page }) => {
   await addComponent(page, 'Címsor')
 
   // Tooltip billentyűzetes fókuszra: a Tab a következő ikongombra lép, a súgó megjelenik, Escape zárja.
-  await page.getByRole('button', { name: 'Feljebb' }).focus()
+  // (Egyetlen komponensnél a fel/le gomb letiltott, ezért a fejléc gombjától lépünk Tab-bal.)
+  await page.locator('.component__toggle').focus()
   await page.keyboard.press('Tab')
   const copy = page.getByRole('button', { name: 'Komponens másolása' })
   await expect(copy).toBeFocused()
