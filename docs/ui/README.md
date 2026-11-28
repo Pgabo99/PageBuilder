@@ -7,3 +7,5 @@ Az U8 mintaképei (`u8-after/`) egy ideiglenes mintablokkal készültek, mert a 
 Az U2 „előtte” állapota megegyezik az `u1-after/` képeivel (azonos nézetek).
 
 Az U10 képei (`u10-after/`) a tooltip (hover), a siker-toast és a veszélyes megerősítő ablak (világos és sötét) kivágásai; előtte a natív súgó (`title`), az egyszerű toast és az ikon nélküli ablak volt.
+
+Az U3 „előtte” állapota megegyezik az `u2-after/` és `u1-after/` képeivel (azonos nézetek).

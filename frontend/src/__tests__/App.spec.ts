@@ -15,17 +15,22 @@ vi.mock('@/api/websites', () => ({
 describe('App', () => {
   beforeEach(() => setActivePinia(createPinia()))
 
-  it('bejelentkezve megjeleníti a nevet és a kijelentkezés gombot', async () => {
+  it('bejelentkezve a felhasználói menü a nevet és a kijelentkezést tartalmazza', async () => {
     const auth = useAuthStore()
     auth.user = { id: 1, name: 'Árvíztűrő Tükörfúrógép', email: 'a@example.com' }
     auth.initialized = true
 
     await router.push('/')
-    const wrapper = mount(App, { global: { plugins: [router] } })
+    const wrapper = mount(App, { global: { plugins: [router] }, attachTo: document.body })
     await flushPromises()
 
     expect(wrapper.text()).toContain('Árvíztűrő Tükörfúrógép')
-    expect(wrapper.findAll('button').map((b) => b.text())).toContain('Kijelentkezés')
+    expect(wrapper.find('nav').text()).toContain('Webhelyeim')
+
+    await wrapper.find('.user-trigger').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.findAll('[role="menuitem"]').map((b) => b.text())).toContain('Kijelentkezés')
   })
 
   it('a kezdeti navigáció alatt betöltésjelzőt mutat, utána az útvonal tartalmát', async () => {
