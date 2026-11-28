@@ -112,3 +112,9 @@ Közös design tokenek CSS változókban; a vászon és a publikált kimenet azo
 - Fejléc (`AppHeader`): logó (akcentus jelvény ikonnal), „Webhelyeim” navigáció, belépve a `UserMenu` (avatar a név kezdőbetűivel, név, e-mail-cím, témaváltó, kijelentkezés), kijelentkezve az ikonos `ThemeToggle`. Mobilon (≤ 40 rem) csak az avatar látszik, így a fejléc nem tör sorba és nem nyúlik túl.
 - `ActionMenu`: általános, ARIA `menu` szerepkörű lenyíló (nyilak, Home/End, Escape, Tab, kívülre kattintás; zárás után a fókusz a gyújtóra tér vissza); a panel `position: fixed`, szükség esetén felfelé nyílik. A tételek a `.menu__item` gombok; a kártyák és listák hárompontos menüje (U4, U9) is ezt használja.
 - Konténerek: lista és adatlap `60rem`, szerkesztő `80rem` (korábban 48 és 72).
+
+### Komponenskártya (szerkesztő)
+
+- Fejléc: húzófogantyú, típusikon-csempe (`componentTypes` ikonja), név és rövid összefoglaló, látható fel/le ikongombok és a hárompontos `ActionMenu` (másolás, majd elkülönítve a veszélyes stílusú törlés; a láblécnél nincs másolás). Hibás, összecsukott kártyán `BadgeLabel` jelzi a hibát.
+- Aktív kártya: akcentuskeret, puha gyűrű és bal oldali akcentussáv, az ikon akcentusszínű; a nyitott beállítások vékony vonallal válnak el a fejléctől.
+- A szerkesztő lista- és rácsoszlopa `minmax(0, 1fr)`, így a kártyák mobilon sem nyúlnak túl a nézeten.

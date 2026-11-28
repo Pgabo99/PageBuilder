@@ -409,6 +409,7 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', warnBeforeUnloa
 
 .component-list {
   position: relative;
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .list-anim-enter-active,
@@ -466,6 +467,7 @@ h2 {
 /* Széles képernyőn a tartalom és az előnézet egymás mellett, az előnézet görgetéskor is látszik. */
 .editor-grid {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-6);
 }
 
