@@ -409,6 +409,7 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', warnBeforeUnloa
 
 .component-list {
   position: relative;
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .list-anim-enter-active,
